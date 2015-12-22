@@ -1,0 +1,4 @@
+const ARRLEN = 100, NEGATIVE = -1, TRUE = 1, FALSE = 0, ENDCHAR = 'a'
+
+
+.

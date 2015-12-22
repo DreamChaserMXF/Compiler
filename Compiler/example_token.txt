@@ -1,0 +1,253 @@
+TokenNumber	LineNumber	TokenType	    TokenValue
+1		1		CONST               
+2		1		IDENTIFIER          ARRLEN
+3		1		EQU                 
+4		1		CONST_INTEGER       100
+5		1		COMMA               
+6		1		IDENTIFIER          NEGATIVE
+7		1		EQU                 
+8		1		CONST_INTEGER       -1
+9		1		COMMA               
+10		1		IDENTIFIER          TRUE
+11		1		EQU                 
+12		1		CONST_INTEGER       1
+13		1		COMMA               
+14		1		IDENTIFIER          FALSE
+15		1		EQU                 
+16		1		CONST_INTEGER       0
+17		1		COMMA               
+18		1		IDENTIFIER          ENDCHAR
+19		1		EQU                 
+20		1		CONST_CHAR          a
+21		1		SEMICOLON           
+22		3		VAR                 
+23		3		IDENTIFIER          i
+24		3		COMMA               
+25		3		IDENTIFIER          j
+26		3		COMMA               
+27		3		IDENTIFIER          k
+28		3		COLON               
+29		3		RW_INTEGER          
+30		3		SEMICOLON           
+31		4		IDENTIFIER          lastChar
+32		4		COLON               
+33		4		RW_CHAR             
+34		4		SEMICOLON           
+35		5		IDENTIFIER          sum
+36		5		COLON               
+37		5		RW_INTEGER          
+38		5		SEMICOLON           
+39		6		IDENTIFIER          sequence
+40		6		COLON               
+41		6		ARRAY               
+42		6		LEFT_BRACKET        
+43		6		CONST_INTEGER       100
+44		6		RIGHT_BRACKET       
+45		6		OF                  
+46		6		RW_INTEGER          
+47		6		SEMICOLON           
+48		9		PROCEDURE           
+49		9		IDENTIFIER          sumP
+50		9		LEFT_PAREN          
+51		9		IDENTIFIER          x
+52		9		COMMA               
+53		9		IDENTIFIER          y
+54		9		COLON               
+55		9		RW_CHAR             
+56		9		SEMICOLON           
+57		9		VAR                 
+58		9		IDENTIFIER          result
+59		9		COLON               
+60		9		RW_INTEGER          
+61		9		RIGHT_PAREN         
+62		9		SEMICOLON           
+63		10		VAR                 
+64		10		IDENTIFIER          tempSumP
+65		10		COLON               
+66		10		RW_INTEGER          
+67		10		SEMICOLON           
+68		11		BEGIN               
+69		12		IDENTIFIER          result
+70		12		ASSIGN              
+71		12		MINUS               
+72		12		IDENTIFIER          x
+73		12		PLUS                
+74		12		IDENTIFIER          y
+75		13		END                 
+76		13		SEMICOLON           
+77		15		FUNCTION            
+78		15		IDENTIFIER          sumF
+79		15		LEFT_PAREN          
+80		15		IDENTIFIER          x
+81		15		COMMA               
+82		15		IDENTIFIER          y
+83		15		COLON               
+84		15		RW_INTEGER          
+85		15		RIGHT_PAREN         
+86		15		COLON               
+87		15		RW_INTEGER          
+88		15		SEMICOLON           
+89		16		VAR                 
+90		16		IDENTIFIER          result
+91		16		COLON               
+92		16		RW_INTEGER          
+93		16		SEMICOLON           
+94		17		PROCEDURE           
+95		17		IDENTIFIER          sumFF
+96		17		LEFT_PAREN          
+97		17		IDENTIFIER          x
+98		17		COMMA               
+99		17		IDENTIFIER          y
+100		17		COLON               
+101		17		RW_INTEGER          
+102		17		RIGHT_PAREN         
+103		17		SEMICOLON           
+104		18		VAR                 
+105		18		IDENTIFIER          z
+106		18		COLON               
+107		18		RW_INTEGER          
+108		18		SEMICOLON           
+109		19		BEGIN               
+110		20		IDENTIFIER          z
+111		20		ASSIGN              
+112		20		IDENTIFIER          x
+113		20		PLUS                
+114		20		IDENTIFIER          y
+115		21		END                 
+116		21		SEMICOLON           
+117		22		BEGIN               
+118		23		IDENTIFIER          result
+119		23		ASSIGN              
+120		23		IDENTIFIER          x
+121		23		PLUS                
+122		23		IDENTIFIER          y
+123		23		SEMICOLON           
+124		24		IDENTIFIER          sumF
+125		24		ASSIGN              
+126		24		IDENTIFIER          result
+127		25		END                 
+128		25		SEMICOLON           
+129		27		BEGIN               
+130		29		IDENTIFIER          i
+131		29		ASSIGN              
+132		29		CONST_INTEGER       10
+133		29		MUL                 
+134		29		CONST_INTEGER       10
+135		29		SEMICOLON           
+136		30		IF                  
+137		30		IDENTIFIER          i
+138		30		NEQ                 
+139		30		CONST_INTEGER       0
+140		31		THEN                
+141		31		IDENTIFIER          i
+142		31		ASSIGN              
+143		31		CONST_INTEGER       0
+144		31		SEMICOLON           
+145		32		IDENTIFIER          i
+146		32		ASSIGN              
+147		32		IDENTIFIER          i
+148		32		PLUS                
+149		32		CONST_INTEGER       1
+150		32		SEMICOLON           
+151		33		IDENTIFIER          sum
+152		33		ASSIGN              
+153		33		CONST_INTEGER       0
+154		33		MUL                 
+155		33		IDENTIFIER          i
+156		33		SEMICOLON           
+157		35		FOR                 
+158		35		IDENTIFIER          j
+159		35		ASSIGN              
+160		35		IDENTIFIER          i
+161		35		TO                  
+162		35		CONST_INTEGER       10
+163		35		MUL                 
+164		35		CONST_INTEGER       10
+165		36		DO                  
+166		37		BEGIN               
+167		38		IDENTIFIER          sequence
+168		38		LEFT_BRACKET        
+169		38		IDENTIFIER          j
+170		38		RIGHT_BRACKET       
+171		38		ASSIGN              
+172		38		IDENTIFIER          j
+173		39		END                 
+174		39		SEMICOLON           
+175		40		IDENTIFIER          i
+176		40		ASSIGN              
+177		40		CONST_CHAR          a
+178		40		SEMICOLON           
+179		41		IDENTIFIER          i
+180		41		ASSIGN              
+181		41		CONST_INTEGER       2147483647
+182		41		SEMICOLON           
+183		42		FOR                 
+184		42		IDENTIFIER          j
+185		42		ASSIGN              
+186		42		CONST_INTEGER       100
+187		42		DOWNTO              
+188		42		CONST_INTEGER       1
+189		43		DO                  
+190		44		BEGIN               
+191		45		WRITE               
+192		45		LEFT_PAREN          
+193		45		CONST_STRING        error "for sum
+194		45		RIGHT_PAREN         
+195		45		SEMICOLON           
+196		46		IDENTIFIER          k
+197		46		ASSIGN              
+198		46		IDENTIFIER          sumF
+199		46		LEFT_PAREN          
+200		46		IDENTIFIER          i
+201		46		COMMA               
+202		46		IDENTIFIER          j
+203		46		RIGHT_PAREN         
+204		46		SEMICOLON           
+205		47		IDENTIFIER          sum
+206		47		ASSIGN              
+207		47		IDENTIFIER          sumF
+208		47		LEFT_PAREN          
+209		47		IDENTIFIER          sum
+210		47		COMMA               
+211		47		IDENTIFIER          j
+212		47		RIGHT_PAREN         
+213		48		END                 
+214		48		SEMICOLON           
+215		52		CASE                
+216		52		IDENTIFIER          sum
+217		52		OF                  
+218		52		CONST_INTEGER       0
+219		53		COLON               
+220		53		WRITE               
+221		53		LEFT_PAREN          
+222		53		CONST_STRING        error for sum
+223		53		RIGHT_PAREN         
+224		53		SEMICOLON           
+225		53		CONST_INTEGER       5050
+226		54		COLON               
+227		54		WRITE               
+228		54		LEFT_PAREN          
+229		54		CONST_STRING        right for sum
+230		54		RIGHT_PAREN         
+231		55		END                 
+232		55		SEMICOLON           
+233		57		READ                
+234		57		LEFT_PAREN          
+235		57		IDENTIFIER          sum
+236		57		RIGHT_PAREN         
+237		57		SEMICOLON           
+238		58		IDENTIFIER          sumP
+239		58		LEFT_PAREN          
+240		58		IDENTIFIER          ENDCHAR
+241		58		COMMA               
+242		58		IDENTIFIER          lastChar
+243		58		COMMA               
+244		58		IDENTIFIER          sum
+245		58		RIGHT_PAREN         
+246		58		SEMICOLON           
+247		59		WRITE               
+248		59		LEFT_PAREN          
+249		59		IDENTIFIER          sum
+250		59		RIGHT_PAREN         
+251		61		END                 
+252		61		PERIOD              
