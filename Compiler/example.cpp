@@ -42,7 +42,7 @@ begin
 	for j := 100 downto 1
 	do
 	begin
-		write("error \"for sum");
+		write("error for \"sum\"");
 		k := sumF(i, j);
 		sum := sumF(sum, j)
 	end;

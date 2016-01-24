@@ -6,6 +6,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <set>
 #include <map>
 #include "Token.h"
 
@@ -14,6 +15,7 @@ using std::vector;
 using std::map;
 using std::ostream;
 using std::ifstream;
+using std::set;
 
 // 词法分析类
 // 最容易出现的BUG是while循环中，若ch='\0'，会不会无限循环
@@ -26,6 +28,7 @@ public:
 	void Print(ostream &output) const;		// 输出到流
 	void ResetTokenPos();					// 重置符号vector的迭代器tokenVector的位置
 	bool GetNextToken(Token &token);		// 获取下一符号，成功则返回true，读到符号尾则返回false
+	vector<string> getStringTable();		// 获得常量字符串表
 private:
 	LexicalAnalyzer(const LexicalAnalyzer&);		// 声明private的复制构造函数，但并不实现==>禁用复制
 	char getNextChar(bool skipSpace = false);		// 得到下一个字符，参数表示是否跳过空字符
@@ -45,8 +48,9 @@ private:
 
 	ifstream srcFile;						// 输入的文件流
 	int currentLine;						// 当前处理的行号
-	vector<Token> tokenVector;			// 存放Token的数组
+	vector<Token> tokenVector;				// 存放Token的数组
 	vector<Token>::const_iterator tokenIter;
+	set<string> stringSet;				// 常量字符串表
 };
 
 #endif

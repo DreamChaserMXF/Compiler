@@ -227,7 +227,7 @@ Parse()
 |   |   |   |   |   |   |   |   statement()
 |   |   |   |   |   |   |   |   |   writeStatement()
 |   |   |   |   |   |   |   |   |     WRITE
-|   |   |   |   |   |   |   |   |     CONST_STRING  error "for sum
+|   |   |   |   |   |   |   |   |     CONST_STRING  error for "sum"
 |   |   |   |   |   |   |   |   statement()
 |   |   |   |   |   |   |   |     IDENTIFIER  k
 |   |   |   |   |   |   |   |   |   assigningStatement()
