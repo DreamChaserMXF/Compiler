@@ -12,6 +12,10 @@ TokenTable::TokenTable() throw() : rows_(), subroutine_tokentableindex_stack_(),
 	subroutine_tokentableaddr_stack_.push(0);		// 这行似乎没有必要
 }
 
+TokenTableItem TokenTable::at(int index) const throw(std::out_of_range)
+{
+	return rows_.at(index);
+}
 
 void TokenTable::Locate() throw()
 {
@@ -100,7 +104,7 @@ TokenTable::iterator TokenTable::SearchDefinition(const Token &token) throw()
 				// 在查找时，last_level先赋为1，从proc3向上查找
 				// 然而proc1的参数a也在第1层，但作用域与proc3中的a并不重合。导致若不更新last_level，则可能存在bug
 				// 解决办法是，当向上检索到proc2时，便把last_level更新为proc2的level，即0
-				if(true == iter->valid_ && r_iter->level_ < last_level)
+				if(true == r_iter->valid_ && r_iter->level_ < last_level)	// bug fixed[if(true == iter->valid_ && r_iter->level_ < last_level)]
 				{
 					last_level = r_iter->level_;
 				}

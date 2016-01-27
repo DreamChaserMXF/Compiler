@@ -1,8 +1,12 @@
 #ifndef TOKENTABLE_H
 #define TOKENTABLE_H
+
+#pragma warning(disable:4290)
+
 #include <ostream>
 #include <vector>
 #include <stack>
+
 #include "Token.h"
 #include "TokenTableItem.h"
 
@@ -19,6 +23,8 @@ public:
 	typedef vector<TokenTableItem>::const_reverse_iterator const_reverse_iterator;
 
 	TokenTable();
+	TokenTableItem at(int index) const throw(std::out_of_range);
+	// 定位与重定位
 	void Locate();
 	void Relocate();
 
@@ -27,7 +33,6 @@ public:
 	
 	iterator SearchDefinition(const Token &token) throw();					// 查找定义处
 	const_iterator end() const throw();
-//	TokenTableItem::DecorateType AddUsedLine(const Token &token);	// 对给定的token，在其定义处，增加当前行的引用信息，并返回该token的修饰类型
 	
 	vector<TokenTableItem::DecorateType> GetProcFuncParameter(const_iterator iter) throw();
 	void AddConstItem(Token constIdentifier, TokenTableItem::DecorateType decoratetype_, int value, int level) throw();
@@ -39,9 +44,9 @@ public:
 	void SetFunctionReturnType(const string &func_name, TokenTableItem::DecorateType decoratetype_) throw();
 	void AddParameterItem(Token parameterIdentifier, TokenTableItem::DecorateType decoratetype_, int level) throw();
 	
-	string toString() const;
-	void Print(const string &fileName) const;	// 输出到文件
-	void Print(std::ostream &output) const;		// 输出到流
+	string toString() const throw();
+	void Print(const string &fileName) const throw();	// 输出到文件
+	void Print(std::ostream &output) const throw();		// 输出到流
 
 
 private:

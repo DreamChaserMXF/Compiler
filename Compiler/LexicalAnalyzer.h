@@ -27,7 +27,7 @@ public:
 	LexicalAnalyzer(const string &srcFileName) throw();
 	bool IsBound() const throw();						// 是否绑定了源文件
 	bool Parse() throw();								// 进行词法分析
-	void Print(string fileName) const throw();			// 输出到文件
+	bool Print(string fileName) const throw();			// 输出到文件
 	void Print(ostream &output) const throw();			// 输出到流
 	void ResetTokenPos() throw();						// 重置符号vector的迭代器token_vector_的位置
 	bool GetNextToken(Token &token) throw();			// 获取下一符号，成功则返回true，读到符号尾则返回false

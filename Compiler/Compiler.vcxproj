@@ -74,16 +74,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AssemblyMaker.cpp" />
     <ClCompile Include="LexicalAnalyzer.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Quaternary.cpp" />
     <ClCompile Include="SyntaxAnalyzer.cpp" />
     <ClCompile Include="Token.cpp" />
     <ClCompile Include="TokenTable.cpp" />
     <ClCompile Include="TokenTableItem.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AssemblyMaker.h" />
     <ClInclude Include="LexException.h" />
     <ClInclude Include="LexicalAnalyzer.h" />
+    <ClInclude Include="Quaternary.h" />
     <ClInclude Include="SyntaxAnalyzer.h" />
     <ClInclude Include="SyntaxException.h" />
     <ClInclude Include="Token.h" />

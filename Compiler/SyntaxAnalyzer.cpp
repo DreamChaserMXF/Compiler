@@ -1,43 +1,69 @@
 #include "SyntaxAnalyzer.h"
 #include "SyntaxException.h"
 #include "TokenTableException.h"
+#include "Quaternary.h"
 #include <assert.h>
 #include <sstream>
 
 #define SYNTAXDEBUG
 
-SyntaxAnalyzer::SyntaxAnalyzer(LexicalAnalyzer &lexicalAnalyzer_, TokenTable &tokenTable_)  throw()
-	: lexical_analyzer_(lexicalAnalyzer_), tokentable_(tokenTable_), token_(), level_(0), tokenbuffer_(), stringbuffer_(), is_successful_(true)
+SyntaxAnalyzer::SyntaxAnalyzer(LexicalAnalyzer &lexical_analyzer, const vector<string> &stringtable, TokenTable &tokentable, vector<Quaternary> &quaternarytable)  throw()
+	: lexical_analyzer_(lexical_analyzer), stringtable_(stringtable), tokentable_(tokentable), quaternarytable_(quaternarytable), 
+	  token_(), level_(0), is_successful_(true), syntax_info_buffer_(), syntax_assist_buffer_(), tokenbuffer_()
 {}
-
 
 
 bool SyntaxAnalyzer::Parse() throw()
 {
 	int depth = 0;
+	syntax_assist_buffer_.clear();
+	syntax_assist_buffer_.clear();
 	PrintFunctionFrame("Parse()", depth);
 	lexical_analyzer_.GetNextToken(token_);
 	Routine(depth + 1);
 	return is_successful_;
 }
-static string buffer;
+
+string SyntaxAnalyzer::toString() const throw()
+{
+	return syntax_info_buffer_.str();
+}
+
+bool SyntaxAnalyzer::Print(const string &filename) const throw()
+{
+	std::ofstream output(filename);
+	if(!output.is_open())
+	{
+		return false;
+	}
+	Print(output);
+	output.close();
+	return true;
+}
+
+void SyntaxAnalyzer::Print(std::ostream &output) const throw()
+{
+	output << syntax_info_buffer_.str() << std::endl;
+}
+
+static string syntax_assist_buffer_;	// 注：不是线程安全的
 void SyntaxAnalyzer::PrintFunctionFrame(const char *func_name, int depth) throw()
 {
 	
-	if(depth * 4 == buffer.size())
+	if(depth * 4 == syntax_assist_buffer_.size())
 	{
-		stringbuffer_ << buffer << func_name << '\n';
+		syntax_info_buffer_ << syntax_assist_buffer_ << func_name << '\n';
 	}
-	else if(depth * 4 > (int)buffer.size())
+	else if(depth * 4 > (int)syntax_assist_buffer_.size())
 	{
-		buffer.append("|");
-		buffer.append(depth * 4 - buffer.size(), ' ');	// 这里不能减1
-		stringbuffer_ << buffer << func_name << '\n';
+		syntax_assist_buffer_.append("|");
+		syntax_assist_buffer_.append(depth * 4 - syntax_assist_buffer_.size(), ' ');	// 这里不能减1
+		syntax_info_buffer_ << syntax_assist_buffer_ << func_name << '\n';
 	}
-	else // depth * 4 < buffer.size()
+	else // depth * 4 < syntax_assist_buffer_.size()
 	{
-		buffer.resize(depth * 4);
-		stringbuffer_ << buffer << func_name << '\n';
+		syntax_assist_buffer_.resize(depth * 4);
+		syntax_info_buffer_ << syntax_assist_buffer_ << func_name << '\n';
 	}
 }
 // <程序> ::= <分程序>.
@@ -140,7 +166,7 @@ void SyntaxAnalyzer::constantDefination(int depth) throw()
 		return;
 	}
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 	// 记录token_以插入符号表
 	Token constIdentifier = token_;
@@ -182,7 +208,7 @@ void SyntaxAnalyzer::constantDefination(int depth) throw()
 		tokentable_.AddConstItem(constIdentifier, TokenTableItem::CHAR, token_.value_.character, level_);
 	}
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 	lexical_analyzer_.GetNextToken(token_);
 }
@@ -246,7 +272,7 @@ void SyntaxAnalyzer::VariableDefinition(int depth) throw()
 	tokenbuffer_.clear();
 	tokenbuffer_.push_back(token_);
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 	lexical_analyzer_.GetNextToken(token_);
 	while(token_.type_ == Token::COMMA)
@@ -268,7 +294,7 @@ void SyntaxAnalyzer::VariableDefinition(int depth) throw()
 		}
 		tokenbuffer_.push_back(token_);
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 		lexical_analyzer_.GetNextToken(token_);
 	}
@@ -300,7 +326,7 @@ void SyntaxAnalyzer::TypeSpecification(int depth) throw()
 	{
 		itemtype_ = TokenTableItem::ARRAY;
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 		lexical_analyzer_.GetNextToken(token_);
 		if(token_.type_ != Token::LEFT_BRACKET)
@@ -326,7 +352,7 @@ void SyntaxAnalyzer::TypeSpecification(int depth) throw()
 		}
 		arrayLength = token_.value_.integer;
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 		lexical_analyzer_.GetNextToken(token_);
 		if(token_.type_ != Token::RIGHT_BRACKET)
@@ -391,7 +417,7 @@ void SyntaxAnalyzer::TypeSpecification(int depth) throw()
 		}
 	}
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 	lexical_analyzer_.GetNextToken(token_);
 }
@@ -443,7 +469,7 @@ void SyntaxAnalyzer::ProcedureHead(int depth) throw()
 		return;
 	}
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 	// 插入过程名到符号表
 	string proc_name = token_.value_.identifier;
@@ -555,7 +581,7 @@ void SyntaxAnalyzer::FunctionHead(int depth) throw()
 		return;
 	}
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 	// 插入函数名到符号表
 	string func_name = token_.value_.identifier;
@@ -625,7 +651,7 @@ void SyntaxAnalyzer::FunctionHead(int depth) throw()
 		return;
 	}
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 	TokenTableItem::DecorateType decoratetype_ = (token_.type_ == Token::RW_INTEGER) ? TokenTableItem::INTEGER : TokenTableItem::CHAR;
 	tokentable_.SetFunctionReturnType(func_name, decoratetype_);
@@ -678,7 +704,7 @@ int SyntaxAnalyzer::ParameterTerm(int depth) throw()
 		}
 	}
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 	// 参数名压栈准备进符号表
 	tokenbuffer_.clear();
@@ -702,7 +728,7 @@ int SyntaxAnalyzer::ParameterTerm(int depth) throw()
 			}
 		}
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 		tokenbuffer_.push_back(token_);
 		++sum;
@@ -731,7 +757,7 @@ int SyntaxAnalyzer::ParameterTerm(int depth) throw()
 		return 0;
 	}
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 	// 参数存符号表
 	TokenTableItem::DecorateType decoratetype_ = (token_.type_ == Token::RW_INTEGER) ? TokenTableItem::INTEGER : TokenTableItem::CHAR;
@@ -804,7 +830,7 @@ void SyntaxAnalyzer::Statement(int depth) throw()
 	{
 	case Token::IDENTIFIER:
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 		iter = tokentable_.SearchDefinition(token_);	// 查找符号表中的定义
 		if(iter == tokentable_.end())
@@ -1027,7 +1053,7 @@ TokenTableItem::DecorateType SyntaxAnalyzer::Factor(int depth) throw()					// 因
 	if(Token::IDENTIFIER == token_.type_)
 	{
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 		//decorate_type = tokentable_.AddUsedLine(token_);	// 插入到符号表
 		TokenTable::iterator iter = tokentable_.SearchDefinition(token_);	// 寻找定义
@@ -1120,7 +1146,7 @@ TokenTableItem::DecorateType SyntaxAnalyzer::Factor(int depth) throw()					// 因
 	else if(Token::CONST_INTEGER == token_.type_)
 	{
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 		decorate_type = TokenTableItem::INTEGER;	// 记录类型
 		lexical_analyzer_.GetNextToken(token_);
@@ -1128,7 +1154,7 @@ TokenTableItem::DecorateType SyntaxAnalyzer::Factor(int depth) throw()					// 因
 	else if(Token::CONST_CHAR == token_.type_)
 	{
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 		decorate_type = TokenTableItem::CHAR;	// 记录类型
 		lexical_analyzer_.GetNextToken(token_);
@@ -1252,7 +1278,7 @@ void SyntaxAnalyzer::CaseList(int depth) throw()					// 情况表元素
 		return;
 	}
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 	lexical_analyzer_.GetNextToken(token_);
 	while(Token::COMMA == token_.type_)
@@ -1270,7 +1296,7 @@ void SyntaxAnalyzer::CaseList(int depth) throw()					// 情况表元素
 			return;
 		}
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 		lexical_analyzer_.GetNextToken(token_);
 	}
@@ -1295,7 +1321,7 @@ void SyntaxAnalyzer::ReadStatement(int depth) throw()			// 读语句
 
 	assert(Token::READ == token_.type_);
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 	lexical_analyzer_.GetNextToken(token_);
 
@@ -1324,7 +1350,7 @@ void SyntaxAnalyzer::ReadStatement(int depth) throw()			// 读语句
 			return;
 		}
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 		TokenTable::iterator iter = tokentable_.SearchDefinition(token_);
 		if(iter == tokentable_.end())
@@ -1373,7 +1399,7 @@ void SyntaxAnalyzer::WriteStatement(int depth) throw()			// 写语句
 	assert(Token::WRITE == token_.type_);
 
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 	lexical_analyzer_.GetNextToken(token_);
 	
@@ -1392,7 +1418,7 @@ void SyntaxAnalyzer::WriteStatement(int depth) throw()			// 写语句
 	if(Token::CONST_STRING == token_.type_)
 	{
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 		lexical_analyzer_.GetNextToken(token_);
 		if(Token::COMMA == token_.type_)
@@ -1438,7 +1464,7 @@ void SyntaxAnalyzer::ForLoopStatement(int depth) throw()			// for循环语句
 		return;
 	}
 #ifdef SYNTAXDEBUG
-	stringbuffer_ << buffer << "  " << token_.toString() << std::endl;
+	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 	TokenTable::iterator iter = tokentable_.SearchDefinition(token_);
 	if(iter == tokentable_.end())

@@ -3,12 +3,16 @@
 
 #include "LexicalAnalyzer.h"
 #include "TokenTable.h"
+#include "Quaternary.h"
 
 class SyntaxAnalyzer
 {
 public:
-	SyntaxAnalyzer(LexicalAnalyzer &lexicalAnalyzer_, TokenTable &tokenTable_) throw();
+	SyntaxAnalyzer(LexicalAnalyzer &lexical_analyzer, const vector<string> &stringtable, TokenTable &tokentable, vector<Quaternary> &quaternarytable) throw();
 	bool Parse() throw();
+	string toString() const throw();
+	bool Print(const string &filename) const throw();
+	void Print(std::ostream &output) const throw();
 private:
 	SyntaxAnalyzer(const SyntaxAnalyzer&) throw();
 	
@@ -49,13 +53,18 @@ private:
 	void FunctionCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, int depth) throw();	// 函数调用语句
 
 
-	LexicalAnalyzer &lexical_analyzer_;	// 绑定的词法分析器
+	LexicalAnalyzer &lexical_analyzer_;		// 绑定的词法分析器
 	TokenTable &tokentable_;				// 绑定的符号表
-	std::ostringstream stringbuffer_;	// 绑定语法分析过程输出流
-	Token token_;						// 当前解析的token_
-	int level_;							// 当前的分程序层次。初始值为0	
-	vector<Token> tokenbuffer_;			// 插入符号表时用于保存多个相关的token_
+	const vector<string> &stringtable_;		// 绑定的常量字符表
+	vector<Quaternary> &quaternarytable_;		// 四元式表
+
+	Token token_;							// 当前解析的token_
+	int level_;								// 当前的分程序层次。初始值为0	
 	bool is_successful_;					// 语法分析是否成功
+
+	std::ostringstream syntax_info_buffer_;	// 语法分析过程的输出
+	std::string syntax_assist_buffer_;		// 辅助输出语法分析过程的变量
+	vector<Token> tokenbuffer_;				// 插入符号表时用于保存多个相关的token_
 };
 
 #endif

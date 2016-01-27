@@ -3,8 +3,8 @@
 #include <vector>
 using std::vector;
 
-TokenTableItem::TokenTableItem(string name, ItemType item_type, DecorateType decorate_type, int value, int level, int defineline, int addr) throw()
-		: valid_(true), name_(name), itemtype_(item_type), decoratetype_(decorate_type), value_(value), level_(level), defineline_(defineline), usedline_(), addr_(addr)
+TokenTableItem::TokenTableItem(string name, ItemType item_type, DecorateType decorate_type, int value, int level, int defineline, int addr, int quaternary_address) throw()
+	: valid_(true), name_(name), itemtype_(item_type), decoratetype_(decorate_type), value_(value), level_(level), defineline_(defineline), usedline_(), addr_(addr), quaternary_address_(quaternary_address)
 { }
 void TokenTableItem::AddUsedLine(int line_number) throw()
 {

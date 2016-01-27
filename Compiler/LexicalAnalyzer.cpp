@@ -68,16 +68,17 @@ bool LexicalAnalyzer::Parse() throw()							// 进行词法分析
 
 
 // 将词法分析的结果输出到文件
-void LexicalAnalyzer::Print(string fileName) const throw()		
+bool LexicalAnalyzer::Print(string fileName) const throw()		
 {
 	std::ofstream outFile(fileName);
 	if(!outFile)
 	{
 		std::cout << "Cannot open file " << fileName << std::endl;
-		exit(EXIT_FAILURE);
+		return false;
 	}
 	Print(outFile);
 	outFile.close();
+	return true;
 }
 // 将词法分析的结果输出到流（文件流、字符流或控制台输出流）
 void LexicalAnalyzer::Print(ostream &output) const throw()		

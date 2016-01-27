@@ -20,7 +20,6 @@ public:
 	};
 	// µ¥´ÊÀà
 	struct TokenValue{
-	public:
 		int integer;
 		char character;
 		string identifier;
