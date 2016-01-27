@@ -8,18 +8,17 @@
 class TokenTableException : public std::exception
 {
 public:
-	TokenTableException(const char *errorMessage, const Token &errToken) : exception(), errMsg()
+	TokenTableException(const char *error_message, const Token &error_token) throw() : exception(), error_message_()
 	{
 		std::ostringstream buf;
-//		buf << "line " << errToken.toString() << '\t' << errorMessage;
-		buf << "line " << errToken.lineNumber << ": " << errToken.toString() << '\t' << errorMessage;
-		errMsg = buf.str();
+		buf << "line " << error_token.lineNumber_ << ": " << error_token.toString() << '\t' << error_message;
+		error_message_ = buf.str();
 	}
-	virtual const char* what() const
+	virtual const char* what() const throw()
 	{
-		return errMsg.c_str();
+		return error_message_.c_str();
 	}
 private:
-	string errMsg;
+	string error_message_;
 };
 #endif

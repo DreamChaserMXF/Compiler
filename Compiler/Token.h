@@ -18,29 +18,28 @@ public:
 		/*Constant(2)*/			CONST_INTEGER, CONST_CHAR, CONST_STRING,
 		/*Operator(21)*/		PERIOD, COMMA, SEMICOLON, SINGLE_QUOTATION, DOUBLE_QUOTATION, COLON, ASSIGN, LEFT_BRACKET, RIGHT_BRACKET, LEFT_PAREN, RIGHT_PAREN, PLUS, MINUS, MUL, DIV, LT, LEQ, GT, GEQ, EQU, NEQ
 	};
-	// 单词类的值的共用体
-	class TokenValue{
+	// 单词类
+	struct TokenValue{
 	public:
-		TokenValue() : integer(0), character('\0'), identifier(){}
 		int integer;
 		char character;
 		string identifier;
 	};
 	// 构造函数
-	Token();
+	Token() throw();
 	// 格式化函数
-	string toTableString() const;
-	string toString() const;
+	string toTableString() const throw();
+	string toString() const throw();
 
 	// 单词类型、值和出现的行号
-	TokenType type;
-	TokenValue value;
-	int lineNumber;
+	TokenType type_;
+	TokenValue value_;
+	int lineNumber_;
 
-	static map<TokenType, string> tokenTypeToString;		// 将enum<TokenType>类型映射到string(用于输出token)
-	static map<string, TokenType> reserveWordToTokenType;// 将属于reserve word的string映射到TokenType(用于识别reserve word)
-	static map<TokenType, string> InitTokenTypeToStringMap();		// 初始化tokenTypeToString
-	static map<string, TokenType> InitReserveWordToTokenTypeMap();	// 初始化reserveWordToTokenType
+	static map<TokenType, string> sTokenTypeToString;						// 将enum<TokenType>类型映射到string(用于输出token)
+	static map<string, TokenType> sReserveWordToTokenType;					// 将属于reserve word的string映射到TokenType(用于识别reserve word)
+	static map<TokenType, string> InitTokenTypeToStringMap() throw();		// 初始化sTokenTypeToString
+	static map<string, TokenType> InitReserveWordToTokenTypeMap() throw();	// 初始化sReserveWordToTokenType
 };
 
 #endif

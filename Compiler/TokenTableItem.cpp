@@ -3,48 +3,48 @@
 #include <vector>
 using std::vector;
 
-TokenTableItem::TokenTableItem(string name_, ItemType itemType_, DecorateType decorateType_, int value_, int level_, int defLine_, int addr_)
-		: valid(true), name(name_), itemType(itemType_), decorateType(decorateType_), value(value_), level(level_), defLine(defLine_), usedLine(), addr(addr_)
+TokenTableItem::TokenTableItem(string name, ItemType item_type, DecorateType decorate_type, int value, int level, int defineline, int addr) throw()
+		: valid_(true), name_(name), itemtype_(item_type), decoratetype_(decorate_type), value_(value), level_(level), defineline_(defineline), usedline_(), addr_(addr)
 { }
-void TokenTableItem::AddUsedLine(int lineNumber)
+void TokenTableItem::AddUsedLine(int line_number) throw()
 {
-	usedLine.insert(lineNumber);
+	usedline_.insert(line_number);
 }
-bool TokenTableItem::CheckItemType(const set<ItemType> legalTypes) const
+bool TokenTableItem::CheckItemType(const set<ItemType> legaltypes) const throw()
 {
-	return (legalTypes.find(itemType) != legalTypes.end());
+	return (legaltypes.find(itemtype_) != legaltypes.end());
 }
-TokenTableItem::ItemType TokenTableItem::GetItemType() const
+TokenTableItem::ItemType TokenTableItem::GetItemType() const throw()
 {
-	return itemType;
+	return itemtype_;
 }
-TokenTableItem::DecorateType TokenTableItem::GetDecorateType() const
+TokenTableItem::DecorateType TokenTableItem::GetDecorateType() const throw()
 {
-	return decorateType;
+	return decoratetype_;
 }
-string TokenTableItem::toString() const
+string TokenTableItem::toString() const throw()
 {
 	std::ostringstream buf;
-	buf << valid << "     ";
+	buf << valid_ << "     ";
 	buf.width(8);
-	buf << std::left << name << "    ";
-	buf << TokenTableItem::itemTypeToString[itemType] << "  ";
-	buf << TokenTableItem::decorateTypeToString[decorateType] << "    ";
+	buf << std::left << name_ << "    ";
+	buf << TokenTableItem::itemTypeToString[itemtype_] << "  ";
+	buf << TokenTableItem::decorateTypeToString[decoratetype_] << "    ";
 	buf.width(4);
-	buf << std::right << value << "   ";
+	buf << std::right << value_ << "   ";
 	buf.width(4);
-	buf << std::left << addr << "  ";
+	buf << std::left << addr_ << "  ";
 	buf.width(4);
-	buf << level << "  ";
+	buf << level_ << "  ";
 	buf.width(4);
-	buf << defLine << "  ";
+	buf << defineline_ << "  ";
 	buf << "{";
-	set<int>::const_iterator s_iter = usedLine.begin();
-	if(s_iter != usedLine.end())
+	set<int>::const_iterator s_iter = usedline_.begin();
+	if(s_iter != usedline_.end())
 	{
 		buf.width(2);
 		buf << *s_iter;
-		while(++s_iter != usedLine.end())
+		while(++s_iter != usedline_.end())
 		{
 			buf << ",";
 			buf.width(3);
@@ -62,7 +62,7 @@ string TokenTableItem::toString() const
 
 
 map<TokenTableItem::ItemType, string> TokenTableItem::itemTypeToString = InitItemTypeToStringMap();
-map<TokenTableItem::ItemType, string> TokenTableItem::InitItemTypeToStringMap()
+map<TokenTableItem::ItemType, string> TokenTableItem::InitItemTypeToStringMap() throw()
 {
 	map<ItemType, string> isMap;
 	isMap.insert(std::pair<ItemType, string>(CONST, "CONST    "));
@@ -75,7 +75,7 @@ map<TokenTableItem::ItemType, string> TokenTableItem::InitItemTypeToStringMap()
 }
 
 map<TokenTableItem::DecorateType, string> TokenTableItem::decorateTypeToString = InitDecorateTypeToStringMap();
-map<TokenTableItem::DecorateType, string> TokenTableItem::InitDecorateTypeToStringMap()
+map<TokenTableItem::DecorateType, string> TokenTableItem::InitDecorateTypeToStringMap() throw()
 {
 	map<DecorateType, string> dsMap;
 	dsMap.insert(std::pair<DecorateType, string>(VOID, "VOID   "));

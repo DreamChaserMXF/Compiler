@@ -18,7 +18,7 @@ public:
 class LexException : public std::exception
 {
 public:
-	LexException(const char *errorMessage, char errCh, int lineNo) : exception(), errMsg()
+	LexException(const char *errorMessage, char errCh, int lineNo) throw() : exception(), errMsg_()
 	{
 		std::ostringstream buf;
 		buf << "line " << lineNo << ": \'";
@@ -31,14 +31,14 @@ public:
 			buf << '\\' << (int)errCh;
 		}
 		buf << "\': " << errorMessage;
-		errMsg = buf.str();
+		errMsg_ = buf.str();
 	}
-	virtual const char* what() const
+	virtual const char* what() const throw()
 	{
-		return errMsg.c_str();
+		return errMsg_.c_str();
 	}
 private:
-	string errMsg;
+	string errMsg_;
 };
 
 #endif

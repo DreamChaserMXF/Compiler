@@ -15,8 +15,8 @@ public:
 	SyntaxTokenException(const char *errorMessage, const Token &errToken) : exception(), errMsg()
 	{
 		std::ostringstream buf;
-//		buf << "line " << errToken.lineNumber << '\t' << errToken.toString() << '\t' << errorMessage;
-		buf << "line " << errToken.lineNumber << ": " << errToken.toString() << '\t' << errorMessage;
+//		buf << "line " << errToken.lineNumber_ << '\t' << errToken.toString() << '\t' << errorMessage;
+		buf << "line " << errToken.lineNumber_ << ": " << errToken.toString() << '\t' << errorMessage;
 		errMsg = buf.str();
 	}
 	virtual const char* what() const

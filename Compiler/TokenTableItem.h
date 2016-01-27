@@ -16,30 +16,30 @@ public:
 	enum ItemType{CONST, VARIABLE, ARRAY, PROCEDURE, FUNCTION, PARAMETER};
 	enum DecorateType{VOID, INTEGER, CHAR};
 
-	TokenTableItem(string name_, ItemType itemType_, DecorateType decorateType_, int value_, int level_, int defLine_, int addr_);
-	void AddUsedLine(int lineNumber);
-	bool CheckItemType(const set<ItemType> legalTypes) const;
-	ItemType GetItemType() const;			// 获得iter指向的符号表行的item type
-	DecorateType GetDecorateType() const;	// 获得iter指向的符号表行的decorate type
-	string toString() const;
+	TokenTableItem(string name, ItemType item_type, DecorateType decorate_type, int value, int level, int defineline, int addr) throw();
+	void AddUsedLine(int line_number) throw();
+	bool CheckItemType(const set<ItemType> legaltypes) const throw();
+	ItemType GetItemType() const throw();			// 获得iter指向的符号表行的item type
+	DecorateType GetDecorateType() const throw();	// 获得iter指向的符号表行的decorate type
+	string toString() const throw();
 
 private:
 	friend class TokenTable;
 
 	static map<ItemType, string> itemTypeToString;
 	static map<DecorateType, string> decorateTypeToString;
-	static map<ItemType, string> InitItemTypeToStringMap();
-	static map<DecorateType, string> InitDecorateTypeToStringMap();
+	static map<ItemType, string> InitItemTypeToStringMap() throw();
+	static map<DecorateType, string> InitDecorateTypeToStringMap() throw();
 
-	bool			valid;
-	string			name;
-	ItemType		itemType;
-	DecorateType	decorateType;
-	int				value;
-	int				level;
-	int				defLine;
-	set<int>		usedLine;
-	int				addr;
+	bool			valid_;
+	string			name_;
+	ItemType		itemtype_;
+	DecorateType	decoratetype_;
+	int				value_;
+	int				level_;
+	int				defineline_;
+	set<int>		usedline_;
+	int				addr_;
 };
 
 #endif

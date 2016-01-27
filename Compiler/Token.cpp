@@ -1,62 +1,62 @@
 #include "Token.h"
 
 // 构造函数
-Token::Token(): type(Token::NIL), value()
+Token::Token(): type_(Token::NIL), value_()
 {}
 
 // 格式化函数
-string Token::toTableString() const
+string Token::toTableString() const throw()
 {
 	std::ostringstream buf;
-	//buf << lineNumber << '\t';
+	//buf << lineNumber_ << '\t';
 	buf.width(16);
-	buf << std::left << tokenTypeToString[type] << "    ";
-	if(type == Token::IDENTIFIER)
+	buf << std::left << sTokenTypeToString[type_] << "    ";
+	if(type_ == Token::IDENTIFIER)
 	{
-		buf << value.identifier;
+		buf << value_.identifier;
 	}
-	else if(type == Token::CONST_INTEGER)
+	else if(type_ == Token::CONST_INTEGER)
 	{
-		buf << value.integer;
+		buf << value_.integer;
 	}
-	else if(type == Token::CONST_CHAR)
+	else if(type_ == Token::CONST_CHAR)
 	{
-		buf << value.character;
+		buf << value_.character;
 	}
-	else if(type == Token::CONST_STRING)
+	else if(type_ == Token::CONST_STRING)
 	{
-		buf << value.identifier;
+		buf << value_.identifier;
 	}
 	return buf.str();
 }
 
 // 格式化函数
-string Token::toString() const
+string Token::toString() const throw()
 {
 	std::ostringstream buf;
-	buf << tokenTypeToString[type];
-	if(type == Token::IDENTIFIER)
+	buf << sTokenTypeToString[type_];
+	if(type_ == Token::IDENTIFIER)
 	{
-		buf << "  " << value.identifier;
+		buf << "  " << value_.identifier;
 	}
-	else if(type == Token::CONST_INTEGER)
+	else if(type_ == Token::CONST_INTEGER)
 	{
-		buf << "  " << value.integer;
+		buf << "  " << value_.integer;
 	}
-	else if(type == Token::CONST_CHAR)
+	else if(type_ == Token::CONST_CHAR)
 	{
-		buf << "  " << value.character;
+		buf << "  " << value_.character;
 	}
-	else if(type == Token::CONST_STRING)
+	else if(type_ == Token::CONST_STRING)
 	{
-		buf << "  " << value.identifier;
+		buf << "  " << value_.identifier;
 	}
 	return buf.str();
 }
 
 // 用于查找enum值对应的字符串
-map<Token::TokenType, string> Token::tokenTypeToString = InitTokenTypeToStringMap(); // tokenTypeToString必须要在类外初始化
-map<Token::TokenType, string> Token::InitTokenTypeToStringMap()
+map<Token::TokenType, string> Token::sTokenTypeToString = InitTokenTypeToStringMap(); // sTokenTypeToString必须要在类外初始化
+map<Token::TokenType, string> Token::InitTokenTypeToStringMap() throw()
 {
 	map<TokenType, string> tsMap;
 	tsMap.insert(map<TokenType,string>::value_type(NIL,					"NIL"					));
@@ -108,8 +108,8 @@ map<Token::TokenType, string> Token::InitTokenTypeToStringMap()
 	return tsMap;
 }
 // 用于查找字符串是否有对应的保留字的enum值
-map<string, Token::TokenType> Token::reserveWordToTokenType = InitReserveWordToTokenTypeMap();
-map<string, Token::TokenType> Token::InitReserveWordToTokenTypeMap()
+map<string, Token::TokenType> Token::sReserveWordToTokenType = InitReserveWordToTokenTypeMap();
+map<string, Token::TokenType> Token::InitReserveWordToTokenTypeMap() throw()
 {
 	map<string, TokenType> stMap;
 	stMap.insert(map<string, TokenType>::value_type("const",		CONST		));	

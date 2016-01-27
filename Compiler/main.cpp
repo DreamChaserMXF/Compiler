@@ -11,45 +11,52 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	bool lexLegitimate = false;
-	bool syntaxLegitimate = false;
-	string codeFileName = "example.cpp";
-	string tokenFileName = "example_token.txt";
-	string tokenTableFileName = "example_tokentable.txt";
-	string syntax_info_buffer_file = "example_syntax.txt";
+	bool lex_legitimate = false;
+	bool syntax_legitimate = false;
+	const string kCodeFileName = "example.cpp";
+	const string kTokenFileName = "example_token.txt";
+	const string kTokenTableFileName = "example_tokentable.txt";
+	const string kSyntaxFileName = "example_syntax.txt";
 
-	std::ofstream syntex_ostream(syntax_info_buffer_file);
+	std::ofstream syntex_ostream(kSyntaxFileName);
 
 	// 词法分析
-	LexicalAnalyzer lexAnalyzer(codeFileName);
-	lexLegitimate = lexAnalyzer.Parse();		// 进行词法分析并返回状态
-	lexAnalyzer.Print(tokenFileName);			// 输出到文件
-//	lexAnalyzer.Print(cout);					// 输出到流
-	if(!lexLegitimate)				// 出错处理
+	LexicalAnalyzer lex_analyzer(kCodeFileName);
+	if(!lex_analyzer.IsBound())
+	{
+		cout << "Cannot open source file " << kCodeFileName << endl;
+		return EXIT_FAILURE;
+	}
+	lex_legitimate = lex_analyzer.Parse();		// 进行词法分析并返回状态
+	lex_analyzer.Print(kTokenFileName);			// 输出到文件
+	if(!lex_legitimate)							// 出错处理
 	{
 		//cout << "词法分析出错！" << endl;
 		return -1;
 	}
+
 	cout << "Token list:\n";
-	lexAnalyzer.Print(cout);		// 输出单词列表
-	vector<string> stringTable = lexAnalyzer.getStringTable();		// 字符串表
-	
-	for(vector<string>::const_iterator iter = stringTable.begin(); iter != stringTable.end(); ++iter)
+	lex_analyzer.Print(cout);		// 输出单词列表
+
+	vector<string> stringtable = lex_analyzer.getStringTable();		// 字符串表
+	for(vector<string>::const_iterator iter = stringtable.begin();	// 输出字符串表
+		iter != stringtable.end(); ++iter)
 	{
 		cout << *iter << endl;
 	}
 
 	// 语法分析
-	TokenTable tokenTable;			// 符号表
-	SyntaxAnalyzer syntaxAnalyzer(lexAnalyzer, tokenTable, syntex_ostream);
-	syntaxLegitimate = syntaxAnalyzer.Parse();	// 进行语法分析并返回状态
-	tokenTable.Print(tokenTableFileName);		// 输出符号表
-	if(!syntaxLegitimate)			// 出错处理
+	TokenTable tokentable;			// 符号表
+	SyntaxAnalyzer syntax_analyzer(lex_analyzer, tokentable);
+	syntax_legitimate = syntax_analyzer.Parse();	// 进行语法分析并返回状态
+
+	tokentable.Print(kTokenTableFileName);		// 输出符号表
+	if(!syntax_legitimate)			// 出错处理
 	{
 		//cout << "语法分析出错！" << endl;
 		return -1;
 	}
-	cout << "\nToken table:\n" << tokenTable.toString();
+	cout << "\nToken table:\n" << tokentable.toString();
 
 	return 0;
 }
