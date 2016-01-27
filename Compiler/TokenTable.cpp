@@ -241,18 +241,23 @@ void TokenTable::AddVariableItem(Token variableIdentifier, TokenTableItem::Decor
 }
 void TokenTable::AddArrayItem(Token arrayIdentifier, TokenTableItem::DecorateType decoratetype_, int arrayLength, int level) throw()
 {
-	TokenTableItem item(arrayIdentifier.value_.identifier, TokenTableItem::ARRAY, decoratetype_, arrayLength, level, arrayIdentifier.lineNumber_, addr_++);
+	TokenTableItem item(arrayIdentifier.value_.identifier, TokenTableItem::ARRAY, decoratetype_, arrayLength, level, arrayIdentifier.lineNumber_, addr_);
 	rows_.push_back(item);
+	// 符号表中增加一个数组，addr_要加上数组的长度以示数组的存在
+	addr_ += arrayLength;
 }
-void TokenTable::AddProcedureItem(Token procedureIdentifier, int level) throw()
+int TokenTable::AddProcedureItem(Token procedureIdentifier, int level) throw()
 {
-	TokenTableItem item(procedureIdentifier.value_.identifier, TokenTableItem::PROCEDURE, TokenTableItem::VOID, 0, level, procedureIdentifier.lineNumber_, addr_++);
+	// 由于过程在运行栈中不占空间，故addr_保持不变
+	TokenTableItem item(procedureIdentifier.value_.identifier, TokenTableItem::PROCEDURE, TokenTableItem::VOID, 0, level, procedureIdentifier.lineNumber_, addr_);
 	rows_.push_back(item);
+	return rows_.size() - 1;
 }
-void TokenTable::AddFunctionItem(Token functionIdentifier, int level) throw()
+int TokenTable::AddFunctionItem(Token functionIdentifier, int level) throw()
 {
 	TokenTableItem item(functionIdentifier.value_.identifier, TokenTableItem::FUNCTION, TokenTableItem::VOID, 0, level, functionIdentifier.lineNumber_, addr_++);
 	rows_.push_back(item);
+	return rows_.size() - 1;
 }
 void TokenTable::SetParameterCount(const string &proc_func_name, int parameterCount) throw()
 {

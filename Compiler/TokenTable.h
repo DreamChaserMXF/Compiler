@@ -38,8 +38,8 @@ public:
 	void AddConstItem(Token constIdentifier, TokenTableItem::DecorateType decoratetype_, int value, int level) throw();
 	void AddVariableItem(Token variableIdentifier, TokenTableItem::DecorateType decoratetype_, int level) throw();
 	void AddArrayItem(Token arrayIdentifier, TokenTableItem::DecorateType decoratetype_, int arrayLength, int level) throw();
-	void AddProcedureItem(Token procedureIdentifier, int level) throw();
-	void AddFunctionItem(Token functionIdentifier, int level) throw();
+	int  AddProcedureItem(Token procedureIdentifier, int level) throw();
+	int AddFunctionItem(Token functionIdentifier, int level) throw();
 	void SetParameterCount(const string &proc_func_name, int parameterCount) throw();
 	void SetFunctionReturnType(const string &func_name, TokenTableItem::DecorateType decoratetype_) throw();
 	void AddParameterItem(Token parameterIdentifier, TokenTableItem::DecorateType decoratetype_, int level) throw();

@@ -9,7 +9,7 @@
 
 SyntaxAnalyzer::SyntaxAnalyzer(LexicalAnalyzer &lexical_analyzer, const vector<string> &stringtable, TokenTable &tokentable, vector<Quaternary> &quaternarytable)  throw()
 	: lexical_analyzer_(lexical_analyzer), stringtable_(stringtable), tokentable_(tokentable), quaternarytable_(quaternarytable), 
-	  token_(), level_(0), is_successful_(true), syntax_info_buffer_(), syntax_assist_buffer_(), tokenbuffer_()
+	  token_(), level_(0), temp_varaible_index_(0), label_index_(0), is_successful_(true), syntax_info_buffer_(), syntax_assist_buffer_(), tokenbuffer_()
 {}
 
 
@@ -429,11 +429,10 @@ void SyntaxAnalyzer::ProcedurePart(int depth) throw()
 
 	do
 	{
-		ProcedureHead(depth + 1);
+		int proc_index = ProcedureHead(depth + 1);
 		SubRoutine(depth + 1);
-/*#ifdef TOKENTABLEDEBUG
-		std::cout << "temp token_ table before procedure relocate:\n" << tokentable_.toString() << std::endl;
-#endif*/
+		// 生成过程的END四元式
+		quaternarytable_.push_back(Quaternary(Quaternary::END, Quaternary::OPERAND_NIL, 0, Quaternary::OPERAND_NIL, 0, Quaternary::PROC_FUNC_INDEX, proc_index));
 		tokentable_.Relocate();
 		--level_;
 		if(Token::SEMICOLON != token_.type_)
@@ -446,11 +445,13 @@ void SyntaxAnalyzer::ProcedurePart(int depth) throw()
 }
 
 // <过程首部> ::= procedure<过程标识符>'('[<形式参数表>]')';
-void SyntaxAnalyzer::ProcedureHead(int depth) throw()
+int SyntaxAnalyzer::ProcedureHead(int depth) throw()
 {
 	PrintFunctionFrame("ProcedureHead()", depth);
 
 	assert(Token::PROCEDURE == token_.type_);
+
+	int proc_index = -1;	// 过程名在符号表中的位置（下标）
 
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::IDENTIFIER)	// 未找到过程名
@@ -466,7 +467,7 @@ void SyntaxAnalyzer::ProcedureHead(int depth) throw()
 		{
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		return;
+		return proc_index;
 	}
 #ifdef SYNTAXDEBUG
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
@@ -478,8 +479,12 @@ void SyntaxAnalyzer::ProcedureHead(int depth) throw()
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  redifinition\n";
 		is_successful_ = false;
 	}
-	tokentable_.AddProcedureItem(token_, level_++);// 过程名之后leve要+1
-	tokentable_.Locate();	// 定位（将过程名后紧邻的位置设为局部作用域的起始点）
+	proc_index = tokentable_.AddProcedureItem(token_, level_++);// 过程名之后leve要+1
+	// 生成过程的BEGIN四元式
+	quaternarytable_.push_back(Quaternary(Quaternary::BEGIN, Quaternary::OPERAND_NIL, 0, Quaternary::OPERAND_NIL, 0, Quaternary::PROC_FUNC_INDEX, proc_index));
+	// 定位（将过程名后紧邻的位置设为局部作用域的起始点）
+	tokentable_.Locate();	
+	// 继续读取单词
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::LEFT_PAREN)	// 没有读到左括号，视作没有参数
 	{
@@ -493,7 +498,7 @@ void SyntaxAnalyzer::ProcedureHead(int depth) throw()
 		{
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		return;
+		return proc_index;
 	}
 	lexical_analyzer_.GetNextToken(token_);
 	if(	Token::VAR == token_.type_
@@ -514,7 +519,7 @@ void SyntaxAnalyzer::ProcedureHead(int depth) throw()
 		{
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		return;
+		return proc_index;
 	}
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::SEMICOLON)
@@ -529,9 +534,10 @@ void SyntaxAnalyzer::ProcedureHead(int depth) throw()
 		{
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		return;
+		return proc_index;
 	}
 	lexical_analyzer_.GetNextToken(token_);
+	return proc_index;
 }
 
 // <函数说明部分> ::= <函数首部><分程序>;{<函数首部><分程序>;}
@@ -541,11 +547,10 @@ void SyntaxAnalyzer::FunctionPart(int depth) throw()
 
 	do
 	{
-		FunctionHead(depth + 1);
+		int func_index = FunctionHead(depth + 1);	// 进行函数头分析，并得到函数名在符号表中的位置
 		SubRoutine(depth + 1);
-/*#ifdef TOKENTABLEDEBUG
-		std::cout << "\ntemp token_ table before function relocate:\n" << tokentable_.toString() << std::endl;
-#endif*/
+		// 生成函数的END四元式
+		quaternarytable_.push_back(Quaternary(Quaternary::END, Quaternary::OPERAND_NIL, 0, Quaternary::OPERAND_NIL, 0, Quaternary::PROC_FUNC_INDEX, func_index));
 		tokentable_.Relocate();
 		--level_;
 		if(Token::SEMICOLON != token_.type_)	// 分程序结束后应读入分号
@@ -558,11 +563,13 @@ void SyntaxAnalyzer::FunctionPart(int depth) throw()
 }
 
 // <函数首部> ::= function <函数标识符>'('[<形式参数表>]')':<基本类型>;
-void SyntaxAnalyzer::FunctionHead(int depth) throw()
+int SyntaxAnalyzer::FunctionHead(int depth) throw()
 {
 	PrintFunctionFrame("FunctionHead()", depth);
 
 	assert(Token::FUNCTION == token_.type_);
+
+	int func_index = -1;	// 函数名在符号表中的位置
 
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::IDENTIFIER)	// 未找到函数名
@@ -578,7 +585,7 @@ void SyntaxAnalyzer::FunctionHead(int depth) throw()
 		{
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		return;
+		return func_index;
 	}
 #ifdef SYNTAXDEBUG
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
@@ -590,7 +597,10 @@ void SyntaxAnalyzer::FunctionHead(int depth) throw()
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  redifinition\n";
 		is_successful_ = false;
 	}
-	tokentable_.AddFunctionItem(token_, level_++);// 过程名之后leve要+1
+	func_index = tokentable_.AddFunctionItem(token_, level_++);// 过程名之后leve要+1
+	// 生成函数的BEGIN四元式
+	quaternarytable_.push_back(Quaternary(Quaternary::BEGIN, Quaternary::OPERAND_NIL, 0, Quaternary::OPERAND_NIL, 0, Quaternary::PROC_FUNC_INDEX, func_index));
+	// 定位
 	tokentable_.Locate();
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::LEFT_PAREN)
@@ -605,7 +615,7 @@ void SyntaxAnalyzer::FunctionHead(int depth) throw()
 		{
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		return;
+		return func_index;
 	}
 	lexical_analyzer_.GetNextToken(token_);
 	if(	Token::VAR == token_.type_
@@ -626,7 +636,7 @@ void SyntaxAnalyzer::FunctionHead(int depth) throw()
 		{
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		return;
+		return func_index;
 	}
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::COLON)	// 假设是忘记冒号
@@ -648,7 +658,7 @@ void SyntaxAnalyzer::FunctionHead(int depth) throw()
 		{
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		return;
+		return func_index;
 	}
 #ifdef SYNTAXDEBUG
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
@@ -660,9 +670,10 @@ void SyntaxAnalyzer::FunctionHead(int depth) throw()
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ';' at the end of function head\n";
 		is_successful_ = false;
-		return;
+		return func_index;
 	}
 	lexical_analyzer_.GetNextToken(token_);
+	return func_index;
 }
 
 // <形式参数表> ::= <形式参数段>{;<形式参数段>}

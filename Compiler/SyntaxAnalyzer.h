@@ -28,9 +28,9 @@ private:
 	void TypeSpecification(int depth) throw();		// 类型
 
 	void ProcedurePart(int depth) throw();			// 过程说明部分
-	void ProcedureHead(int depth) throw();			// 过程首部
+	int  ProcedureHead(int depth) throw();			// 过程首部
 	void FunctionPart(int depth) throw();			// 函数说明部分
-	void FunctionHead(int depth) throw();			// 函数首部
+	int FunctionHead(int depth) throw();			// 函数首部
 	int ParameterList(int depth) throw();			// 形参表 返回形参个数
 	int ParameterTerm(int depth) throw();			// 形参段 返回形参个数
 	vector<TokenTableItem::DecorateType> ArgumentList(int depth) throw();// 实参表
@@ -59,7 +59,11 @@ private:
 	vector<Quaternary> &quaternarytable_;		// 四元式表
 
 	Token token_;							// 当前解析的token_
-	int level_;								// 当前的分程序层次。初始值为0	
+	int level_;								// 当前的分程序层次。初始值为0
+//	int quaternary_index;					// 下一条生成的四元式的下标（初始为0）
+	int temp_varaible_index_;		// 将要使用的下一个临时变量的下标
+	int label_index_;				// 将要使用的下一个label的下标
+
 	bool is_successful_;					// 语法分析是否成功
 
 	std::ostringstream syntax_info_buffer_;	// 语法分析过程的输出

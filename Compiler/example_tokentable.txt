@@ -10,12 +10,12 @@ Valid Name        ItemType DecorateType Value Addr Level DefLine UsedLine
 1     lastChar    VARIABLE   CHAR          0   8     0     4     {58}  
 1     sum         VARIABLE   INTEGER       0   9     0     5     {33, 47, 52, 57, 58, 59}  
 1     sequence    ARRAY      INTEGER     100   10    0     6     {38}  
-1     sumP        PROCEDURE  VOID          3   11    0     9     {58}  
+1     sumP        PROCEDURE  VOID          3   110   0     9     {58}  
 1     x           PARAMETER  CHAR          0   0     1     9     {12}  
 1     y           PARAMETER  CHAR          0   1     1     9     {12}  
 1     result      PARAMETER  INTEGER       0   2     1     9     {12}  
 0     tempSumP    VARIABLE   INTEGER       0   3     1     10    { }  
-1     sumF        FUNCTION   INTEGER       2   12    0     15    {24, 46, 47}  
+1     sumF        FUNCTION   INTEGER       2   110   0     15    {24, 46, 47}  
 1     x           PARAMETER  INTEGER       0   0     1     15    {23}  
 1     y           PARAMETER  INTEGER       0   1     1     15    {23}  
 0     result      VARIABLE   INTEGER       0   2     1     16    {23, 24}  

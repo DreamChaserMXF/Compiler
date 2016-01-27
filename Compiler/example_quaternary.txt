@@ -1,0 +1,6 @@
+   BEGIN	0	0	sumP@11
+     END	0	0	sumP@11
+   BEGIN	0	0	sumF@16
+   BEGIN	0	0	sumFF@20
+     END	0	0	sumFF@20
+     END	0	0	sumF@16

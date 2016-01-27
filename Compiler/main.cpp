@@ -17,62 +17,93 @@ void PrintQuaternaryVector(const vector<Quaternary> &quaternarytable, const Toke
 	for(vector<Quaternary>::const_iterator iter = quaternarytable.begin();
 		iter != quaternarytable.end(); ++iter)
 	{
-		cout.width(8);
-		//cout << Quaternary::OPCodeString[iter->op_] << '\t';
+		out.width(8);
+		//out.setf(ios::left);
+		out << Quaternary::OPCodeString[iter->op_] << '\t';
 		switch(iter->type1_)
 		{
 		case Quaternary::IMMEDIATE_OPERAND:
-			cout << iter->src1_;
+			out << iter->src1_;
 			break;
 		case Quaternary::CONSTANT_OPERAND:
-			cout << tokentable.at(iter->src1_).name_;
+			out << tokentable.at(iter->src1_).name_ << "(" << tokentable.at(iter->src1_).value_ << ")@" << iter->src1_;
 			break;
 		case Quaternary::VARIABLE_OPERAND:
-			cout << tokentable.at(iter->src1_).name_ << "(" << tokentable.at(iter->src1_).value_ << ")";
+			out << tokentable.at(iter->src1_).name_ << "@" << iter->src1_;
 			break;
 		case Quaternary::TEMPORARY_OPERAND:
-			cout << "TEMP@" << iter->src1_;
+			out << "TEMP@" << iter->src1_;
+			break;
+		case Quaternary::LABEL_OPERAND:
+			out << "LABEL@" << iter->src1_;
+			break;
+		case Quaternary::PROC_FUNC_INDEX:
+			out << tokentable.at(iter->src1_).name_ << "@" << iter->src1_;
+			break;
+		case Quaternary::PARANUM_OPERAND:
+			out << iter->src1_;
 			break;
 		default:
+			out << iter->src1_;
 			break;
 		}
-		cout << '\t';
+		out << '\t';
 		switch(iter->type2_)
 		{
 		case Quaternary::IMMEDIATE_OPERAND:
-			cout << iter->src2_;
+			out << iter->src2_;
 			break;
 		case Quaternary::CONSTANT_OPERAND:
-			cout << tokentable.at(iter->src2_).name_;
+			out << tokentable.at(iter->src2_).name_ << "(" << tokentable.at(iter->src2_).value_ << ")@" << iter->src2_;
 			break;
 		case Quaternary::VARIABLE_OPERAND:
-			cout << tokentable.at(iter->src2_).name_ << "(" << tokentable.at(iter->src2_).value_ << ")";
+			out << tokentable.at(iter->src2_).name_ << "@" << iter->src2_;
 			break;
 		case Quaternary::TEMPORARY_OPERAND:
-			cout << "TEMP@" << iter->src2_;
+			out << "TEMP@" << iter->src2_;
+			break;
+		case Quaternary::LABEL_OPERAND:
+			out << "LABEL@" << iter->src2_;
+			break;
+		case Quaternary::PROC_FUNC_INDEX:
+			out << tokentable.at(iter->src2_).name_ << "@" << iter->src2_;
+			break;
+		case Quaternary::PARANUM_OPERAND:
+			out << iter->src2_;
 			break;
 		default:
+			out << iter->src2_;
 			break;
 		}
-		cout << '\t';
+		out << '\t';
 		switch(iter->type3_)
 		{
 		case Quaternary::IMMEDIATE_OPERAND:
-			cout << iter->dst_;
+			out << iter->dst_;
 			break;
 		case Quaternary::CONSTANT_OPERAND:
-			cout << tokentable.at(iter->dst_).name_;
+			out << tokentable.at(iter->dst_).name_ << "(" << tokentable.at(iter->dst_).value_ << ")@" << iter->dst_;
 			break;
 		case Quaternary::VARIABLE_OPERAND:
-			cout << tokentable.at(iter->dst_).name_ << "(" << tokentable.at(iter->dst_).value_ << ")";
+			out << tokentable.at(iter->dst_).name_ << "@" << iter->dst_;
 			break;
 		case Quaternary::TEMPORARY_OPERAND:
-			cout << "TEMP@" << iter->dst_;
+			out << "TEMP@" << iter->dst_;
+			break;
+		case Quaternary::LABEL_OPERAND:
+			out << "LABEL@" << iter->dst_;
+			break;
+		case Quaternary::PROC_FUNC_INDEX:
+			out << tokentable.at(iter->dst_).name_ << "@" << iter->dst_;
+			break;
+		case Quaternary::PARANUM_OPERAND:
+			out << iter->dst_;
 			break;
 		default:
+			out << iter->dst_;
 			break;
 		}
-		cout << endl;
+		out << endl;
 	}
 }
 
@@ -130,6 +161,7 @@ int main(int argc, char *argv[])
 	syntax_analyzer.Print(kSyntaxFileName);		// 输出语法分析过程
 	tokentable.Print(kTokenTableFileName);		// 输出符号表
 	PrintQuaternaryVector(quaternarytable, tokentable, kQuaternaryCodeFileName);		// 输出四元式
+	PrintQuaternaryVector(quaternarytable, tokentable, cout);		// 输出四元式
 	if(!syntax_legitimate)						// 出错提示
 	{
 		cout << "语法分析出错！" << endl;
