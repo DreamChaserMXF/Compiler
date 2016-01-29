@@ -2,14 +2,16 @@
 #include "SyntaxException.h"
 #include "TokenTableException.h"
 #include "Quaternary.h"
+#include "ExpressionAttribute.h"
 #include <assert.h>
 #include <sstream>
+#include <algorithm>
 
 #define SYNTAXDEBUG
 
 SyntaxAnalyzer::SyntaxAnalyzer(LexicalAnalyzer &lexical_analyzer, const vector<string> &stringtable, TokenTable &tokentable, vector<Quaternary> &quaternarytable)  throw()
 	: lexical_analyzer_(lexical_analyzer), stringtable_(stringtable), tokentable_(tokentable), quaternarytable_(quaternarytable), 
-	  token_(), level_(0), temp_varaible_index_(0), label_index_(0), is_successful_(true), syntax_info_buffer_(), syntax_assist_buffer_(), tokenbuffer_()
+	  token_(), level_(0), tempvar_index_(0), label_index_(0), is_successful_(true), syntax_info_buffer_(), syntax_assist_buffer_(), tokenbuffer_()
 {}
 
 
@@ -787,18 +789,45 @@ int SyntaxAnalyzer::ParameterTerm(int depth) throw()
 }
 
 // <实在参数表> ::= <表达式>{,<表达式>}
-vector<TokenTableItem::DecorateType> SyntaxAnalyzer::ArgumentList(int depth) throw()			// 实参表
+vector<ExpressionAttribute> SyntaxAnalyzer::ArgumentList(int depth) throw()			// 实参表
 {
 	PrintFunctionFrame("ArgumentList()", depth);
 
-	vector<TokenTableItem::DecorateType> decorate_type_buffer;
-	decorate_type_buffer.push_back(Expression(depth + 1));
+	vector<ExpressionAttribute> attribute_buffer;
+	ExpressionAttribute argument_attribute = Expression(depth + 1);
+	attribute_buffer.push_back(argument_attribute);
+	// 生成设置参数的四元式
+	Quaternary q_addpara(Quaternary::SETP, 
+		Quaternary::OPERAND_NIL, 0, 
+		argument_attribute.offset_operandtype_, argument_attribute.offset_, 
+		argument_attribute.operandtype_, argument_attribute.value_);
+	quaternarytable_.push_back(q_addpara);
+	// 回收临时变量
+	if(Quaternary::TEMPORARY_OPERAND == argument_attribute.operandtype_
+		|| Quaternary::TEMPORARY_OPERAND == argument_attribute.offset_operandtype_)	// 两者不可能同时成立，故写在一起
+	{
+		--tempvar_index_;
+	}
+
 	while(Token::COMMA == token_.type_)
 	{
 		lexical_analyzer_.GetNextToken(token_);
-		decorate_type_buffer.push_back(Expression(depth + 1));
+		argument_attribute = Expression(depth + 1);
+		attribute_buffer.push_back(argument_attribute);
+		// 生成设置参数的四元式
+		q_addpara.type2_ = argument_attribute.offset_operandtype_;
+		q_addpara.offset2_ = argument_attribute.offset_;
+		q_addpara.type3_ = argument_attribute.operandtype_;
+		q_addpara.dst_ = argument_attribute.value_;
+		quaternarytable_.push_back(q_addpara);
+		// 回收临时变量
+		if(Quaternary::TEMPORARY_OPERAND == argument_attribute.operandtype_
+		|| Quaternary::TEMPORARY_OPERAND == argument_attribute.offset_operandtype_)	// 两者不可能同时成立，故写在一起
+		{
+			--tempvar_index_;
+		}
 	}
-	return decorate_type_buffer;
+	return attribute_buffer;
 }
 
 // <复合语句> ::= begin <语句>{;<语句>} end
@@ -814,7 +843,7 @@ void SyntaxAnalyzer::StatementBlockPart(int depth) throw()	// 复合语句
 	}while(token_.type_ == Token::SEMICOLON);
 	if(token_.type_ != Token::END)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"end\" at the end of Statement block\n";
+		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"end\" at the end of Statement Block\n";
 		is_successful_ = false;
 		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
 		{ 
@@ -858,7 +887,7 @@ void SyntaxAnalyzer::Statement(int depth) throw()
 		lexical_analyzer_.GetNextToken(token_);
 		if(Token::LEFT_PAREN == token_.type_)	// 过程调用
 		{
-			if(iter->GetItemType() != TokenTableItem::PROCEDURE)	// 检查是否为过程
+			if(iter->GetItemType() != TokenTableItem::PROCEDURE)	// 检查其属性是否为过程
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  not declared as a procedure\n";
 				is_successful_ = false;
@@ -869,6 +898,9 @@ void SyntaxAnalyzer::Statement(int depth) throw()
 				return;
 			}
 			vector<TokenTableItem::DecorateType> decorate_types = tokentable_.GetProcFuncParameter(iter);
+			// 生成过程调用四元式
+			Quaternary q_procedurecall(Quaternary::PROC_CALL, Quaternary::OPERAND_NIL, 0, Quaternary::PARANUM_OPERAND, decorate_types.size(), Quaternary::PROC_FUNC_INDEX, distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter)));
+			quaternarytable_.push_back(q_procedurecall);
 			ProcedureCallStatement(idToken, decorate_types, depth + 1);
 		}
 		else if(Token::ASSIGN == token_.type_
@@ -927,12 +959,19 @@ void SyntaxAnalyzer::Statement(int depth) throw()
 }
 
 // <赋值语句> ::= ['['<表达式>']']:=<表达式>
+// idToken是赋值语句之前标识符的token，iter是其在符号表中的迭代器
 void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterator &iter, int depth)			// 赋值语句
 {
 	PrintFunctionFrame("AssigningStatement()", depth);
 
+	// 为四元式生成而定义的变量
+	bool assign2array= false;	// 是否为对数组的赋值操作
+	
+	ExpressionAttribute offset_attribute;	// 当对数组元素赋值时，存储偏移量的属性
+
 	if(Token::LEFT_BRACKET == token_.type_)	// 对数组元素赋值
 	{
+		assign2array = true;
 		if(iter->GetItemType() != TokenTableItem::ARRAY)	// 检查是否为数组名
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  subscript requires array or pointer type\n";
@@ -944,7 +983,35 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 			return;
 		}
 		lexical_analyzer_.GetNextToken(token_);
-		Expression(depth + 1);
+		offset_attribute = Expression(depth + 1);	// 这里的结果一定是在temp#tempvar_index_中存储的
+		// 数组下标是数组元素的特殊情况处理
+		if(Quaternary::ARRAY_OPERAND == offset_attribute.operandtype_)
+		{
+			// 插入四元式，将数组下标值赋给一个临时变量
+			Quaternary q_subscript2temp;
+			q_subscript2temp.op_ = Quaternary::ASG;
+			q_subscript2temp.type1_ = offset_attribute.operandtype_;
+			q_subscript2temp.src1_ = offset_attribute.value_;
+			q_subscript2temp.type2_ = offset_attribute.offset_operandtype_;
+			q_subscript2temp.offset2_ = offset_attribute.offset_;
+			q_subscript2temp.type3_ = Quaternary::TEMPORARY_OPERAND;
+			// 目标的临时变量标号的确定
+			// 如果数组下标就是临时变量，那么就用这个变量
+			// 否则就新开一个临时变量
+			if(Quaternary::TEMPORARY_OPERAND == offset_attribute.offset_operandtype_)
+			{
+				q_subscript2temp.dst_ = offset_attribute.offset_;
+			}
+			else
+			{
+				q_subscript2temp.dst_ = tempvar_index_++;
+			}
+			quaternarytable_.push_back(q_subscript2temp);
+			offset_attribute.operandtype_ = Quaternary::TEMPORARY_OPERAND;
+			offset_attribute.value_ = tempvar_index_ - 1;
+			offset_attribute.offset_operandtype_ = Quaternary::OPERAND_NIL;
+			offset_attribute.offset_ = 0;
+		}
 		if(token_.type_ != Token::RIGHT_BRACKET)
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ']' to match '['\n";
@@ -957,24 +1024,22 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 		}
 		lexical_analyzer_.GetNextToken(token_);
 	}
-	else
-	{
-		if(iter->GetItemType() != TokenTableItem::VARIABLE
+	else if(iter->GetItemType() != TokenTableItem::VARIABLE
 		&& iter->GetItemType() != TokenTableItem::PARAMETER
 		&& iter->GetItemType() != TokenTableItem::FUNCTION)	// 检查是否为变量或参数或函数名
-		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot be assigned\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
-			return;
+	{
+		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot be assigned\n";
+		is_successful_ = false;
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
+		{ 
+			lexical_analyzer_.GetNextToken(token_);
 		}
+		return;
 	}
+	// 剩下只有三种情况：变量、参数或是函数返回值
 	if(token_.type_ != Token::ASSIGN)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  \":=\" doesn't occur in the assigning Statement\n";
+		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  \":=\" doesn't occur in the Assigning Statement\n";
 		is_successful_ = false;
 		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
 		{ 
@@ -988,8 +1053,8 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 	errToken.lineNumber_ = token_.lineNumber_;
 
 	lexical_analyzer_.GetNextToken(token_);
-	TokenTableItem::DecorateType expression_type = Expression(depth + 1);
-	if(TokenTableItem::CHAR == iter->GetDecorateType() && TokenTableItem::INTEGER == expression_type)
+	ExpressionAttribute right_attribute = Expression(depth + 1);
+	if(TokenTableItem::CHAR == iter->GetDecorateType() && TokenTableItem::INTEGER == right_attribute.decoratetype_)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot convert from 'int' to 'char'\n";
 		is_successful_ = false;
@@ -999,74 +1064,444 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 		}
 		return;
 	}
+	// 生成四元式
+	if(assign2array)	// 对数组元素赋值
+	{
+		// 如果right_attribute是数组元素的话，要将其赋值给临时变量
+		if(Quaternary::ARRAY_OPERAND == right_attribute.operandtype_)
+		{
+			Quaternary q_subscript2temp;
+			q_subscript2temp.op_ = Quaternary::ASG;
+			q_subscript2temp.type1_ = right_attribute.operandtype_;
+			q_subscript2temp.src1_ = right_attribute.value_;
+			q_subscript2temp.type2_ = right_attribute.offset_operandtype_;
+			q_subscript2temp.offset2_ = right_attribute.offset_;
+			q_subscript2temp.type3_ = Quaternary::TEMPORARY_OPERAND;
+			// 目标的临时变量标号的确定
+			// 如果数组下标就是临时变量，那么就用这个变量
+			// 否则就新开一个临时变量
+			if(Quaternary::TEMPORARY_OPERAND == right_attribute.offset_operandtype_)
+			{
+				q_subscript2temp.dst_ = right_attribute.offset_;
+			}
+			else
+			{
+				q_subscript2temp.dst_ = tempvar_index_++;
+			}
+			quaternarytable_.push_back(q_subscript2temp);
+			right_attribute.operandtype_ = Quaternary::TEMPORARY_OPERAND;
+			right_attribute.value_ = tempvar_index_ - 1;
+			right_attribute.offset_operandtype_ = Quaternary::OPERAND_NIL;
+			right_attribute.offset_ = 0;
+		}
+		// 进行数组赋值
+		Quaternary q_asg;
+		q_asg.op_ = Quaternary::AASG;
+		q_asg.type1_ = right_attribute.operandtype_;
+		q_asg.src1_ = right_attribute.value_;
+		q_asg.type2_ = offset_attribute.operandtype_;
+		q_asg.offset2_ = offset_attribute.value_;
+		q_asg.type3_ = Quaternary::ARRAY_OPERAND;
+		q_asg.dst_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
+		quaternarytable_.push_back(q_asg);
+
+		// 如果右操作数是临时变量，可回收
+		if(Quaternary::TEMPORARY_OPERAND == right_attribute.operandtype_)
+		{
+			--tempvar_index_;
+		}
+		// 如果被赋值的数组下标也是临时变量，可回收
+		if(Quaternary::TEMPORARY_OPERAND == offset_attribute.operandtype_)
+		{
+			--tempvar_index_;
+		}
+	}
+	else if(TokenTableItem::PARAMETER == iter->GetItemType()
+			|| TokenTableItem::VARIABLE == iter->GetItemType())	// 普通变量/参数的赋值
+	{
+		Quaternary q_asg;
+		q_asg.op_ = Quaternary::ASG;
+		q_asg.type1_ = right_attribute.operandtype_;
+		q_asg.src1_ = right_attribute.value_;
+		q_asg.type2_ = right_attribute.offset_operandtype_;
+		q_asg.offset2_ = right_attribute.offset_;
+		q_asg.type3_ = Quaternary::VARIABLE_OPERAND;
+		q_asg.dst_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
+		quaternarytable_.push_back(q_asg);
+		// 如果右操作数是临时变量，可回收
+		if(Quaternary::TEMPORARY_OPERAND == right_attribute.operandtype_)
+		{
+			--tempvar_index_;
+		}
+		// 如果右操作数是数组，且其数组下标是临时变量，可回收
+		else if(Quaternary::TEMPORARY_OPERAND == offset_attribute.offset_operandtype_)
+		{
+			// 这里有一个程序鲁棒性的假定，即如果operandtype_不是ARRAY的话，那么operandtype_一定是OPERAND_NIL
+			// 所以用下面的assert检测一下程序逻辑有无问题
+			assert(Quaternary::ARRAY_OPERAND == offset_attribute.operandtype_);
+			--tempvar_index_;
+		}
+	}
+	else	// 函数返回值
+	{
+		Quaternary q_ret;
+		q_ret.op_ = Quaternary::RET;
+		q_ret.type2_ = right_attribute.offset_operandtype_;
+		q_ret.offset2_ = right_attribute.offset_;
+		q_ret.type3_ = right_attribute.operandtype_;
+		q_ret.dst_ = right_attribute.value_;
+		quaternarytable_.push_back(q_ret);
+		// 如果右操作数是临时变量，可回收
+		if(Quaternary::TEMPORARY_OPERAND == right_attribute.operandtype_)
+		{
+			--tempvar_index_;
+		}
+		// 如果右操作数是数组，且其数组下标是临时变量，可回收
+		else if(Quaternary::TEMPORARY_OPERAND == offset_attribute.offset_operandtype_)
+		{
+			// 这里有一个程序鲁棒性的假定，即如果operandtype_不是ARRAY的话，那么operandtype_一定是OPERAND_NIL
+			// 所以用下面的assert检测一下程序逻辑有无问题
+			assert(Quaternary::ARRAY_OPERAND == offset_attribute.operandtype_);
+			--tempvar_index_;
+		}
+	}
 }
 
 // <表达式> ::= [+|-]<项>{<加法运算符><项>}
-TokenTableItem::DecorateType SyntaxAnalyzer::Expression(int depth) throw()				// 表达式
+ExpressionAttribute SyntaxAnalyzer::Expression(int depth) throw()				// 表达式
 {
 	PrintFunctionFrame("Expression()", depth);
 
-	if(	token_.type_ == Token::PLUS
-		|| token_.type_ == Token::MINUS)
+	Quaternary q_neg;	// 可能生成的NEG四元式
+	if(	Token::PLUS == token_.type_
+		|| Token::MINUS == token_.type_)
 	{
+		if(Token::MINUS == token_.type_)	// 如果是减号，就要生成一项四元式
+		{
+			q_neg.op_ = Quaternary::NEG;
+		}
 		lexical_analyzer_.GetNextToken(token_);
 	}
-	TokenTableItem::DecorateType decorate_type = Term(depth + 1);
-	while(	token_.type_ == Token::PLUS
-		||	token_.type_ == Token::MINUS)
+	//TokenTableItem::DecorateType decorate_type = Term(depth + 1);
+	ExpressionAttribute first_term = Term(depth + 1);
+	if(Quaternary::NEG == q_neg.op_)	// 如果之前读到了一个减号
 	{
-		lexical_analyzer_.GetNextToken(token_);
-		TokenTableItem::DecorateType local_decorate_type = Term(depth + 1);
-		// 这里的类型转换规则很简单：只有两个类型都为CHAR，最终类型才是CHAR
-		// 否则就是INTEGER
-		if(decorate_type == TokenTableItem::CHAR && local_decorate_type == TokenTableItem::CHAR)
+		// 生成NEG的四元式
+		q_neg.type2_ = first_term.offset_operandtype_;
+		q_neg.offset2_ = first_term.offset_;
+		q_neg.type3_ = first_term.operandtype_;
+		q_neg.dst_ = first_term.value_;
+		quaternarytable_.push_back(q_neg);
+	}
+
+	Quaternary q_term;
+	ExpressionAttribute new_term;
+	bool is_first_operator = true;
+	while(	Token::PLUS == token_.type_
+		||	Token::MINUS == token_.type_)
+	{
+		// 第一次时，如果new_term是数组元素，则要将其赋值给临时变量
+		if(is_first_operator && Quaternary::ARRAY_OPERAND == first_term.operandtype_)
 		{
-			decorate_type = TokenTableItem::CHAR;
+			Quaternary q_subscript2temp;
+			q_subscript2temp.op_ = Quaternary::ASG;
+			q_subscript2temp.type1_ = first_term.operandtype_;
+			q_subscript2temp.src1_ = first_term.value_;
+			q_subscript2temp.type2_ = first_term.offset_operandtype_;
+			q_subscript2temp.offset2_ = first_term.offset_;
+			q_subscript2temp.type3_ = Quaternary::TEMPORARY_OPERAND;
+			// 目标的临时变量标号的确定
+			// 如果数组下标就是临时变量，那么就用这个变量
+			// 否则就新开一个临时变量
+			if(Quaternary::TEMPORARY_OPERAND == first_term.offset_operandtype_)
+			{
+				q_subscript2temp.dst_ = first_term.offset_;
+			}
+			else
+			{
+				q_subscript2temp.dst_ = tempvar_index_++;
+			}
+			quaternarytable_.push_back(q_subscript2temp);
+			first_term.operandtype_ = Quaternary::TEMPORARY_OPERAND;
+			first_term.value_ = tempvar_index_ - 1;
+			first_term.offset_operandtype_ = Quaternary::OPERAND_NIL;
+			first_term.offset_ = 0;
+		}
+
+		// 确定四元式的操作符
+		q_term.op_ = Token::PLUS == token_.type_ ? Quaternary::ADD : Quaternary::SUB;
+		
+		// 读取下一项
+		lexical_analyzer_.GetNextToken(token_);
+		TokenTableItem::DecorateType last_term_decoratetype = is_first_operator ? first_term.decoratetype_ : new_term.decoratetype_;
+		new_term = Term(depth + 1);
+
+		// 执行类型转换
+		// 只有两个类型都为CHAR，最终类型才是CHAR。否则就是INTEGER
+		if(last_term_decoratetype == TokenTableItem::CHAR && new_term.decoratetype_ == TokenTableItem::CHAR)
+		{
+			new_term.decoratetype_ = TokenTableItem::CHAR;
 		}
 		else
 		{
-			decorate_type = TokenTableItem::INTEGER;
+			new_term.decoratetype_ = TokenTableItem::INTEGER;
 		}
+
+		// 如果读到的new_term还是数组元素，那么仍然需要一次转换
+		// 将数组元素的值赋给临时变量
+		if(Quaternary::ARRAY_OPERAND == new_term.operandtype_)
+		{
+			Quaternary q_subscript2temp;
+			q_subscript2temp.op_ = Quaternary::ASG;
+			q_subscript2temp.type1_ = new_term.operandtype_;
+			q_subscript2temp.src1_ = new_term.value_;
+			q_subscript2temp.type2_ = new_term.offset_operandtype_;
+			q_subscript2temp.offset2_ = new_term.offset_;
+			q_subscript2temp.type3_ = Quaternary::TEMPORARY_OPERAND;
+			// 目标的临时变量标号的确定
+			// 如果数组下标就是临时变量，那么就用这个变量
+			// 否则就新开一个临时变量
+			if(Quaternary::TEMPORARY_OPERAND == new_term.offset_operandtype_)
+			{
+				q_subscript2temp.dst_ = new_term.offset_;
+			}
+			else
+			{
+				q_subscript2temp.dst_ = tempvar_index_++;
+			}
+			quaternarytable_.push_back(q_subscript2temp);
+			new_term.operandtype_ = Quaternary::TEMPORARY_OPERAND;
+			new_term.value_ = tempvar_index_ - 1;
+			new_term.offset_operandtype_ = Quaternary::OPERAND_NIL;
+			new_term.offset_ = 0;
+		}
+
+		// 确定四元式的操作数
+		// src1的确定：
+		// 第一次加/减时，src1就是while之前读入的那个term
+		// 之后加/减时，src1就是上一个四元式的结果
+		if(is_first_operator)
+		{
+			q_term.type1_ = first_term.operandtype_;
+			q_term.src1_ = first_term.value_;
+			is_first_operator = false;
+		}
+		else
+		{
+			q_term.type1_ = q_term.type3_;
+			q_term.src1_ = q_term.dst_;
+		}
+		// src2的确定：
+		// src2就是读到的新的term
+		q_term.type2_ = new_term.operandtype_;
+		q_term.src2_ = new_term.value_;
+		// dst的确定：
+		// 如果src1是临时变量，就令dst为src1
+		// 否则，如果src2是临时变量，就令dst为src2
+		// 否则，令dst为新的临时变量
+		if(Quaternary::TEMPORARY_OPERAND == q_term.type1_)
+		{
+			q_term.type3_ = q_term.type1_;
+			q_term.dst_ = q_term.src1_;
+			// 此时，如果src2也是临时变量，那么就可以在执行完这个四元式后，把这个临时变量的标号回收
+			if(Quaternary::TEMPORARY_OPERAND == q_term.type2_)
+			{
+				--tempvar_index_;
+			}
+		}
+		else if(Quaternary::TEMPORARY_OPERAND == q_term.type2_)
+		{
+			q_term.type3_ = q_term.type2_;
+			q_term.dst_ = q_term.src2_;
+		}
+		else
+		{
+			q_term.type3_ = Quaternary::TEMPORARY_OPERAND;
+			q_term.dst_ = tempvar_index_++;
+		}
+		// 保存四元式
+		quaternarytable_.push_back(q_term);
 	}
-	return decorate_type;
+
+	if(is_first_operator)	// 只有一项的情况
+	{
+		new_term = first_term;
+	}
+	else	// 有多项的情况，要更新new_term的属性。否则new_term除了decoratetype_外，其余都是最后一项的属性
+	{
+		new_term.operandtype_ = Quaternary::TEMPORARY_OPERAND;
+		new_term.value_ = tempvar_index_ - 1;
+		new_term.offset_operandtype_ = Quaternary::OPERAND_NIL;
+		new_term.offset_ = 0;
+	}
+	return new_term;
 }
 
 // <项> ::= <因子>{<乘法运算符><因子>}
-TokenTableItem::DecorateType SyntaxAnalyzer::Term(int depth) throw()						// 项
+ExpressionAttribute SyntaxAnalyzer::Term(int depth) throw()						// 项
 {
 	PrintFunctionFrame("Term()", depth);
 
-	TokenTableItem::DecorateType decorate_type = Factor(depth + 1);
+	ExpressionAttribute first_factor = Factor(depth + 1);
+
+	ExpressionAttribute new_factor;
+	Quaternary q_factor;
+	bool is_first_operator = true;
 	while(	token_.type_ == Token::MUL
 		||	token_.type_ == Token::DIV)
 	{
+		// 第一次时，如果new_factor是数组元素，则要将其赋值给临时变量
+		if(is_first_operator && Quaternary::ARRAY_OPERAND == first_factor.operandtype_)
+		{
+			Quaternary q_subscript2temp;
+			q_subscript2temp.op_ = Quaternary::ASG;
+			q_subscript2temp.type1_ = first_factor.operandtype_;
+			q_subscript2temp.src1_ = first_factor.value_;
+			q_subscript2temp.type2_ = first_factor.offset_operandtype_;
+			q_subscript2temp.offset2_ = first_factor.offset_;
+			q_subscript2temp.type3_ = Quaternary::TEMPORARY_OPERAND;
+			// 目标的临时变量标号的确定
+			// 如果数组下标就是临时变量，那么就用这个变量
+			// 否则就新开一个临时变量
+			if(Quaternary::TEMPORARY_OPERAND == first_factor.offset_operandtype_)
+			{
+				q_subscript2temp.dst_ = first_factor.offset_;
+			}
+			else
+			{
+				q_subscript2temp.dst_ = tempvar_index_++;
+			}
+			quaternarytable_.push_back(q_subscript2temp);
+			first_factor.operandtype_ = Quaternary::TEMPORARY_OPERAND;
+			first_factor.value_ = tempvar_index_ - 1;
+			first_factor.offset_operandtype_ = Quaternary::OPERAND_NIL;
+			first_factor.offset_ = 0;
+		}
+
+		// 确定四元式的操作符
+		q_factor.op_ = Token::MUL == token_.type_ ? Quaternary::MUL : Quaternary::DIV;
+
+		// 读取下一项
 		lexical_analyzer_.GetNextToken(token_);
-		TokenTableItem::DecorateType local_decorate_type = Factor(depth + 1);
+		TokenTableItem::DecorateType last_factor_decoratetype = is_first_operator ? first_factor.decoratetype_ : new_factor.decoratetype_;
+		new_factor = Factor(depth + 1);
 		// 这里的类型转换规则很简单：只有两个类型都为CHAR，最终类型才是CHAR
 		// 否则就是INTEGER
-		if(decorate_type == TokenTableItem::CHAR && local_decorate_type == TokenTableItem::CHAR)
+		if(last_factor_decoratetype == TokenTableItem::CHAR && new_factor.decoratetype_ == TokenTableItem::CHAR)
 		{
-			decorate_type = TokenTableItem::CHAR;
+			new_factor.decoratetype_ = TokenTableItem::CHAR;
 		}
 		else
 		{
-			decorate_type = TokenTableItem::INTEGER;
+			new_factor.decoratetype_ = TokenTableItem::INTEGER;
 		}
+
+		// 如果读到的项还是数组元素，那么仍然需要一次转换
+		// 将数组元素的值赋给临时变量
+		if(Quaternary::ARRAY_OPERAND == new_factor.operandtype_)
+		{
+			Quaternary q_subscript2temp;
+			q_subscript2temp.op_ = Quaternary::ASG;
+			q_subscript2temp.type1_ = new_factor.operandtype_;
+			q_subscript2temp.src1_ = new_factor.value_;
+			q_subscript2temp.type2_ = new_factor.offset_operandtype_;
+			q_subscript2temp.offset2_ = new_factor.offset_;
+			q_subscript2temp.type3_ = Quaternary::TEMPORARY_OPERAND;
+			// 目标的临时变量标号的确定
+			// 如果数组下标就是临时变量，那么就用这个变量
+			// 否则就新开一个临时变量
+			if(Quaternary::TEMPORARY_OPERAND == new_factor.offset_operandtype_)
+			{
+				q_subscript2temp.dst_ = new_factor.offset_;
+			}
+			else
+			{
+				q_subscript2temp.dst_ = tempvar_index_++;
+			}
+			quaternarytable_.push_back(q_subscript2temp);
+			new_factor.operandtype_ = Quaternary::TEMPORARY_OPERAND;
+			new_factor.value_ = tempvar_index_ - 1;
+			new_factor.offset_operandtype_ = Quaternary::OPERAND_NIL;
+			new_factor.offset_ = 0;
+		}
+
+		// 确定四元式的操作数
+		// src1的确定：
+		// 第一次乘/除，src1就是while之前读入的那个factor
+		// 之后加/减时，src1就是上一个四元式的结果
+		if(is_first_operator)
+		{
+			q_factor.type1_ = first_factor.operandtype_;
+			q_factor.src1_ = first_factor.value_;
+			is_first_operator = false;
+		}
+		else
+		{
+			q_factor.type1_ = q_factor.type3_;
+			q_factor.src1_ = q_factor.dst_;
+		}
+		// src2的确定：
+		// src2是读到的新的factor
+		q_factor.type2_ = new_factor.operandtype_;
+		q_factor.src2_ = new_factor.value_;
+		// dst的确定：
+		// 如果src1是临时变量，就令dst为src1
+		// 否则，如果src2是临时变量，就令dst为src2
+		// 否则，令dst为新的临时变量
+		if(Quaternary::TEMPORARY_OPERAND == q_factor.type1_)
+		{
+			q_factor.type3_ = q_factor.type1_;
+			q_factor.dst_ = q_factor.src1_;
+			// 此时，如果src2也是临时变量，那么就可以在执行完这个四元式后，把这个临时变量的标号回收
+			if(Quaternary::TEMPORARY_OPERAND == q_factor.type2_)
+			{
+				--tempvar_index_;
+			}
+		}
+		else if(Quaternary::TEMPORARY_OPERAND == q_factor.type2_)
+		{
+			q_factor.type3_ = q_factor.type2_;
+			q_factor.dst_ = q_factor.src2_;
+		}
+		else
+		{
+			q_factor.type3_ = Quaternary::TEMPORARY_OPERAND;
+			q_factor.dst_ = tempvar_index_++;
+		}
+		// 保存四元式
+		quaternarytable_.push_back(q_factor);
 	}
-	return decorate_type;
+	if(is_first_operator)	// 只有一个因子
+	{
+		new_factor = first_factor;
+	}
+	else
+	{
+		// 更新new_factor的属性
+		// 否则new_factor除decoratetype外，其余属性均保留了最后一个因子的属性
+		new_factor.operandtype_ = Quaternary::TEMPORARY_OPERAND;
+		new_factor.value_ = tempvar_index_ - 1;
+		new_factor.offset_operandtype_ = Quaternary::OPERAND_NIL;
+		new_factor.offset_ = 0;
+	}
+	return new_factor;
 }
 
-// <因子> ::= <标识符>(['['<表达式>']'] | [<函数调用语句>]) | '('<表达式>')' | <无符号整数> | <字符>
-TokenTableItem::DecorateType SyntaxAnalyzer::Factor(int depth) throw()					// 因子
+// <因子> ::= <标识符>(['['<表达式>']'] | [<函数调用语句>])
+//          | '('<表达式>')' 
+//          | <无符号整数> 
+//          | <字符>
+ExpressionAttribute SyntaxAnalyzer::Factor(int depth) throw()					// 因子
 {
 	PrintFunctionFrame("Factor()", depth);
-	TokenTableItem::DecorateType decorate_type = TokenTableItem::VOID;	// 因子的类型
+	ExpressionAttribute factor_attribute;	// 记录该factor因子的信息
+
 	if(Token::IDENTIFIER == token_.type_)
 	{
 #ifdef SYNTAXDEBUG
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
-		//decorate_type = tokentable_.AddUsedLine(token_);	// 插入到符号表
+
 		TokenTable::iterator iter = tokentable_.SearchDefinition(token_);	// 寻找定义
 		if(iter == tokentable_.end())
 		{
@@ -1076,15 +1511,19 @@ TokenTableItem::DecorateType SyntaxAnalyzer::Factor(int depth) throw()					// 因
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
-			return decorate_type;
+			return factor_attribute;
 		}
-		decorate_type = iter->GetDecorateType();
+		factor_attribute.decoratetype_ = iter->GetDecorateType();
 		iter->AddUsedLine(token_.lineNumber_);		// 在符号表中插入引用行记录
 		Token idToken = token_;	// 记下，待用
 		lexical_analyzer_.GetNextToken(token_);
-		if(Token::LEFT_BRACKET == token_.type_)	// 对数组元素的赋值
+		if(Token::LEFT_BRACKET == token_.type_)	// 数组元素
 		{
-			if(iter->GetItemType() != TokenTableItem::ARRAY)	// 检查是否为数组名
+			// factor_attribute自己的类型与值
+			factor_attribute.operandtype_ = Quaternary::ARRAY_OPERAND;
+			factor_attribute.value_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
+			// 类型检查：是否为数组名
+			if(iter->GetItemType() != TokenTableItem::ARRAY)	
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  subscript requires array or pointer type\n";
 				is_successful_ = false;
@@ -1092,10 +1531,35 @@ TokenTableItem::DecorateType SyntaxAnalyzer::Factor(int depth) throw()					// 因
 				{ 
 					lexical_analyzer_.GetNextToken(token_);
 				}
-				return decorate_type;
+				return factor_attribute;
 			}
 			lexical_analyzer_.GetNextToken(token_);
-			Expression(depth + 1);
+			ExpressionAttribute offset_attribute = Expression(depth + 1);
+			// 确定factor_attribute的下标
+			// 这里的offset_attribute不能是数组元素，否则会构成嵌套的数组下标（即数组下标又是一个数组元素），无法翻译成四元式
+			// 如果是数组，就要把offset_attribute存到临时变量中，作为当前factor的下标
+			if(Quaternary::ARRAY_OPERAND == offset_attribute.operandtype_)
+			{
+				// 新建一个四元式，将Expression的结果保存到临时变量TEMP#tempvar_index_中
+				Quaternary assign_q;
+				assign_q.op_ = Quaternary::ASG;
+				assign_q.type1_ = offset_attribute.operandtype_;
+				assign_q.src1_ = offset_attribute.value_;
+				assign_q.type2_ = offset_attribute.offset_operandtype_;
+				assign_q.offset2_ = offset_attribute.offset_;
+				assign_q.type3_ = Quaternary::TEMPORARY_OPERAND;
+				assign_q.dst_ = tempvar_index_++;
+				quaternarytable_.push_back(assign_q);
+				// 将新的临时变量作为当前factor的数组下标
+				factor_attribute.offset_operandtype_ = Quaternary::TEMPORARY_OPERAND;
+				factor_attribute.offset_ = tempvar_index_ - 1;
+			}
+			else
+			{
+				factor_attribute.offset_operandtype_ = offset_attribute.operandtype_;
+				factor_attribute.offset_ = offset_attribute.value_;
+			}
+
 			if(token_.type_ != Token::RIGHT_BRACKET)
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ']' to match '['\n";
@@ -1104,13 +1568,16 @@ TokenTableItem::DecorateType SyntaxAnalyzer::Factor(int depth) throw()					// 因
 				{ 
 					lexical_analyzer_.GetNextToken(token_);
 				}
-				return decorate_type;
+				return factor_attribute;
 			}
+			// 读入右中括号的下一个单词 <bug fixed by mxf at 21:28 1.29 2016>
+			lexical_analyzer_.GetNextToken(token_);
 		}
 		else if(Token::LEFT_PAREN == token_.type_)
 		{
+
 			// 检查是否为函数
-			if(iter->GetItemType() != TokenTableItem::FUNCTION)	// 检查是否为过程
+			if(iter->GetItemType() != TokenTableItem::FUNCTION)
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  not declared as a function\n";
 				is_successful_ = false;
@@ -1118,15 +1585,27 @@ TokenTableItem::DecorateType SyntaxAnalyzer::Factor(int depth) throw()					// 因
 				{ 
 					lexical_analyzer_.GetNextToken(token_);
 				}
-				return decorate_type;
+				return factor_attribute;
 			}
 			// 从符号表中取出函数的参数类型，待FunctionCallStatement去匹配参数
 			vector<TokenTableItem::DecorateType> decorate_types = tokentable_.GetProcFuncParameter(iter);
+			// 生成函数调用的四元式
+			// 这里先生成调用语句，再在FunctionCallStatement中生成参数设置语句
+			// 以便在转成汇编时，方便在函数调用时就留出返回值的存储空间，然后再为参数分配存储空间
+			Quaternary q_functioncall(Quaternary::FUNC_CALL, Quaternary::OPERAND_NIL, 0, Quaternary::PARANUM_OPERAND, decorate_types.size(), Quaternary::PROC_FUNC_INDEX, distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter)));
+			quaternarytable_.push_back(q_functioncall);
 			FunctionCallStatement(idToken, decorate_types, depth + 1);
+			// Important! 
+			// 约定好，函数的返回值放置在temp#tempvar_index的位置
+			// 所以factor_attribute自己的类型与值都是临时变量的类型
+			factor_attribute.operandtype_ = Quaternary::TEMPORARY_OPERAND;
+			factor_attribute.value_ = tempvar_index_++;
+			factor_attribute.offset_operandtype_ = Quaternary::OPERAND_NIL;
+			factor_attribute.offset_ = 0;
 		}
 		else
 		{
-			// 检查是否为变量、常量或过程/函数的参数
+			// 类型检查：是否为变量、常量或过程/函数的参数
 			if(iter->GetItemType() != TokenTableItem::VARIABLE && iter->GetItemType() != TokenTableItem::PARAMETER && iter->GetItemType() != TokenTableItem::CONST)
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  single token_ Factor should be varaible or constant\n";
@@ -1135,13 +1614,25 @@ TokenTableItem::DecorateType SyntaxAnalyzer::Factor(int depth) throw()					// 因
 				{ 
 					lexical_analyzer_.GetNextToken(token_);
 				}
-				return decorate_type;
+				return factor_attribute;
 			}
+			// factor_attribute的属性
+			if(TokenTableItem::CONST == iter->GetItemType())
+			{
+				factor_attribute.operandtype_ = Quaternary::CONSTANT_OPERAND;
+			}
+			else
+			{
+				factor_attribute.operandtype_ = Quaternary::VARIABLE_OPERAND;
+			}
+			factor_attribute.value_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
+			factor_attribute.offset_operandtype_ = Quaternary::OPERAND_NIL;
+			factor_attribute.offset_ = 0;
 		}
 	}
 	else if(Token::LEFT_PAREN == token_.type_)	// 括号括起来的表达式
 	{
-		decorate_type = Expression(depth + 1);	// 记录类型
+		factor_attribute = Expression(depth + 1);	// 记录类型
 		if(token_.type_ != Token::RIGHT_PAREN)
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match '('\n";
@@ -1150,37 +1641,49 @@ TokenTableItem::DecorateType SyntaxAnalyzer::Factor(int depth) throw()					// 因
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
-			return decorate_type;
+			return factor_attribute;
 		}
 		lexical_analyzer_.GetNextToken(token_);
 	}
 	else if(Token::CONST_INTEGER == token_.type_)
 	{
+
 #ifdef SYNTAXDEBUG
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
-		decorate_type = TokenTableItem::INTEGER;	// 记录类型
+
+		factor_attribute.decoratetype_ = TokenTableItem::INTEGER;	// 记录类型
+		factor_attribute.operandtype_ = Quaternary::IMMEDIATE_OPERAND;
+		factor_attribute.value_ = token_.value_.integer;
+		factor_attribute.offset_operandtype_ = Quaternary::OPERAND_NIL;
+		factor_attribute.offset_ = 0;
 		lexical_analyzer_.GetNextToken(token_);
 	}
 	else if(Token::CONST_CHAR == token_.type_)
 	{
+
 #ifdef SYNTAXDEBUG
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
-		decorate_type = TokenTableItem::CHAR;	// 记录类型
+
+		factor_attribute.decoratetype_ = TokenTableItem::CHAR;	// 记录类型
+		factor_attribute.operandtype_ = Quaternary::IMMEDIATE_OPERAND;
+		factor_attribute.value_ = token_.value_.character;
+		factor_attribute.offset_operandtype_ = Quaternary::OPERAND_NIL;
+		factor_attribute.offset_ = 0;
 		lexical_analyzer_.GetNextToken(token_);
 	}
 	else
 	{
+		// 出错处理
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  not a legal Factor\n";
 		is_successful_ = false;
 		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		return decorate_type;
 	}
-	return decorate_type;
+	return factor_attribute;
 }
 
 // <条件语句> ::= if<条件>then<语句>[else<语句>]
@@ -1326,6 +1829,7 @@ void SyntaxAnalyzer::CaseList(int depth) throw()					// 情况表元素
 }
 
 // <读语句> ::= read'('<标识符>{,<标识符>}')'
+// 可扩展出对数组的支持
 void SyntaxAnalyzer::ReadStatement(int depth) throw()			// 读语句
 {
 	PrintFunctionFrame("ReadStatement()", depth);
@@ -1386,6 +1890,13 @@ void SyntaxAnalyzer::ReadStatement(int depth) throw()			// 读语句
 			}
 			return;
 		}
+		// 生成READ调用的四元式
+		Quaternary q_read(Quaternary::READ,
+			Quaternary::OPERAND_NIL, 0,
+			Quaternary::OPERAND_NIL, 0,
+			Quaternary::VARIABLE_OPERAND, distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter)));
+		quaternarytable_.push_back(q_read);
+		// 读取下一个单词
 		lexical_analyzer_.GetNextToken(token_);
 	}while(Token::COMMA == token_.type_);
 	
@@ -1428,19 +1939,53 @@ void SyntaxAnalyzer::WriteStatement(int depth) throw()			// 写语句
 	
 	if(Token::CONST_STRING == token_.type_)
 	{
+
 #ifdef SYNTAXDEBUG
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
+		
+		vector<string>::const_iterator iter = std::find(stringtable_.begin(), stringtable_.end(), token_.value_.identifier);
+		// 生成WRITE调用的四元式
+		Quaternary q_read(Quaternary::WRITE,
+			Quaternary::OPERAND_NIL, 0,
+			Quaternary::OPERAND_NIL, 0,
+			Quaternary::STRING_OPERAND, distance(static_cast<vector<string>::const_iterator>(stringtable_.begin()), iter));
+		quaternarytable_.push_back(q_read);
+
 		lexical_analyzer_.GetNextToken(token_);
 		if(Token::COMMA == token_.type_)
 		{
 			lexical_analyzer_.GetNextToken(token_);
-			Expression(depth + 1);
+			ExpressionAttribute exp_attribute = Expression(depth + 1);
+			// 生成WRITE调用的四元式
+			Quaternary q_read(Quaternary::WRITE,
+				Quaternary::OPERAND_NIL, 0,
+				exp_attribute.offset_operandtype_, exp_attribute.offset_,
+				exp_attribute.operandtype_, exp_attribute.value_);
+			quaternarytable_.push_back(q_read);
+			// 回收临时变量
+			if(Quaternary::TEMPORARY_OPERAND == exp_attribute.operandtype_
+			|| Quaternary::TEMPORARY_OPERAND == exp_attribute.offset_operandtype_)	// 两者不可能同时成立，故写在一起
+			{
+				--tempvar_index_;
+			}
 		}
 	}
 	else
 	{
-		Expression(depth + 1);
+		ExpressionAttribute exp_attribute = Expression(depth + 1);
+		// 生成WRITE调用的四元式
+		Quaternary q_read(Quaternary::WRITE,
+			Quaternary::OPERAND_NIL, 0,
+			exp_attribute.offset_operandtype_, exp_attribute.offset_,
+			exp_attribute.operandtype_, exp_attribute.value_);
+		quaternarytable_.push_back(q_read);
+		// 回收临时变量
+		if(Quaternary::TEMPORARY_OPERAND == exp_attribute.operandtype_
+		|| Quaternary::TEMPORARY_OPERAND == exp_attribute.offset_operandtype_)	// 两者不可能同时成立，故写在一起
+		{
+			--tempvar_index_;
+		}
 	}
 	
 	if(Token::RIGHT_PAREN != token_.type_)
@@ -1556,7 +2101,7 @@ void SyntaxAnalyzer::ProcedureCallStatement(const Token proc_token, const vector
 		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
-	vector<TokenTableItem::DecorateType> argument_decorate_types = ArgumentList(depth + 1);
+	vector<ExpressionAttribute> attributes = ArgumentList(depth + 1);
 	if(Token::RIGHT_PAREN != token_.type_)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
@@ -1570,10 +2115,10 @@ void SyntaxAnalyzer::ProcedureCallStatement(const Token proc_token, const vector
 	lexical_analyzer_.GetNextToken(token_);
 
 	// 检查过程参数与过程声明是否匹配
-	if(parameter_decorate_types.size() != argument_decorate_types.size())	// 检查参数数量
+	if(parameter_decorate_types.size() != attributes.size())	// 检查参数数量
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  procedure does not take " << argument_decorate_types.size() << " argument";
-		if(argument_decorate_types.size() > 1)
+		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  procedure does not take " << attributes.size() << " argument";
+		if(attributes.size() > 1)
 		{
 			std::cout << "s\n";
 		}
@@ -1591,11 +2136,11 @@ void SyntaxAnalyzer::ProcedureCallStatement(const Token proc_token, const vector
 	for(int i = 0; i < static_cast<int>(parameter_decorate_types.size()); ++i)
 	{
 		assert(parameter_decorate_types[i] != TokenTableItem::VOID);	// 这里的数据类型只能为CHAR或INTEGER
-		assert(argument_decorate_types[i] != TokenTableItem::VOID);
-		if(parameter_decorate_types[i] != argument_decorate_types[i])
+		assert(attributes[i].decoratetype_ != TokenTableItem::VOID);
+		if(parameter_decorate_types[i] != attributes[i].decoratetype_)
 		{
 			// 要求参数为CHAR，实际参数为INTEGER，则无法转换
-			if(parameter_decorate_types[i] == TokenTableItem::CHAR && argument_decorate_types[i] == TokenTableItem::INTEGER)
+			if(parameter_decorate_types[i] == TokenTableItem::CHAR && attributes[i].decoratetype_ == TokenTableItem::INTEGER)
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot convert parameter " << i + 1 << " from integer to char\n";
 				is_successful_ = false;
@@ -1613,7 +2158,7 @@ void SyntaxAnalyzer::FunctionCallStatement(const Token func_token, const vector<
 	assert(Token::LEFT_PAREN == token_.type_);
 
 	lexical_analyzer_.GetNextToken(token_);
-	vector<TokenTableItem::DecorateType> argument_decorate_types = ArgumentList(depth + 1);
+	vector<ExpressionAttribute> attributes = ArgumentList(depth + 1);
 	if(Token::RIGHT_PAREN != token_.type_)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
@@ -1627,10 +2172,10 @@ void SyntaxAnalyzer::FunctionCallStatement(const Token func_token, const vector<
 	lexical_analyzer_.GetNextToken(token_);
 
 	// 检查函数参数与函数声明是否匹配
-	if(parameter_decorate_types.size() != argument_decorate_types.size())	// 检查参数数量
+	if(parameter_decorate_types.size() != attributes.size())	// 检查参数数量
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  function does not take " << argument_decorate_types.size() << " argument";
-		if(argument_decorate_types.size() > 1)
+		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  function does not take " << attributes.size() << " argument";
+		if(attributes.size() > 1)
 		{
 			std::cout << "s\n";
 		}
@@ -1648,11 +2193,11 @@ void SyntaxAnalyzer::FunctionCallStatement(const Token func_token, const vector<
 	for(int i = 0; i < static_cast<int>(parameter_decorate_types.size()); ++i)
 	{
 		assert(parameter_decorate_types[i] != TokenTableItem::VOID);	// 这里的数据类型只能为CHAR或INTEGER
-		assert(argument_decorate_types[i] != TokenTableItem::VOID);
-		if(parameter_decorate_types[i] != argument_decorate_types[i])
+		assert(attributes[i].decoratetype_ != TokenTableItem::VOID);
+		if(parameter_decorate_types[i] != attributes[i].decoratetype_)
 		{
 			// 要求参数为CHAR，实际参数为INTEGER，则无法转换
-			if(parameter_decorate_types[i] == TokenTableItem::CHAR && argument_decorate_types[i] == TokenTableItem::INTEGER)
+			if(TokenTableItem::CHAR == parameter_decorate_types[i] && TokenTableItem::INTEGER == attributes[i].decoratetype_)
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot convert parameter " << i + 1 << " from integer to char\n";
 				is_successful_ = false;

@@ -17,11 +17,12 @@ function sumF(x, y : integer) : integer;
 	procedure sumFF(x, y : integer);
 		var z : integer;
 		begin
-			z := x + y
+			z := x + y + 1 + x + y
 		end;
 	begin
 		result:= x + y;
-		sumF := result
+		sumF := result;
+		sumFF(x, y)
 	end;
 
 begin
@@ -32,19 +33,25 @@ begin
 	i:= i + 1;
 	sum := 0 * i;
 	
-	for j := i to 10 * 10
+	i:= 1;
+	sequence[0] := 0;
+	for j := i to 10 * 10 - 1
 	do
 	begin
-		sequence[j] := j
+		sequence[j] := j + sequence[j - 1]
 	end;
+	sequence[1] := -sequence[1];
+	
+	sequence[sequence[0]] := sequence[sequence[1] + sequence[2] + sequence[1+2]];
 	i := 'a';// hehe
 	i := 2147483647;
+	i := ARRLEN;
 	for j := 100 downto 1
 	do
 	begin
 		write("error for \"sum\"");
-		k := sumF(i, j);
-		sum := sumF(sum, j)
+		k := sumF(i, j + i);
+		sum := sumF(sum, j - i)
 	end;
 /*
 	begin
@@ -56,7 +63,9 @@ begin
 
 	read(sum);
 	sumP(ENDCHAR, lastChar, sum);	
-	write(sum)
+	sumP(ENDCHAR, 'c', sequence[3+5]);	
+	write(sum);
+	write(sequence[j+1+2])
 
 end
 .

@@ -77,6 +77,7 @@
     <ClCompile Include="AssemblyMaker.cpp" />
     <ClCompile Include="LexicalAnalyzer.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Print.cpp" />
     <ClCompile Include="Quaternary.cpp" />
     <ClCompile Include="SyntaxAnalyzer.cpp" />
     <ClCompile Include="Token.cpp" />
@@ -85,8 +86,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssemblyMaker.h" />
+    <ClInclude Include="ExpressionAttribute.h" />
     <ClInclude Include="LexException.h" />
     <ClInclude Include="LexicalAnalyzer.h" />
+    <ClInclude Include="Print.h" />
     <ClInclude Include="Quaternary.h" />
     <ClInclude Include="SyntaxAnalyzer.h" />
     <ClInclude Include="SyntaxException.h" />

@@ -9,115 +9,9 @@
 #include "Quaternary.h"
 #include "AssemblyMaker.h"
 
+#include "Print.h"
+
 using namespace std;
-
-
-void PrintQuaternaryVector(const vector<Quaternary> &quaternarytable, const TokenTable &tokentable, ostream &out) throw()
-{
-	for(vector<Quaternary>::const_iterator iter = quaternarytable.begin();
-		iter != quaternarytable.end(); ++iter)
-	{
-		out.width(8);
-		//out.setf(ios::left);
-		out << Quaternary::OPCodeString[iter->op_] << '\t';
-		switch(iter->type1_)
-		{
-		case Quaternary::IMMEDIATE_OPERAND:
-			out << iter->src1_;
-			break;
-		case Quaternary::CONSTANT_OPERAND:
-			out << tokentable.at(iter->src1_).name_ << "(" << tokentable.at(iter->src1_).value_ << ")@" << iter->src1_;
-			break;
-		case Quaternary::VARIABLE_OPERAND:
-			out << tokentable.at(iter->src1_).name_ << "@" << iter->src1_;
-			break;
-		case Quaternary::TEMPORARY_OPERAND:
-			out << "TEMP@" << iter->src1_;
-			break;
-		case Quaternary::LABEL_OPERAND:
-			out << "LABEL@" << iter->src1_;
-			break;
-		case Quaternary::PROC_FUNC_INDEX:
-			out << tokentable.at(iter->src1_).name_ << "@" << iter->src1_;
-			break;
-		case Quaternary::PARANUM_OPERAND:
-			out << iter->src1_;
-			break;
-		default:
-			out << iter->src1_;
-			break;
-		}
-		out << '\t';
-		switch(iter->type2_)
-		{
-		case Quaternary::IMMEDIATE_OPERAND:
-			out << iter->src2_;
-			break;
-		case Quaternary::CONSTANT_OPERAND:
-			out << tokentable.at(iter->src2_).name_ << "(" << tokentable.at(iter->src2_).value_ << ")@" << iter->src2_;
-			break;
-		case Quaternary::VARIABLE_OPERAND:
-			out << tokentable.at(iter->src2_).name_ << "@" << iter->src2_;
-			break;
-		case Quaternary::TEMPORARY_OPERAND:
-			out << "TEMP@" << iter->src2_;
-			break;
-		case Quaternary::LABEL_OPERAND:
-			out << "LABEL@" << iter->src2_;
-			break;
-		case Quaternary::PROC_FUNC_INDEX:
-			out << tokentable.at(iter->src2_).name_ << "@" << iter->src2_;
-			break;
-		case Quaternary::PARANUM_OPERAND:
-			out << iter->src2_;
-			break;
-		default:
-			out << iter->src2_;
-			break;
-		}
-		out << '\t';
-		switch(iter->type3_)
-		{
-		case Quaternary::IMMEDIATE_OPERAND:
-			out << iter->dst_;
-			break;
-		case Quaternary::CONSTANT_OPERAND:
-			out << tokentable.at(iter->dst_).name_ << "(" << tokentable.at(iter->dst_).value_ << ")@" << iter->dst_;
-			break;
-		case Quaternary::VARIABLE_OPERAND:
-			out << tokentable.at(iter->dst_).name_ << "@" << iter->dst_;
-			break;
-		case Quaternary::TEMPORARY_OPERAND:
-			out << "TEMP@" << iter->dst_;
-			break;
-		case Quaternary::LABEL_OPERAND:
-			out << "LABEL@" << iter->dst_;
-			break;
-		case Quaternary::PROC_FUNC_INDEX:
-			out << tokentable.at(iter->dst_).name_ << "@" << iter->dst_;
-			break;
-		case Quaternary::PARANUM_OPERAND:
-			out << iter->dst_;
-			break;
-		default:
-			out << iter->dst_;
-			break;
-		}
-		out << endl;
-	}
-}
-
-bool PrintQuaternaryVector(const vector<Quaternary> &quaternarytable, const TokenTable &tokentable, const string &filename) throw()
-{
-	ofstream out(filename);
-	if(!out.is_open())
-	{
-		return false;
-	}
-	PrintQuaternaryVector(quaternarytable, tokentable, out);
-	out.close();
-	return true;
-}
 
 int main(int argc, char *argv[])
 {
@@ -128,6 +22,7 @@ int main(int argc, char *argv[])
 	const string kCodeFileName = "example.cpp";
 	const string kTokenFileName = "example_token.txt";
 	const string kTokenTableFileName = "example_tokentable.txt";
+	const string kStringTableFileName = "example_stringtable.txt";
 	const string kSyntaxFileName = "example_syntax.txt";
 	const string kQuaternaryCodeFileName = "example_quaternary.txt";
 	const string kAssemblyCodeFileName = "example_assembly.asm";
@@ -150,19 +45,20 @@ int main(int argc, char *argv[])
 	}
 
 	// 过渡
-	vector<string> stringtable = lex_analyzer.getStringTable();		// 字符串表
-	TokenTable tokentable;											// 符号表
-	vector<Quaternary> quaternarytable;								// 四元式表
+	vector<string> stringtable = lex_analyzer.getStringTable();						// 字符串表
+	TokenTable tokentable;															// 符号表
+	vector<Quaternary> quaternarytable;												// 四元式表
 
 	// 语法分析
 	// 用词法分析器、符号表、字符串表和四元式表对语法分析器进行初始化
 	SyntaxAnalyzer syntax_analyzer(lex_analyzer, stringtable, tokentable, quaternarytable);
-	syntax_legitimate = syntax_analyzer.Parse();// 进行语法分析并返回状态
-	syntax_analyzer.Print(kSyntaxFileName);		// 输出语法分析过程
-	tokentable.Print(kTokenTableFileName);		// 输出符号表
-	PrintQuaternaryVector(quaternarytable, tokentable, kQuaternaryCodeFileName);		// 输出四元式
-	PrintQuaternaryVector(quaternarytable, tokentable, cout);		// 输出四元式
-	if(!syntax_legitimate)						// 出错提示
+	syntax_legitimate = syntax_analyzer.Parse();									// 进行语法分析并返回状态
+	syntax_analyzer.Print(kSyntaxFileName);											// 输出语法分析过程
+	tokentable.Print(kTokenTableFileName);											// 输出符号表
+	PrintStringVector(stringtable, kStringTableFileName);							// 输出字符串表
+	PrintQuaternaryVector(quaternarytable, tokentable, kQuaternaryCodeFileName);	// 输出四元式
+	PrintQuaternaryVector(quaternarytable, tokentable, cout);						// 输出四元式
+	if(!syntax_legitimate)// 出错提示
 	{
 		cout << "语法分析出错！" << endl;
 		return -1;

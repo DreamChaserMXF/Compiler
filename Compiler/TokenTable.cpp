@@ -184,6 +184,10 @@ TokenTable::const_iterator TokenTable::SearchDefinition(const Token &token) cons
 		}
 	}
 }
+TokenTable::const_iterator TokenTable::begin() const throw()
+{
+	return rows_.begin();
+}
 TokenTable::const_iterator TokenTable::end() const throw()
 {
 	return rows_.end();
@@ -206,10 +210,10 @@ vector<TokenTableItem::DecorateType> TokenTable::GetProcFuncParameter(const_iter
 string TokenTable::toString() const throw()
 {
 	std::ostringstream buf;
-	buf << "Valid Name        ItemType DecorateType Value Addr Level DefLine UsedLine\n";
+	buf << "NO.\tValid Name        ItemType DecorateType Value Addr Level DefLine UsedLine\n";
 	for(const_iterator iter = rows_.begin(); iter != rows_.end(); ++iter)
 	{
-		buf << iter->toString() << '\n';
+		buf << distance(rows_.begin(), iter) << '\t' << iter->toString() << '\n';
 	}
 	return buf.str();
 }

@@ -32,6 +32,7 @@ public:
 	bool SearchDefinitionInCurrentLevel(const string &name) throw();		// 查找在当前子程序中是否存在定义（用于常/变量定义语句）
 	
 	iterator SearchDefinition(const Token &token) throw();					// 查找定义处
+	const_iterator begin() const throw();
 	const_iterator end() const throw();
 	
 	vector<TokenTableItem::DecorateType> GetProcFuncParameter(const_iterator iter) throw();

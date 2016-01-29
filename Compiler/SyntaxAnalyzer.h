@@ -4,6 +4,7 @@
 #include "LexicalAnalyzer.h"
 #include "TokenTable.h"
 #include "Quaternary.h"
+#include "ExpressionAttribute.h"
 
 class SyntaxAnalyzer
 {
@@ -33,15 +34,15 @@ private:
 	int FunctionHead(int depth) throw();			// 函数首部
 	int ParameterList(int depth) throw();			// 形参表 返回形参个数
 	int ParameterTerm(int depth) throw();			// 形参段 返回形参个数
-	vector<TokenTableItem::DecorateType> ArgumentList(int depth) throw();// 实参表
+	vector<ExpressionAttribute> ArgumentList(int depth) throw();// 实参表
 
 	void StatementBlockPart(int depth) throw();		// 复合语句部分
 	void Statement(int depth) throw();				// 语句
 
 	void AssigningStatement(const Token &idToken, TokenTable::iterator &iter, int depth) throw();	// 赋值语句
-	TokenTableItem::DecorateType Expression(int depth) throw();				// 表达式，返回表达式的类型
-	TokenTableItem::DecorateType Term(int depth) throw();					// 项
-	TokenTableItem::DecorateType Factor(int depth) throw();					// 因子
+	ExpressionAttribute Expression(int depth) throw();				// 表达式，返回表达式的类型
+	ExpressionAttribute Term(int depth) throw();					// 项
+	ExpressionAttribute Factor(int depth) throw();					// 因子
 	void IfStatement(int depth) throw();			// 条件语句
 	void Condition(int depth) throw();				// 条件
 	void CaseStatement(int depth) throw();			// 情况语句
@@ -61,8 +62,8 @@ private:
 	Token token_;							// 当前解析的token_
 	int level_;								// 当前的分程序层次。初始值为0
 //	int quaternary_index;					// 下一条生成的四元式的下标（初始为0）
-	int temp_varaible_index_;		// 将要使用的下一个临时变量的下标
-	int label_index_;				// 将要使用的下一个label的下标
+	int tempvar_index_;						// 将要使用的下一个临时变量的下标
+	int label_index_;						// 将要使用的下一个label的下标
 
 	bool is_successful_;					// 语法分析是否成功
 

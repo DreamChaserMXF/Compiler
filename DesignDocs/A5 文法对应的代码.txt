@@ -1,47 +1,65 @@
-const ARRLEN = 100, NEGATIVE = -1, TRUE = 1, FALSE = 0, ENDCHAR = 'a'
+const ARRLEN = + 100, NEGATIVE = -1, TRUE = 1, FALSE = 0, ENDCHAR = 'a';
 
 var i, j, k : integer;
 lastChar : char;
 sum : integer;
-sequence : array[100] of integer
+sequence : array[100] of integer;
 
 
-procedure sumP(x, y : int; var result : int);
+procedure sumP(x, y: char; var result : integer);
+	var tempSumP : integer;
+	begin
+		result:= - x + y
+	end;
+
+function sumF(x, y : integer) : integer;
+	var result : integer;
+	procedure sumFF(x, y : integer);
+		var z : integer;
+		begin
+			z := x + y + 1 + x + y
+		end;
+	begin
+		result:= x + y;
+		sumF := result
+	end;
+
 begin
-	result: = x + y
-end
 
-function sumF(x, y : int) : int;
-begin
-	var result : int;
-	result: = x + y;
-	sumF := result
-end
-
-begin
 	i := 10 * 10;
 	if i <> 0
-		then i: = 0
-	i: = i + 1;
+		then i:= 0;
+	i:= i + 1;
 	sum := 0 * i;
 	
-	for j := i to 10 * 10
+	i:= 1;
+	sqeuence[0] = 0;
+	for j := i to 10 * 10 - 1
 	do
 	begin
-		sequence[j] = j
-	end
-
+		sequence[j] := j + sequence[j - 1]
+	end;
+	sequence[sequence[0]] = sequence[sequencep[1] + sequencep[2] + sequencep[1+2]];
+	i := 'a';// hehe
+	i := 2147483647;
 	for j := 100 downto 1
 	do
 	begin
+		write("error for \"sum\"");
+		k := sumF(i, j);
 		sum := sumF(sum, j)
-	end
-
+	end;
+/*
+	begin
+*/	
 	case sum of
 		0 : write("error for sum");
 		5050: write("right for sum")
-	end
-	
-end
+	end;
 
+	read(sum);
+	sumP(ENDCHAR, lastChar, sum);	
+	write(sum)
+
+end
 .
