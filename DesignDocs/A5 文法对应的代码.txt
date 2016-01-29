@@ -21,7 +21,8 @@ function sumF(x, y : integer) : integer;
 		end;
 	begin
 		result:= x + y;
-		sumF := result
+		sumF := result;
+		sumFF(x, y)
 	end;
 
 begin
@@ -32,22 +33,35 @@ begin
 	i:= i + 1;
 	sum := 0 * i;
 	
+	if 0 = sum
+		then sum := 1
+		else sum := 0
+	; // 表示if语句的结束
+	
+	// 空语句块测试
+	begin
+	end
+	;
+	
 	i:= 1;
-	sqeuence[0] = 0;
+	sequence[0] := 0;
 	for j := i to 10 * 10 - 1
 	do
 	begin
 		sequence[j] := j + sequence[j - 1]
 	end;
-	sequence[sequence[0]] = sequence[sequencep[1] + sequencep[2] + sequencep[1+2]];
+	sequence[1] := -sequence[1];
+	
+	sequence[sequence[0]] := sequence[sequence[1] + sequence[2] + sequence[1+2]];
 	i := 'a';// hehe
 	i := 2147483647;
+	i := ARRLEN;
 	for j := 100 downto 1
 	do
 	begin
 		write("error for \"sum\"");
-		k := sumF(i, j);
-		sum := sumF(sum, j)
+		k := sumF(i, j + i);
+		sum := sumF(sum, j - i)
 	end;
 /*
 	begin
@@ -59,7 +73,9 @@ begin
 
 	read(sum);
 	sumP(ENDCHAR, lastChar, sum);	
-	write(sum)
+	sumP(ENDCHAR, 'c', sequence[3+5]);	
+	write(sum);
+	write(sequence[j+1+2])
 
 end
 .

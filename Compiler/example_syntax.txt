@@ -193,6 +193,34 @@ Parse()
 |   |   |   |   |   |   |   |   Factor()
 |   |   |   |   |   |   |   |     IDENTIFIER  i
 |   |   |   |   Statement()
+|   |   |   |   |   IfStatement()
+|   |   |   |   |   |   Condition()
+|   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |     CONST_INTEGER  0
+|   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |     IDENTIFIER  sum
+|   |   |   |   |   |   Statement()
+|   |   |   |   |   |     IDENTIFIER  sum
+|   |   |   |   |   |   |   AssigningStatement()
+|   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |     CONST_INTEGER  1
+|   |   |   |   |   |   Statement()
+|   |   |   |   |   |     IDENTIFIER  sum
+|   |   |   |   |   |   |   AssigningStatement()
+|   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |     CONST_INTEGER  0
+|   |   |   |   Statement()
+|   |   |   |   |   StatementBlockPart()
+|   |   |   |   |   |   Statement()
+|   |   |   |   Statement()
 |   |   |   |     IDENTIFIER  i
 |   |   |   |   |   AssigningStatement()
 |   |   |   |   |   |   Expression()

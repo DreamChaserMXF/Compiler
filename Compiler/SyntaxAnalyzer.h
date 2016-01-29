@@ -44,7 +44,7 @@ private:
 	ExpressionAttribute Term(int depth) throw();					// 项
 	ExpressionAttribute Factor(int depth) throw();					// 因子
 	void IfStatement(int depth) throw();			// 条件语句
-	void Condition(int depth) throw();				// 条件
+	void Condition(int label, int depth) throw();				// 条件
 	void CaseStatement(int depth) throw();			// 情况语句
 	void CaseList(int depth) throw();				// 情况表元素
 	void ReadStatement(int depth) throw();			// 读语句

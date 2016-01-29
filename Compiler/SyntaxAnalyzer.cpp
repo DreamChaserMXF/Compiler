@@ -947,6 +947,9 @@ void SyntaxAnalyzer::Statement(int depth) throw()
 	case Token::FOR:
 		ForLoopStatement(depth + 1);
 		break;
+		// TODO 检测空语句是否合法（应该合法）
+	case Token::END:	// 空语句
+		break;
 	default:
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  syntax error at the beginning of Statement\n";
 		is_successful_ = false;
@@ -1008,7 +1011,7 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 			}
 			quaternarytable_.push_back(q_subscript2temp);
 			offset_attribute.operandtype_ = Quaternary::TEMPORARY_OPERAND;
-			offset_attribute.value_ = tempvar_index_ - 1;
+			offset_attribute.value_ = q_subscript2temp.dst_;
 			offset_attribute.offset_operandtype_ = Quaternary::OPERAND_NIL;
 			offset_attribute.offset_ = 0;
 		}
@@ -1090,7 +1093,7 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 			}
 			quaternarytable_.push_back(q_subscript2temp);
 			right_attribute.operandtype_ = Quaternary::TEMPORARY_OPERAND;
-			right_attribute.value_ = tempvar_index_ - 1;
+			right_attribute.value_ = q_subscript2temp.dst_;
 			right_attribute.offset_operandtype_ = Quaternary::OPERAND_NIL;
 			right_attribute.offset_ = 0;
 		}
@@ -1223,7 +1226,7 @@ ExpressionAttribute SyntaxAnalyzer::Expression(int depth) throw()				// 表达式
 			}
 			quaternarytable_.push_back(q_subscript2temp);
 			first_term.operandtype_ = Quaternary::TEMPORARY_OPERAND;
-			first_term.value_ = tempvar_index_ - 1;
+			first_term.value_ = q_subscript2temp.dst_;
 			first_term.offset_operandtype_ = Quaternary::OPERAND_NIL;
 			first_term.offset_ = 0;
 		}
@@ -1271,7 +1274,7 @@ ExpressionAttribute SyntaxAnalyzer::Expression(int depth) throw()				// 表达式
 			}
 			quaternarytable_.push_back(q_subscript2temp);
 			new_term.operandtype_ = Quaternary::TEMPORARY_OPERAND;
-			new_term.value_ = tempvar_index_ - 1;
+			new_term.value_ = q_subscript2temp.dst_;
 			new_term.offset_operandtype_ = Quaternary::OPERAND_NIL;
 			new_term.offset_ = 0;
 		}
@@ -1330,7 +1333,7 @@ ExpressionAttribute SyntaxAnalyzer::Expression(int depth) throw()				// 表达式
 	else	// 有多项的情况，要更新new_term的属性。否则new_term除了decoratetype_外，其余都是最后一项的属性
 	{
 		new_term.operandtype_ = Quaternary::TEMPORARY_OPERAND;
-		new_term.value_ = tempvar_index_ - 1;
+		new_term.value_ = q_term.dst_;
 		new_term.offset_operandtype_ = Quaternary::OPERAND_NIL;
 		new_term.offset_ = 0;
 	}
@@ -1373,7 +1376,7 @@ ExpressionAttribute SyntaxAnalyzer::Term(int depth) throw()						// 项
 			}
 			quaternarytable_.push_back(q_subscript2temp);
 			first_factor.operandtype_ = Quaternary::TEMPORARY_OPERAND;
-			first_factor.value_ = tempvar_index_ - 1;
+			first_factor.value_ = q_subscript2temp.dst_;
 			first_factor.offset_operandtype_ = Quaternary::OPERAND_NIL;
 			first_factor.offset_ = 0;
 		}
@@ -1420,7 +1423,7 @@ ExpressionAttribute SyntaxAnalyzer::Term(int depth) throw()						// 项
 			}
 			quaternarytable_.push_back(q_subscript2temp);
 			new_factor.operandtype_ = Quaternary::TEMPORARY_OPERAND;
-			new_factor.value_ = tempvar_index_ - 1;
+			new_factor.value_ = q_subscript2temp.dst_;
 			new_factor.offset_operandtype_ = Quaternary::OPERAND_NIL;
 			new_factor.offset_ = 0;
 		}
@@ -1480,7 +1483,7 @@ ExpressionAttribute SyntaxAnalyzer::Term(int depth) throw()						// 项
 		// 更新new_factor的属性
 		// 否则new_factor除decoratetype外，其余属性均保留了最后一个因子的属性
 		new_factor.operandtype_ = Quaternary::TEMPORARY_OPERAND;
-		new_factor.value_ = tempvar_index_ - 1;
+		new_factor.value_ = q_factor.dst_;
 		new_factor.offset_operandtype_ = Quaternary::OPERAND_NIL;
 		new_factor.offset_ = 0;
 	}
@@ -1541,18 +1544,18 @@ ExpressionAttribute SyntaxAnalyzer::Factor(int depth) throw()					// 因子
 			if(Quaternary::ARRAY_OPERAND == offset_attribute.operandtype_)
 			{
 				// 新建一个四元式，将Expression的结果保存到临时变量TEMP#tempvar_index_中
-				Quaternary assign_q;
-				assign_q.op_ = Quaternary::ASG;
-				assign_q.type1_ = offset_attribute.operandtype_;
-				assign_q.src1_ = offset_attribute.value_;
-				assign_q.type2_ = offset_attribute.offset_operandtype_;
-				assign_q.offset2_ = offset_attribute.offset_;
-				assign_q.type3_ = Quaternary::TEMPORARY_OPERAND;
-				assign_q.dst_ = tempvar_index_++;
-				quaternarytable_.push_back(assign_q);
+				Quaternary q_assign;
+				q_assign.op_ = Quaternary::ASG;
+				q_assign.type1_ = offset_attribute.operandtype_;
+				q_assign.src1_ = offset_attribute.value_;
+				q_assign.type2_ = offset_attribute.offset_operandtype_;
+				q_assign.offset2_ = offset_attribute.offset_;
+				q_assign.type3_ = Quaternary::TEMPORARY_OPERAND;
+				q_assign.dst_ = tempvar_index_++;
+				quaternarytable_.push_back(q_assign);
 				// 将新的临时变量作为当前factor的数组下标
 				factor_attribute.offset_operandtype_ = Quaternary::TEMPORARY_OPERAND;
-				factor_attribute.offset_ = tempvar_index_ - 1;
+				factor_attribute.offset_ = q_assign.dst_;
 			}
 			else
 			{
@@ -1692,8 +1695,12 @@ void SyntaxAnalyzer::IfStatement(int depth) throw()				// 条件语句
 	PrintFunctionFrame("IfStatement()", depth);
 
 	assert(Token::IF == token_.type_);
+
+	// 先申请一个label
+	int label1 = label_index_++;
+	// 读取条件语句
 	lexical_analyzer_.GetNextToken(token_);
-	Condition(depth + 1);
+	Condition(label1, depth + 1);	// 在condition中设置跳转语句
 	if(Token::THEN != token_.type_)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"then\" after Condition\n";
@@ -1704,21 +1711,84 @@ void SyntaxAnalyzer::IfStatement(int depth) throw()				// 条件语句
 		}
 		return;
 	}
+	// 读取if成功后的语句
 	lexical_analyzer_.GetNextToken(token_);
 	Statement(depth + 1);
+
+	
+
+	// 读取else的语句
 	if(Token::ELSE == token_.type_)
 	{
+		// 申请第二个label
+		int label2 =  label_index_++;
+		// 生成无条件跳转语句
+		Quaternary q_jmp(Quaternary::JMP, 
+			Quaternary::OPERAND_NIL, 0,
+			Quaternary::OPERAND_NIL, 0,
+			Quaternary::IMMEDIATE_OPERAND, label2);
+		quaternarytable_.push_back(q_jmp);
+		// 设置第一个label
+		Quaternary q_label1(Quaternary::LABEL, 
+				Quaternary::OPERAND_NIL, 0,
+				Quaternary::OPERAND_NIL, 0,
+				Quaternary::IMMEDIATE_OPERAND, label1);
+		quaternarytable_.push_back(q_label1);
+		// 读取else中的语句
 		lexical_analyzer_.GetNextToken(token_);
 		Statement(depth + 1);
+		// 设置第二个label
+		Quaternary q_label2(Quaternary::LABEL, 
+			Quaternary::OPERAND_NIL, 0,
+			Quaternary::OPERAND_NIL, 0,
+			Quaternary::IMMEDIATE_OPERAND, label2);
+		quaternarytable_.push_back(q_label2);
+	}
+	else	// 如果没有else语句，就在if语句块结束的时候设置第一个label
+	{
+		// 设置第一个label
+		Quaternary q_label1(Quaternary::LABEL, 
+				Quaternary::OPERAND_NIL, 0,
+				Quaternary::OPERAND_NIL, 0,
+				Quaternary::IMMEDIATE_OPERAND, label1);
+		quaternarytable_.push_back(q_label1);
 	}
 }
 
 // <条件> ::= <表达式><关系运算符><表达式>
-void SyntaxAnalyzer::Condition(int depth) throw()				// 条件
+// 由if语句中传递下来label参数，用于在处理condition时设置跳转语句
+void SyntaxAnalyzer::Condition(int label, int depth) throw()				// 条件
 {
 	PrintFunctionFrame("Condition()", depth);
 
-	Expression(depth + 1);
+	ExpressionAttribute left_attribute = Expression(depth + 1);
+	// 化简数组为临时变量
+	if(Quaternary::TEMPORARY_OPERAND == left_attribute.operandtype_)
+	{
+		Quaternary q_subscript2temp;
+		q_subscript2temp.op_ = Quaternary::ASG;
+		q_subscript2temp.type1_ = left_attribute.operandtype_;
+		q_subscript2temp.src1_ = left_attribute.value_;
+		q_subscript2temp.type2_ = left_attribute.offset_operandtype_;
+		q_subscript2temp.offset2_ = left_attribute.offset_;
+		q_subscript2temp.type3_ = Quaternary::TEMPORARY_OPERAND;
+		// 目标的临时变量标号的确定
+		// 如果数组下标就是临时变量，那么就用这个变量
+		// 否则就新开一个临时变量
+		if(Quaternary::TEMPORARY_OPERAND == left_attribute.offset_operandtype_)
+		{
+			q_subscript2temp.dst_ = left_attribute.offset_;
+		}
+		else
+		{
+			q_subscript2temp.dst_ = tempvar_index_++;
+		}
+		quaternarytable_.push_back(q_subscript2temp);
+		left_attribute.operandtype_ = Quaternary::TEMPORARY_OPERAND;
+		left_attribute.value_ = q_subscript2temp.dst_;
+		left_attribute.offset_operandtype_ = Quaternary::OPERAND_NIL;
+		left_attribute.offset_ = 0;
+	}
 	if(		Token::LT	!= token_.type_
 		&&	Token::LEQ	!= token_.type_
 		&&	Token::GT	!= token_.type_
@@ -1735,8 +1805,83 @@ void SyntaxAnalyzer::Condition(int depth) throw()				// 条件
 		}
 		return;
 	}
+	Token compare_token = token_;
 	lexical_analyzer_.GetNextToken(token_);
-	Expression(depth + 1);
+	ExpressionAttribute right_attribute = Expression(depth + 1);
+	// 化简数组为临时变量
+	if(Quaternary::TEMPORARY_OPERAND == right_attribute.operandtype_)
+	{
+		Quaternary q_subscript2temp;
+		q_subscript2temp.op_ = Quaternary::ASG;
+		q_subscript2temp.type1_ = right_attribute.operandtype_;
+		q_subscript2temp.src1_ = right_attribute.value_;
+		q_subscript2temp.type2_ = right_attribute.offset_operandtype_;
+		q_subscript2temp.offset2_ = right_attribute.offset_;
+		q_subscript2temp.type3_ = Quaternary::TEMPORARY_OPERAND;
+		// 目标的临时变量标号的确定
+		// 如果数组下标就是临时变量，那么就用这个变量
+		// 否则就新开一个临时变量
+		if(Quaternary::TEMPORARY_OPERAND == right_attribute.offset_operandtype_)
+		{
+			q_subscript2temp.dst_ = right_attribute.offset_;
+		}
+		else
+		{
+			q_subscript2temp.dst_ = tempvar_index_++;
+		}
+		quaternarytable_.push_back(q_subscript2temp);
+		right_attribute.operandtype_ = Quaternary::TEMPORARY_OPERAND;
+		right_attribute.value_ = q_subscript2temp.dst_;
+		right_attribute.offset_operandtype_ = Quaternary::OPERAND_NIL;
+		right_attribute.offset_ = 0;
+	}
+
+	// 生成有条件的跳转语句
+	// 不符合条件时才会跳转，所以这里的操作符与读到的token要反一下
+	Quaternary q_jmp_condition;
+	switch(compare_token.type_)
+	{
+	case Token::LT:
+		q_jmp_condition.op_ = Quaternary::JNL;
+		break;
+	case Token::LEQ:
+		q_jmp_condition.op_ = Quaternary::JG;
+		break;
+	case Token::GT:
+		q_jmp_condition.op_ = Quaternary::JNG;
+		break;
+	case Token::GEQ:
+		q_jmp_condition.op_ = Quaternary::JL;
+		break;
+	case Token::EQU:
+		q_jmp_condition.op_ = Quaternary::JNE;
+		break;
+	case Token::NEQ:
+		q_jmp_condition.op_ = Quaternary::JE;
+		break;
+	// 因为之前已经检查过了，所以正常情况下不可能有default
+	default:
+		assert(false);
+		break;
+	}
+	// 操作数
+	q_jmp_condition.type1_ = left_attribute.operandtype_;
+	q_jmp_condition.src1_ = left_attribute.value_;
+	q_jmp_condition.type2_ = right_attribute.operandtype_;
+	q_jmp_condition.src2_ = right_attribute.value_;
+	q_jmp_condition.type3_ = Quaternary::IMMEDIATE_OPERAND;
+	q_jmp_condition.dst_ = label;
+	// 保存四元式
+	quaternarytable_.push_back(q_jmp_condition);
+	// 回收临时变量
+	if(Quaternary::TEMPORARY_OPERAND == left_attribute.operandtype_)
+	{
+		--tempvar_index_;
+	}
+	if(Quaternary::TEMPORARY_OPERAND == right_attribute.operandtype_)
+	{
+		--tempvar_index_;
+	}
 }
 
 // <情况语句> ::= case <表达式> of <情况表元素>{; <情况表元素>}end
@@ -2008,6 +2153,7 @@ void SyntaxAnalyzer::ForLoopStatement(int depth) throw()			// for循环语句
 
 	assert(Token::FOR == token_.type_);
 
+	// 读取标识符
 	lexical_analyzer_.GetNextToken(token_);
 	if(Token::IDENTIFIER != token_.type_)
 	{
@@ -2045,6 +2191,7 @@ void SyntaxAnalyzer::ForLoopStatement(int depth) throw()			// for循环语句
 		}
 		return;
 	}
+	// 读取赋值号
 	lexical_analyzer_.GetNextToken(token_);
 	if(Token::ASSIGN != token_.type_)
 	{
@@ -2056,8 +2203,10 @@ void SyntaxAnalyzer::ForLoopStatement(int depth) throw()			// for循环语句
 		}
 		return;
 	}
+	// 读取表达式
 	lexical_analyzer_.GetNextToken(token_);
 	Expression(depth + 1);
+	// 检测to/downto
 	if(Token::DOWNTO != token_.type_
 		&& Token::TO != token_.type_)
 	{
@@ -2069,6 +2218,7 @@ void SyntaxAnalyzer::ForLoopStatement(int depth) throw()			// for循环语句
 		}
 		return;
 	}
+	// 读取表达式
 	lexical_analyzer_.GetNextToken(token_);
 	Expression(depth + 1);
 	if(Token::DO != token_.type_)
@@ -2082,6 +2232,7 @@ void SyntaxAnalyzer::ForLoopStatement(int depth) throw()			// for循环语句
 		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
+	// 读取循环体
 	Statement(depth + 1);
 }
 

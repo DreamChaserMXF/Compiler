@@ -33,6 +33,16 @@ begin
 	i:= i + 1;
 	sum := 0 * i;
 	
+	if 0 = sum
+		then sum := 1
+		else sum := 0
+	; // 表示if语句的结束
+	
+	// 空语句块测试
+	begin
+	end
+	;
+	
 	i:= 1;
 	sequence[0] := 0;
 	for j := i to 10 * 10 - 1
