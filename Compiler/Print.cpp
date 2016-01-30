@@ -8,8 +8,11 @@ void PrintOperand(Quaternary::OperandType type, int value, const TokenTable &tok
 	case Quaternary::IMMEDIATE_OPERAND:
 		buffer << value;
 		break;
-	case Quaternary::CONSTANT_OPERAND:
-		buffer << tokentable.at(value).name_ << "<" << tokentable.at(value).value_ << ">#" << value;
+	//case Quaternary::CONSTANT_OPERAND:
+	//	buffer << tokentable.at(value).name_ << "<" << tokentable.at(value).value_ << ">#" << value;
+	//	break;
+	case Quaternary::STRING_OPERAND:
+		buffer << "_string#" << value;
 		break;
 	case Quaternary::VARIABLE_OPERAND:
 		buffer << tokentable.at(value).name_ << "#" << value;
@@ -18,10 +21,10 @@ void PrintOperand(Quaternary::OperandType type, int value, const TokenTable &tok
 		buffer << tokentable.at(value).name_ << "#" << value;
 		break;
 	case Quaternary::TEMPORARY_OPERAND:
-		buffer << "_TEMP#" << value;
+		buffer << "_temp#" << value;
 		break;
 	case Quaternary::LABEL_OPERAND:
-		buffer << "_LABEL#" << value;
+		buffer << "_label#" << value;
 		break;
 	case Quaternary::PROC_FUNC_INDEX:
 		buffer << tokentable.at(value).name_ << "#" << value;

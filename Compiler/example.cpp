@@ -66,9 +66,11 @@ begin
 /*
 	begin
 */	
-	case sum of
-		0 : write("error for sum");
-		5050: write("right for sum")
+	case sum * 2 + 1 of
+		1 : write("error for sum");
+		10101: write("right for sum");
+		520 : write("error for sum");
+		ARRLEN : write("error for sum")
 	end;
 
 	read(sum);

@@ -18,6 +18,7 @@ private:
 	SyntaxAnalyzer(const SyntaxAnalyzer&) throw();
 	
 	void PrintFunctionFrame(const char *func_name, int depth) throw();// 输出函数帧信息，depth是语法分析时的函数调用深度
+
 	void Routine(int depth) throw();				// 程序
 	void SubRoutine(int depth) throw();				// 分程序
 
@@ -34,7 +35,7 @@ private:
 	int FunctionHead(int depth) throw();			// 函数首部
 	int ParameterList(int depth) throw();			// 形参表 返回形参个数
 	int ParameterTerm(int depth) throw();			// 形参段 返回形参个数
-	vector<ExpressionAttribute> ArgumentList(int depth) throw();// 实参表
+	vector<TokenTableItem::DecorateType> ArgumentList(int depth) throw();// 实参表
 
 	void StatementBlockPart(int depth) throw();		// 复合语句部分
 	void Statement(int depth) throw();				// 语句
@@ -46,14 +47,16 @@ private:
 	void IfStatement(int depth) throw();			// 条件语句
 	void Condition(int label, int depth) throw();				// 条件
 	void CaseStatement(int depth) throw();			// 情况语句
-	void CaseList(int depth) throw();				// 情况表元素
+	vector<int> CaseElement(const ExpressionAttribute &exp_attribute, int caselabel, int endlabel, int depth) throw();				// 情况表元素
 	void ReadStatement(int depth) throw();			// 读语句
 	void WriteStatement(int depth) throw();			// 写语句
 	void ForLoopStatement(int depth) throw();		// for循环语句
-	void ProcedureCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, int depth) throw();// 过程调用语句
+	void ProcedureCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, int depth) throw();	// 过程调用语句
 	void FunctionCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, int depth) throw();	// 函数调用语句
 
+	void SimplifyArrayOperand(ExpressionAttribute &attribute) throw();
 
+	// 数据成员
 	LexicalAnalyzer &lexical_analyzer_;		// 绑定的词法分析器
 	TokenTable &tokentable_;				// 绑定的符号表
 	const vector<string> &stringtable_;		// 绑定的常量字符表

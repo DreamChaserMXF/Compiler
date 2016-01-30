@@ -416,18 +416,35 @@ Parse()
 |   |   |   |   |   |   |   Term()
 |   |   |   |   |   |   |   |   Factor()
 |   |   |   |   |   |   |   |     IDENTIFIER  sum
-|   |   |   |   |   |   CaseList()
-|   |   |   |   |   |     CONST_INTEGER  0
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     CONST_INTEGER  2
+|   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     CONST_INTEGER  1
+|   |   |   |   |   |   CaseElement()
+|   |   |   |   |   |     CONST_INTEGER  1
 |   |   |   |   |   |   |   Statement()
 |   |   |   |   |   |   |   |   WriteStatement()
 |   |   |   |   |   |   |   |     WRITE
 |   |   |   |   |   |   |   |     CONST_STRING  error for sum
-|   |   |   |   |   |   CaseList()
-|   |   |   |   |   |     CONST_INTEGER  5050
+|   |   |   |   |   |   CaseElement()
+|   |   |   |   |   |     CONST_INTEGER  10101
 |   |   |   |   |   |   |   Statement()
 |   |   |   |   |   |   |   |   WriteStatement()
 |   |   |   |   |   |   |   |     WRITE
 |   |   |   |   |   |   |   |     CONST_STRING  right for sum
+|   |   |   |   |   |   CaseElement()
+|   |   |   |   |   |     CONST_INTEGER  520
+|   |   |   |   |   |   |   Statement()
+|   |   |   |   |   |   |   |   WriteStatement()
+|   |   |   |   |   |   |   |     WRITE
+|   |   |   |   |   |   |   |     CONST_STRING  error for sum
+|   |   |   |   |   |   CaseElement()
+|   |   |   |   |   |     IDENTIFIER  ARRLEN
+|   |   |   |   |   |   |   Statement()
+|   |   |   |   |   |   |   |   WriteStatement()
+|   |   |   |   |   |   |   |     WRITE
+|   |   |   |   |   |   |   |     CONST_STRING  error for sum
 |   |   |   |   Statement()
 |   |   |   |   |   ReadStatement()
 |   |   |   |   |     READ
