@@ -11,14 +11,6 @@ void TokenTableItem::AddUsedLine(int line_number) throw()
 	usedline_.insert(line_number);
 }
 
-//TokenTableItem::ItemType TokenTableItem::GetItemType() const throw()
-//{
-//	return itemtype_;
-//}
-//TokenTableItem::DecorateType TokenTableItem::GetDecorateType() const throw()
-//{
-//	return decoratetype_;
-//}
 string TokenTableItem::toString() const throw()
 {
 	std::ostringstream buf;

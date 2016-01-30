@@ -192,6 +192,14 @@ TokenTable::const_iterator TokenTable::end() const throw()
 {
 	return rows_.end();
 }
+const TokenTableItem& TokenTable::back() const throw()
+{
+	return rows_.back();
+}
+size_t TokenTable::size() const throw()
+{
+	return rows_.size();
+}
 
 // 通过过程/函数的迭代器，返回过程/函数的参数
 vector<TokenTableItem::DecorateType> TokenTable::GetProcFuncParameter(const_iterator iter) throw()

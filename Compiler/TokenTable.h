@@ -14,6 +14,7 @@ using std::vector;
 using std::stack;
 
 // 疑问：这个类定义const函数有用吗？毕竟不会出现该类的const对象呀
+// 答：会出现const对象，例如在AssemblyMaker类中就有const引用
 class TokenTable
 {
 public:
@@ -34,6 +35,8 @@ public:
 	iterator SearchDefinition(const Token &token) throw();					// 查找定义处
 	const_iterator begin() const throw();
 	const_iterator end() const throw();
+	const TokenTableItem& back() const throw();
+	size_t size() const throw();
 	
 	vector<TokenTableItem::DecorateType> GetProcFuncParameter(const_iterator iter) throw();
 	void AddConstItem(Token constIdentifier, TokenTableItem::DecorateType decoratetype_, int value, int level) throw();
