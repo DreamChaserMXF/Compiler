@@ -45,11 +45,12 @@ private:
 	ExpressionAttribute Term(int depth) throw();					// 项
 	ExpressionAttribute Factor(int depth) throw();					// 因子
 	void IfStatement(int depth) throw();			// 条件语句
-	void Condition(int label, int depth) throw();				// 条件
+	void Condition(int endlabel, int depth) throw();// 条件
 	void CaseStatement(int depth) throw();			// 情况语句
 	vector<int> CaseElement(const ExpressionAttribute &exp_attribute, int caselabel, int endlabel, int depth) throw();				// 情况表元素
 	void ReadStatement(int depth) throw();			// 读语句
 	void WriteStatement(int depth) throw();			// 写语句
+	void WhileLoopStatement(int depth) throw();		// for循环语句
 	void ForLoopStatement(int depth) throw();		// for循环语句
 	void ProcedureCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, int depth) throw();	// 过程调用语句
 	void FunctionCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, int depth) throw();	// 函数调用语句

@@ -371,7 +371,7 @@ void SyntaxAnalyzer::TypeSpecification(int depth) throw()
 		lexical_analyzer_.GetNextToken(token_);
 		if(token_.type_ != Token::OF)
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"of\" after [*]\n";
+			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"of\" after []\n";
 			is_successful_ = false;
 			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、PROCEDURE FUNCTION BEGIN
 			{ 
@@ -644,7 +644,7 @@ int SyntaxAnalyzer::FunctionHead(int depth) throw()
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::COLON)	// 假设是忘记冒号
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ':' after parameter Statement\n";
+		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ':' after Parameter Statement\n";
 		is_successful_ = false;
 	}
 	lexical_analyzer_.GetNextToken(token_);
@@ -859,7 +859,7 @@ void SyntaxAnalyzer::StatementBlockPart(int depth) throw()	// 复合语句
 	lexical_analyzer_.GetNextToken(token_);
 }
 
-// <语句> ::= <标识符>(<赋值语句>|<过程调用语句>)|<条件语句>|<情况语句>|<复合语句>|<读语句>|<写语句>|<for循环语句>|<空>
+// <语句> ::= <标识符>(<赋值语句>|<过程调用语句>)|<条件语句>|<情况语句>|<复合语句>|<读语句>|<写语句>|<while循环语句>|<for循环语句>|<空>
 void SyntaxAnalyzer::Statement(int depth) throw()
 {
 	PrintFunctionFrame("Statement()", depth);
@@ -888,7 +888,7 @@ void SyntaxAnalyzer::Statement(int depth) throw()
 		lexical_analyzer_.GetNextToken(token_);
 		if(Token::LEFT_PAREN == token_.type_)	// 过程调用
 		{
-			if(iter->GetItemType() != TokenTableItem::PROCEDURE)	// 检查其属性是否为过程
+			if(iter->itemtype_ != TokenTableItem::PROCEDURE)	// 检查其属性是否为过程
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  not declared as a procedure\n";
 				is_successful_ = false;
@@ -945,6 +945,9 @@ void SyntaxAnalyzer::Statement(int depth) throw()
 	case Token::WRITE:
 		WriteStatement(depth + 1);
 		break;
+	case Token::WHILE:
+		WhileLoopStatement(depth + 1);
+		break;
 	case Token::FOR:
 		ForLoopStatement(depth + 1);
 		break;
@@ -978,7 +981,7 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 	{
 		assign2array = true;
 		// 语义检查
-		if(iter->GetItemType() != TokenTableItem::ARRAY)	// 检查是否为数组名
+		if(iter->itemtype_ != TokenTableItem::ARRAY)	// 检查是否为数组名
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  subscript requires array or pointer type\n";
 			is_successful_ = false;
@@ -1008,9 +1011,9 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 		lexical_analyzer_.GetNextToken(token_);
 	}
 	// 语义检查：剩下只有三种情况：变量、参数或是函数返回值
-	else if(iter->GetItemType() != TokenTableItem::VARIABLE
-		&& iter->GetItemType() != TokenTableItem::PARAMETER
-		&& iter->GetItemType() != TokenTableItem::FUNCTION)
+	else if(iter->itemtype_ != TokenTableItem::VARIABLE
+		&& iter->itemtype_ != TokenTableItem::PARAMETER
+		&& iter->itemtype_ != TokenTableItem::FUNCTION)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot be assigned\n";
 		is_successful_ = false;
@@ -1041,11 +1044,11 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 	ExpressionAttribute right_attribute = Expression(depth + 1);
 
 	// 语义检查：类型转换
-	if(iter->GetDecorateType() < right_attribute.decoratetype_)	// 小于表示不能从右至左的转换
+	if(iter->decoratetype_ < right_attribute.decoratetype_)	// 小于表示不能从右至左的转换
 	{
 		std::cout << "line " << idToken.lineNumber_ << ":  " << idToken.toString() 
 			<< "  cannot convert from " << TokenTableItem::DecorateTypeString[right_attribute.decoratetype_] 
-			<< " to " << TokenTableItem::DecorateTypeString[iter->GetDecorateType()] << "\n";
+			<< " to " << TokenTableItem::DecorateTypeString[iter->decoratetype_] << "\n";
 		is_successful_ = false;
 		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
 		{ 
@@ -1081,8 +1084,8 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 			--tempvar_index_;
 		}
 	}
-	else if(TokenTableItem::PARAMETER == iter->GetItemType()
-			|| TokenTableItem::VARIABLE == iter->GetItemType())	// 普通变量/参数的赋值
+	else if(TokenTableItem::PARAMETER == iter->itemtype_
+			|| TokenTableItem::VARIABLE == iter->itemtype_)	// 普通变量/参数的赋值
 	{
 		Quaternary q_asg;
 		q_asg.op_ = Quaternary::ASG;
@@ -1390,7 +1393,7 @@ ExpressionAttribute SyntaxAnalyzer::Factor(int depth) throw()					// 因子
 			return factor_attribute;
 		}
 		// 语义：记录修饰类型，并更新符号表
-		factor_attribute.decoratetype_ = iter->GetDecorateType();	
+		factor_attribute.decoratetype_ = iter->decoratetype_;	
 		iter->AddUsedLine(token_.lineNumber_);		// 在符号表中插入引用行记录
 		Token idToken = token_;	// 记下，待用
 		lexical_analyzer_.GetNextToken(token_);
@@ -1401,7 +1404,7 @@ ExpressionAttribute SyntaxAnalyzer::Factor(int depth) throw()					// 因子
 			factor_attribute.operandtype_ = Quaternary::ARRAY_OPERAND;
 			factor_attribute.value_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
 			// 语义检查：是否为数组名
-			if(iter->GetItemType() != TokenTableItem::ARRAY)	
+			if(iter->itemtype_ != TokenTableItem::ARRAY)	
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  subscript requires array or pointer type\n";
 				is_successful_ = false;
@@ -1459,7 +1462,7 @@ ExpressionAttribute SyntaxAnalyzer::Factor(int depth) throw()					// 因子
 		else if(Token::LEFT_PAREN == token_.type_)	// 左括号，函数调用
 		{
 			// 语义检查：是否为函数
-			if(iter->GetItemType() != TokenTableItem::FUNCTION)
+			if(iter->itemtype_ != TokenTableItem::FUNCTION)
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  not declared as a function\n";
 				is_successful_ = false;
@@ -1492,7 +1495,7 @@ ExpressionAttribute SyntaxAnalyzer::Factor(int depth) throw()					// 因子
 		else	// 单独一个标识符
 		{
 			// 语义检查：是否为变量、常量或过程/函数的参数
-			if(iter->GetItemType() != TokenTableItem::VARIABLE && iter->GetItemType() != TokenTableItem::PARAMETER && iter->GetItemType() != TokenTableItem::CONST)
+			if(iter->itemtype_ != TokenTableItem::VARIABLE && iter->itemtype_ != TokenTableItem::PARAMETER && iter->itemtype_ != TokenTableItem::CONST)
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  single token Factor should be varaible or constant\n";
 				is_successful_ = false;
@@ -1503,7 +1506,7 @@ ExpressionAttribute SyntaxAnalyzer::Factor(int depth) throw()					// 因子
 				return factor_attribute;
 			}
 			// factor_attribute的属性
-			if(TokenTableItem::CONST == iter->GetItemType())	// 常变量
+			if(TokenTableItem::CONST == iter->itemtype_)	// 常变量
 			{
 				// 这里直接将常变量转换成常数类型，详见《F1 设计备注》
 				factor_attribute.operandtype_ = Quaternary::IMMEDIATE_OPERAND;
@@ -1645,8 +1648,9 @@ void SyntaxAnalyzer::IfStatement(int depth) throw()				// 条件语句
 }
 
 // <条件> ::= <表达式><关系运算符><表达式>
-// 由if语句中传递下来label参数，用于在处理condition时设置跳转语句
-void SyntaxAnalyzer::Condition(int label, int depth) throw()				// 条件
+// 由if或for语句中传递下来label参数，标识if语句块或for循环体的结束
+// 用于在处理condition时设置跳转语句
+void SyntaxAnalyzer::Condition(int endlabel, int depth) throw()				// 条件
 {
 	PrintFunctionFrame("Condition()", depth);
 
@@ -1709,7 +1713,7 @@ void SyntaxAnalyzer::Condition(int label, int depth) throw()				// 条件
 	q_jmp_condition.type2_ = right_attribute.operandtype_;
 	q_jmp_condition.src2_ = right_attribute.value_;
 	q_jmp_condition.type3_ = Quaternary::IMMEDIATE_OPERAND;
-	q_jmp_condition.dst_ = label;
+	q_jmp_condition.dst_ = endlabel;
 	// 保存四元式
 	quaternarytable_.push_back(q_jmp_condition);
 	// 回收临时变量
@@ -1963,8 +1967,8 @@ void SyntaxAnalyzer::ReadStatement(int depth) throw()			// 读语句
 			return;
 		}
 		iter->AddUsedLine(token_.lineNumber_);		// 在符号表中插入引用行记录
-		if(iter->GetItemType() != TokenTableItem::VARIABLE
-		&& iter->GetItemType() != TokenTableItem::PARAMETER)	// 检查是否为变量或参数或函数名
+		if(iter->itemtype_ != TokenTableItem::VARIABLE
+		&& iter->itemtype_ != TokenTableItem::PARAMETER)	// 检查是否为变量或参数或函数名
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot be assigned in read call\n";
 			is_successful_ = false;
@@ -2085,6 +2089,54 @@ void SyntaxAnalyzer::WriteStatement(int depth) throw()			// 写语句
 	lexical_analyzer_.GetNextToken(token_);
 }
 
+// <while循环语句> ::= while <条件> do <语句>
+// <while循环语句> ::= while @Label<check> <条件> @JZLabel<end> do <语句> @JMPLabel<check> @Label<end>
+void SyntaxAnalyzer::WhileLoopStatement(int depth) throw()			// while循环语句
+{
+	PrintFunctionFrame("WhileLoopStatement()", depth);
+	assert(Token::WHILE == token_.type_);
+
+	// 申请条件语句前面的label<check>和结束时的label<end>
+	int checklabel = label_index_++;
+	int endlabel = label_index_++;
+	// 放下label<check>
+	Quaternary q_checklabel(Quaternary::LABEL,
+		Quaternary::NIL_OPERAND, 0,
+		Quaternary::NIL_OPERAND, 0,
+		Quaternary::IMMEDIATE_OPERAND, checklabel);
+	quaternarytable_.push_back(q_checklabel);
+	// 读取下一个单词，并进入条件语句
+	lexical_analyzer_.GetNextToken(token_);
+	Condition(endlabel, depth + 1);	// 条件语句中会执行动作@JZLabel<end>
+	// 语法检查
+	if(Token::DO != token_.type_)
+	{
+		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"do\" before loop body\n";
+		is_successful_ = false;
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
+		{ 
+			lexical_analyzer_.GetNextToken(token_);
+		}
+		return;
+	}
+	// 读入循环体的第一个单词
+	lexical_analyzer_.GetNextToken(token_);
+	// 读入循环体
+	Statement(depth + 1);
+	// 循环体结束后的跳转
+	Quaternary q_jmp(Quaternary::JMP,
+		Quaternary::NIL_OPERAND, 0,
+		Quaternary::NIL_OPERAND, 0,
+		Quaternary::IMMEDIATE_OPERAND, checklabel);
+	quaternarytable_.push_back(q_jmp);
+	// 放下结束的label
+	Quaternary q_endlabel(Quaternary::LABEL,
+		Quaternary::NIL_OPERAND, 0,
+		Quaternary::NIL_OPERAND, 0,
+		Quaternary::IMMEDIATE_OPERAND, endlabel);
+	quaternarytable_.push_back(q_endlabel);
+}
+
 // <for循环语句> ::= for <标识符> := <表达式> （downto | to） <表达式> do <语句>
 // <for循环语句> ::= for <标识符> := <表达式> （downto | to）
 // @ASG<init> @JMPLABEL<check> @Label<vary> @ASG<vary> @Label<check> <表达式> @JZLABEL<end> 
@@ -2122,8 +2174,8 @@ void SyntaxAnalyzer::ForLoopStatement(int depth) throw()			// for循环语句
 		return;
 	}
 	loopvar_iter->AddUsedLine(token_.lineNumber_);		// 在符号表中插入引用行记录
-	if(loopvar_iter->GetItemType() != TokenTableItem::VARIABLE
-	&& loopvar_iter->GetItemType() != TokenTableItem::PARAMETER)	// 检查是否为变量或参数
+	if(loopvar_iter->itemtype_ != TokenTableItem::VARIABLE
+	&& loopvar_iter->itemtype_ != TokenTableItem::PARAMETER)	// 检查是否为变量或参数
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot be assigned in for loop\n";
 		is_successful_ = false;

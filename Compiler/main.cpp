@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 	bool syntax_legitimate = false;
 	bool assemble_legitimate = false;
 
-	const string kCodeFileName = "test04.txt";
+	const string kCodeFileName = "test05.txt";
 	const string kTokenFileName = "example_token.txt";
 	const string kTokenTableFileName = "example_tokentable.txt";
 	const string kStringTableFileName = "example_stringtable.txt";

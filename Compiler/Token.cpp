@@ -72,6 +72,7 @@ map<Token::TokenType, string> Token::InitTokenTypeToStringMap() throw()
 	tsMap.insert(map<TokenType,string>::value_type(ELSE,				"ELSE"					));
 	tsMap.insert(map<TokenType,string>::value_type(CASE,				"CASE"					));
 	tsMap.insert(map<TokenType,string>::value_type(OF,					"OF"					));
+	tsMap.insert(map<TokenType,string>::value_type(WHILE,				"WHILE"					));
 	tsMap.insert(map<TokenType,string>::value_type(FOR,					"FOR"					));
 	tsMap.insert(map<TokenType,string>::value_type(DOWNTO,				"DOWNTO"				));
 	tsMap.insert(map<TokenType,string>::value_type(TO,					"TO"					));
@@ -124,6 +125,7 @@ map<string, Token::TokenType> Token::InitReserveWordToTokenTypeMap() throw()
 	stMap.insert(map<string, TokenType>::value_type("else",			ELSE		));	
 	stMap.insert(map<string, TokenType>::value_type("case",			CASE		));	
 	stMap.insert(map<string, TokenType>::value_type("of",			OF			));	
+	stMap.insert(map<string, TokenType>::value_type("while",		WHILE		));	
 	stMap.insert(map<string, TokenType>::value_type("for",			FOR			));	
 	stMap.insert(map<string, TokenType>::value_type("downto",		DOWNTO		));	
 	stMap.insert(map<string, TokenType>::value_type("to",			TO			));	

@@ -1,0 +1,31 @@
+var n,result integer;
+function fib(k: integer): integer;
+	begin
+		if k=0 then
+			fib:=1	
+		else
+			begin
+			if k=1 then
+				fib:=1
+			else
+			fib= fib(k-1)+fib(k-2);
+			end
+	end
+	;
+function happy();
+	begin
+	end
+begin
+	repeat
+		begin
+		write("Please enter a number n which is larger than 0: ");
+		read(n)
+		end
+	until n>= 0;
+	
+	write("Fib(n) is: ");
+	result:=fib n);
+	write(result);
+
+end
+.

@@ -23,8 +23,8 @@ public:
 
 	TokenTableItem(string name, ItemType item_type, DecorateType decorate_type, int value, int level, int defineline, int addr, int quaternary_address = 0) throw();
 	void AddUsedLine(int line_number) throw();
-	ItemType GetItemType() const throw();			// 获得iter指向的符号表行的item type
-	DecorateType GetDecorateType() const throw();	// 获得iter指向的符号表行的decorate type
+//	ItemType GetItemType() const throw();			// 获得iter指向的符号表行的item type
+//	DecorateType GetDecorateType() const throw();	// 获得iter指向的符号表行的decorate type
 	string toString() const throw();
 
 // 这里感觉还是设为public为好

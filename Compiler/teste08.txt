@@ -1,29 +1,29 @@
 var h : array[10] of integer;
+var h : array[10] of integer;
        j, mid : integer;
 procedure happy();
 	var i, total : integer;
 	begin
 		i := 0;
 		total := 0;
-		while i >= 10 do
+		repeat
 			begin
 				total := total+h[i];
-				mid := h[i];
 				i := i + 1;
 			end
-		;
-		write("the total is: ", total)
+		un	i >= 10	;
+		write("the total is:" ,)
 	end
 	;
 begin
 	j:=0;
-	while j>=10 do
+	repeat
 		begin
-			read(mid);
+			read mid);
 			h[j] := mid;
 			j := j+1
 		end
-	;
-	happy()
+	until	j>=10;
+	happy(
 end
 .
