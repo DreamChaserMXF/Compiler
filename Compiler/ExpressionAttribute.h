@@ -11,7 +11,7 @@
 class ExpressionAttribute
 {
 public:
-	ExpressionAttribute() throw() : operandtype_(Quaternary::OPERAND_NIL), value_(0), offset_operandtype_(Quaternary::OPERAND_NIL), offset_(0), decoratetype_(TokenTableItem::VOID)
+	ExpressionAttribute() throw() : operandtype_(Quaternary::NIL_OPERAND), value_(0), offset_operandtype_(Quaternary::NIL_OPERAND), offset_(0), decoratetype_(TokenTableItem::VOID)
 	{}
 	Quaternary::OperandType operandtype_;
 	int value_;
