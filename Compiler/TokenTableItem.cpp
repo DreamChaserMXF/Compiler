@@ -10,10 +10,7 @@ void TokenTableItem::AddUsedLine(int line_number) throw()
 {
 	usedline_.insert(line_number);
 }
-bool TokenTableItem::CheckItemType(const set<ItemType> legaltypes) const throw()
-{
-	return (legaltypes.find(itemtype_) != legaltypes.end());
-}
+
 TokenTableItem::ItemType TokenTableItem::GetItemType() const throw()
 {
 	return itemtype_;
@@ -60,6 +57,16 @@ string TokenTableItem::toString() const throw()
 	return buf.str();
 }
 
+// 类型转换矩阵，行下标和列下标为两个操作数的类型，对应的数组元素为两个操作数运算后的结果类型
+// 注意，这里矩阵的行列排布严格依赖于DecorateType中的定义顺序
+const TokenTableItem::DecorateType TokenTableItem::TypeConversionMatrix[3][3] = 
+{
+/*               VOID                              CHAR                          INTEGER*/
+/* VOID    */    {TokenTableItem::VOID,             TokenTableItem::CHAR,         TokenTableItem::INTEGER},
+/* CHAR    */    {TokenTableItem::CHAR,             TokenTableItem::CHAR,         TokenTableItem::INTEGER},
+/* INTEGER */    {TokenTableItem::INTEGER,          TokenTableItem::INTEGER,      TokenTableItem::INTEGER}
+};
+const char* TokenTableItem::DecorateTypeString[3] = {"void", "char", "integer"};
 
 map<TokenTableItem::ItemType, string> TokenTableItem::itemTypeToString = InitItemTypeToStringMap();
 map<TokenTableItem::ItemType, string> TokenTableItem::InitItemTypeToStringMap() throw()

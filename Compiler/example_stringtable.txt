@@ -1,3 +1,1 @@
-0	error for "sum"
-1	error for sum
-2	right for sum
+0	the result is:

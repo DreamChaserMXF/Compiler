@@ -1,0 +1,31 @@
+var c,d : char;
+      max : integer;
+function calcuMax(var x,y : char): integer;
+	var max : integer;
+	procedure calcuMax1(x, y: char);
+	var max : integer;
+		begin
+			if x>y	then write("the max add 1 is", x)
+			else	write("the max add 1 is", y)
+		end;
+	begin
+		; ; ; ;
+		if x>y	then max := x
+		else	max := y;
+		calcuMax := max;
+		x := x+max;
+		y := y+1;
+		calcuMax1(c,d);
+	end
+	;
+begin
+	read(c);
+	read(d);
+	write(c);
+	write(c+1);
+	max := calcuMax(c,d);
+	write("the max is", max);
+	write(c);
+	write(d)
+end
+.

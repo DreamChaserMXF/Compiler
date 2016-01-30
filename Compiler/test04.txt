@@ -1,0 +1,19 @@
+var a,b,c,x,y,z,w1,w2: integer;
+begin
+	a:=1;
+	b:=2;
+	c:=(a+b)+(a+b);
+	x:=(a+b)+(a+b);
+	y:=(a+b)+(a+b);
+	z:=c+x+y;
+	w1:=(a+b)*3;
+	w2:=(a+b)/3;
+	write("the result is:");
+	write(c);
+	write(x);
+	write(y);
+	write(z);
+	write(w1);
+	write(w2)
+end
+.

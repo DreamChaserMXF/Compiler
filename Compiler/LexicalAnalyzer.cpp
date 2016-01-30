@@ -257,7 +257,8 @@ void LexicalAnalyzer::ParseCurrentToken(Token &token, char &ch) throw(LexExcepti
 		}
 		else
 		{
-			throw LexException("unkown character", ch, currentline_);
+			// 就是一个简单的除号
+			token.type_ = Token::DIV;
 		}
 	}
 	// 剩下是单字符的情况
@@ -291,9 +292,9 @@ void LexicalAnalyzer::ParseCurrentToken(Token &token, char &ch) throw(LexExcepti
 		case '*':
 			token.type_ = Token::MUL;
 			break;
-		case '/':
-			token.type_ = Token::DIV;
-			break;
+		//case '/':
+		//	token.type_ = Token::DIV;
+		//	break;
 		case '=':
 			token.type_ = Token::EQU;
 			break;

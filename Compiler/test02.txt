@@ -1,0 +1,29 @@
+var h : array[10] of integer;
+       j, mid : integer;
+procedure happy();
+	var i, total : integer;
+	begin
+		i := 0;
+		total := 0;
+		repeat
+			begin
+				total := total+h[i];
+				mid := h[i];
+				i := i + 1;
+			end
+		until	i >= 10	;
+		write("the total is: ", total)
+	end
+	;
+begin
+	j:=0;
+	repeat
+		begin
+			read(mid);
+			h[j] := mid;
+			j := j+1
+		end
+	until	j>=10;
+	happy()
+end
+.

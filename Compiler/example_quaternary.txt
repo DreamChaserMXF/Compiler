@@ -1,119 +1,30 @@
-  0	    BEGIN               0               0         sumP#11
-  1	      NEG               0               0            x#12
-  2	      ADD            x#12            y#13         _temp#0
-  3	      ASG         _temp#0               0       result#14
-  4	      END               0               0         sumP#11
-  5	    BEGIN               0               0         sumF#16
-  6	    BEGIN               0               0        sumFF#20
-  7	      ADD            x#21            y#22         _temp#0
-  8	      ADD         _temp#0               1         _temp#0
-  9	      ADD         _temp#0            x#21         _temp#0
- 10	      ADD         _temp#0            y#22         _temp#0
- 11	      ASG         _temp#0               0            z#23
- 12	      END               0               0        sumFF#20
- 13	      ADD            x#17            y#18         _temp#0
- 14	      ASG         _temp#0               0       result#19
- 15	      RET               0               0       result#19
- 16	PROC_CALL               0               2        sumFF#20
- 17	     SETP               0               0            x#17
- 18	     SETP               0               0            y#18
- 19	      END               0               0         sumF#16
- 20	      MUL              10              10         _temp#0
- 21	      ASG         _temp#0               0             i#5
- 22	       JE             i#5               0               0
- 23	      ASG               0               0             i#5
- 24	    LABEL               0               0               0
- 25	      ADD             i#5               1         _temp#0
- 26	      ASG         _temp#0               0             i#5
- 27	      MUL               0             i#5         _temp#0
- 28	      ASG         _temp#0               0           sum#9
- 29	      JNE               0           sum#9               1
- 30	      ASG               1               0           sum#9
- 31	      JMP               0               0               2
- 32	    LABEL               0               0               1
- 33	      ASG               0               0           sum#9
- 34	    LABEL               0               0               2
- 35	      ASG               1               0             i#5
- 36	     AASG               0               0     sequence#10
- 37	      ASG             i#5               0             j#6
- 38	      JMP               0               0               4
- 39	    LABEL               0               0               3
- 40	      ADD             j#6               1             j#6
- 41	    LABEL               0               0               4
- 42	      MUL              10              10         _temp#0
- 43	      SUB         _temp#0               1         _temp#0
- 44	       JG             j#6         _temp#0               5
- 45	      SUB             j#6               1         _temp#0
- 46	      ASG     sequence#10         _temp#0         _temp#0
- 47	      ADD             j#6         _temp#0         _temp#0
- 48	     AASG         _temp#0             j#6     sequence#10
- 49	      JMP               0               0               3
- 50	    LABEL               0               0               5
- 51	      NEG               0               1     sequence#10
- 52	      ASG     sequence#10               1         _temp#0
- 53	     AASG         _temp#0               1     sequence#10
- 54	      ASG     sequence#10               0         _temp#0
- 55	      ASG     sequence#10               1         _temp#1
- 56	      ASG     sequence#10               2         _temp#2
- 57	      ADD         _temp#1         _temp#2         _temp#1
- 58	      ADD               1               2         _temp#2
- 59	      ASG     sequence#10         _temp#2         _temp#2
- 60	      ADD         _temp#1         _temp#2         _temp#1
- 61	      ASG     sequence#10         _temp#1         _temp#1
- 62	     AASG         _temp#1         _temp#0     sequence#10
- 63	      ASG              97               0             i#5
- 64	      ASG      2147483647               0             i#5
- 65	      ASG             100               0             i#5
- 66	      ASG             100               0             j#6
- 67	      JMP               0               0               7
- 68	    LABEL               0               0               6
- 69	      SUB             j#6               1             j#6
- 70	    LABEL               0               0               7
- 71	       JL             j#6               1               8
- 72	    WRITE               0               0       _string#0
- 73	FUNC_CALL               0               2         sumF#16
- 74	     SETP               0               0             i#5
- 75	      ADD             j#6             i#5         _temp#0
- 76	     SETP               0               0         _temp#0
- 77	      ASG         _temp#0               0             k#7
- 78	FUNC_CALL               0               2         sumF#16
- 79	     SETP               0               0           sum#9
- 80	      SUB             j#6             i#5         _temp#0
- 81	     SETP               0               0         _temp#0
- 82	      ASG         _temp#0               0           sum#9
- 83	      JMP               0               0               6
- 84	    LABEL               0               0               8
- 85	      MUL           sum#9               2         _temp#0
- 86	      ADD         _temp#0               1         _temp#0
- 87	       JE         _temp#0               1              10
- 88	       JE         _temp#0           10101              11
- 89	       JE         _temp#0             520              12
- 90	       JE         _temp#0             100              13
- 91	      JMP               0               0               9
- 92	    LABEL               0               0              10
- 93	    WRITE               0               0       _string#1
- 94	      JMP               0               0               9
- 95	    LABEL               0               0              11
- 96	    WRITE               0               0       _string#2
- 97	      JMP               0               0               9
- 98	    LABEL               0               0              12
- 99	    WRITE               0               0       _string#1
-100	      JMP               0               0               9
-101	    LABEL               0               0              13
-102	    WRITE               0               0       _string#1
-103	      JMP               0               0               9
-104	    LABEL               0               0               9
-105	     READ               0               0           sum#9
-106	PROC_CALL               0               3         sumP#11
-107	     SETP               0               0              97
-108	     SETP               0               0      lastChar#8
-109	     SETP               0               0           sum#9
-110	PROC_CALL               0               3         sumP#11
-111	     SETP               0               0              97
-112	     SETP               0               0              99
-113	      ADD               3               5         _temp#0
-114	     SETP               0         _temp#0     sequence#10
-115	    WRITE               0               0           sum#9
-116	      ADD             j#6               1         _temp#0
-117	      ADD         _temp#0               2         _temp#0
-118	    WRITE               0         _temp#0     sequence#10
+  0	      ASG               1               0             a#0
+  1	      ASG               2               0             b#1
+  2	      ADD             a#0             b#1         _temp#0
+  3	      ADD             a#0             b#1         _temp#1
+  4	      ADD         _temp#0         _temp#1         _temp#0
+  5	      ASG         _temp#0               0             c#2
+  6	      ADD             a#0             b#1         _temp#0
+  7	      ADD             a#0             b#1         _temp#1
+  8	      ADD         _temp#0         _temp#1         _temp#0
+  9	      ASG         _temp#0               0             x#3
+ 10	      ADD             a#0             b#1         _temp#0
+ 11	      ADD             a#0             b#1         _temp#1
+ 12	      ADD         _temp#0         _temp#1         _temp#0
+ 13	      ASG         _temp#0               0             y#4
+ 14	      ADD             c#2             x#3         _temp#0
+ 15	      ADD         _temp#0             y#4         _temp#0
+ 16	      ASG         _temp#0               0             z#5
+ 17	      ADD             a#0             b#1         _temp#0
+ 18	      MUL         _temp#0               3         _temp#0
+ 19	      ASG         _temp#0               0            w1#6
+ 20	      ADD             a#0             b#1         _temp#0
+ 21	      DIV         _temp#0               3         _temp#0
+ 22	      ASG         _temp#0               0            w2#7
+ 23	    WRITE               0               0       _string#0
+ 24	    WRITE               0               0             c#2
+ 25	    WRITE               0               0             x#3
+ 26	    WRITE               0               0             y#4
+ 27	    WRITE               0               0             z#5
+ 28	    WRITE               0               0            w1#6
+ 29	    WRITE               0               0            w2#7

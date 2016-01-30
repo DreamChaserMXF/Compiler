@@ -14,11 +14,15 @@ class TokenTableItem
 {
 public:
 	enum ItemType{CONST, VARIABLE, ARRAY, PROCEDURE, FUNCTION, PARAMETER};
-	enum DecorateType{VOID, INTEGER, CHAR};
+	// 一般变量的修饰类型为INTEGER或CHAR，过程的修饰类型为VOID，字面常量的修饰类型为VOID
+	// 这里的排布顺序是按照类型转换严格顺序递增的，程序的逻辑判断也依赖了这一点
+	// VOID可以转换为CHAR或INTEGER
+	// CHAR可以转换为INTEGER，不可以转换为VOID
+	// INTEGER不能转换为CHAR或VOID
+	enum DecorateType{VOID = 0, CHAR = 1, INTEGER = 2};	
 
 	TokenTableItem(string name, ItemType item_type, DecorateType decorate_type, int value, int level, int defineline, int addr, int quaternary_address = 0) throw();
 	void AddUsedLine(int line_number) throw();
-	bool CheckItemType(const set<ItemType> legaltypes) const throw();
 	ItemType GetItemType() const throw();			// 获得iter指向的符号表行的item type
 	DecorateType GetDecorateType() const throw();	// 获得iter指向的符号表行的decorate type
 	string toString() const throw();
@@ -36,6 +40,8 @@ public:
 	int				addr_;
 	int				quaternary_address_;
 
+	static const DecorateType TypeConversionMatrix[3][3];
+	static const char* DecorateTypeString[3];
 private:
 	friend class TokenTable;
 
