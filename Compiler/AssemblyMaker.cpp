@@ -33,19 +33,27 @@ bool AssemblyMaker::Assemble() throw()
 	DataSegment();
 	CodeBeginSegment();
 	MainFunction();
-	// TODO traverse the tokentable
+	// traverse the tokentable
 	for(TokenTable::const_iterator c_iter = tokentable_.begin();
 		c_iter != tokentable_.end(); ++c_iter)
 	{
-		if(TokenTableItem::PROCEDURE == c_iter->itemtype_)
+		if(TokenTableItem::PROCEDURE == c_iter->itemtype_
+			|| TokenTableItem::FUNCTION == c_iter->itemtype_)
 		{
-			OtherProcedure(GetVariableSpace(c_iter + 1), GetProcFuncIterInQuaternaryTable(c_iter));
+			OtherFunction(c_iter);
 		}
-		else if(TokenTableItem::FUNCTION == c_iter->itemtype_)
-		{
-			OtherFunction(GetVariableSpace(c_iter + 1), GetProcFuncIterInQuaternaryTable(c_iter));
-		}
+//		if(TokenTableItem::PROCEDURE == c_iter->itemtype_)
+//		{
+//			OtherProcedure(c_iter);
+////			OtherProcedure(GetVariableSpace(c_iter + 1), GetProcFuncIterInQuaternaryTable(c_iter));
+//		}
+//		else if(TokenTableItem::FUNCTION == c_iter->itemtype_)
+//		{
+//			OtherFunction(c_iter);
+////			OtherFunction(GetVariableSpace(c_iter + 1), GetProcFuncIterInQuaternaryTable(c_iter));
+//		}
 	}
+	EndStatement();
 	return true;
 }
 
@@ -88,44 +96,11 @@ void AssemblyMaker::MainFunction() throw()
 {
 	// 主函数声明
 	assemble_buffer << "\n.start:\n";				// 开始位置
-	assemble_buffer << "\nmain:  proc far" << endl;	// 跳转方式
+	assemble_buffer << "\n_main:  proc far\n";		// 跳转方式
 	// 主函数头
-	// 一. 找出主函数中变量的存储空间
+	// 一. 找出主函数中局部变量与TODO:临时变量的存储空间
 	int var_space = GetVariableSpace(tokentable_.begin());;
-
-	//TokenTable::const_iterator c_tokentable_iter = tokentable_.begin();
-	//while( tokentable_.end() != c_tokentable_iter
-	//	|| TokenTableItem::PROCEDURE == c_tokentable_iter->itemtype_
-	//	|| TokenTableItem::FUNCTION == c_tokentable_iter->itemtype_)
-	//{
-	//	++c_tokentable_iter;
-	//}
-	//// 第一个过程/函数的addr即为变量的存储空间（单位：4bytes）
-	//int var_space = 0;
-	//if(tokentable_.end() == c_tokentable_iter)	// 表示整个程序只有一个主函数
-	//{
-	//	// 如果有变量的话，找出最后一个变量，再计算地址
-	//	// 如果没有变量，var_space保持为0
-	//	if(tokentable_.size() != 0)	
-	//	{
-	//		const TokenTableItem &item = tokentable_.back();
-	//		int base_addr = item.addr_;	// 最后一个变量的地址
-	//		// 最后一个变量是数组的计算方式
-	//		if(TokenTableItem::ARRAY == item.itemtype_)
-	//		{
-	//			var_space = base_addr + item.value_;
-	//		}
-	//		else	// 普通变量的计算方式
-	//		{
-	//			var_space = base_addr + 1;
-	//		}
-	//	}
-	//}
-	//else
-	//{
-	//	var_space = c_tokentable_iter->addr_;
-	//}
-
+	int temp_space = quaternarytable_.front().src2_;
 	// TODO 二. 构造运行栈
 
 	// TODO 三. 为变量在栈上分配空间
@@ -133,7 +108,7 @@ void AssemblyMaker::MainFunction() throw()
 	// 四. 在四元式表中找到主函数的开始地址，对四元式进行汇编
 	vector<Quaternary>::const_reverse_iterator rc_quaternary_iter = quaternarytable_.rbegin();
 	while(rc_quaternary_iter != quaternarytable_.rend() 
-		&& Quaternary::END != rc_quaternary_iter->type1_)
+		&& Quaternary::END != rc_quaternary_iter->op_)
 	{
 		++rc_quaternary_iter;
 	}
@@ -142,30 +117,70 @@ void AssemblyMaker::MainFunction() throw()
 		c_quaternary_iter != quaternarytable_.end(); ++c_quaternary_iter)
 	{
 		// TODO 转换汇编码
+		TranslateQuaternary(c_quaternary_iter);
 	}
+	// TODO 五. 函数尾
+	assemble_buffer << "\n    push    0";
+	assemble_buffer << "\n    call    ExitProcess";
+	assemble_buffer << "\n_main:  endp\n" << endl;
 }
 
 // 普通函数的汇编过程
-// var_space是该函数的局部变量的空间
-// func_begin是四元式表中该函数的BEGIN语句的迭代器
-void AssemblyMaker::OtherFunction(int var_space, vector<Quaternary>::const_iterator func_begin) throw()
+// c_iter是该函数名在符号表中的位置
+void AssemblyMaker::OtherFunction(TokenTable::const_iterator c_iter) throw()
+{
+	// 一. 找到函数在四元式的BEGIN语句
+	vector<Quaternary>::const_iterator q_iter = GetProcFuncIterInQuaternaryTable(c_iter);
+	// 二. 得到参数所占的空间（单位：4bytes）
+	int para_space = c_iter->value_;
+	// 三. 得到局部变量的空间（单位：4bytes）
+	int var_space = GetVariableSpace(c_iter + 1);
+	// 四. 得到临时变量的空间（单位：4bytes）
+	int temp_space = q_iter->src2_;
+	// 五. TODO 输出函数头，为局部变量和临时变量分配空间
+	assemble_buffer << "\n_";
+	assemble_buffer.width(8);
+	assemble_buffer.setf(std::ios::left);
+	assemble_buffer << c_iter->name_ << "  proc near\n";
+	// 六. TODO 找到函数主体在四元式中的语句
+	//     然后逐个四元式生成汇编码
+	for(q_iter = GetFunctionBody(q_iter);
+		Quaternary::END != q_iter->op_;
+		++q_iter)
+	{
+		TranslateQuaternary(q_iter);	
+	}
+	// 七. TODO 输出函数尾
+	assemble_buffer << "\n_";
+	assemble_buffer.width(8);
+	assemble_buffer.setf(std::ios::left);
+	assemble_buffer << c_iter->name_ << "  endp\n";
+}
+
+void AssemblyMaker::EndStatement() throw()
+{
+	assemble_buffer << "\n.end start" << endl;
+}
+
+// TODO 翻译四元式
+void AssemblyMaker::TranslateQuaternary(vector<Quaternary>::const_iterator &c_iter) const throw()
 {
 	
 }
 
-// 普通过程的汇编过程
-// var_space是该过程的局部变量的空间
-// func_begin是四元式表中该过程的BEGIN语句的迭代器
-void AssemblyMaker::OtherProcedure(int var_space, vector<Quaternary>::const_iterator proc_begin) throw()
-{
-
-}
-
 // 返回过程/函数的局部变量所占的空间（单位：4bytes）
 // c_iter为过程/函数在符号表中的位置的下一个位置
-// 参数之所以这么要求，是因为主函数在符号表中没有位置，只能提供下一个位置
+// 之所以这么要求，是因为主函数在符号表中没有位置，只能提供下一个位置
 int AssemblyMaker::GetVariableSpace(TokenTable::const_iterator c_iter) const throw()
 {
+	// 先用while跳过当前过程/函数的参数及常量
+	while( tokentable_.end() != c_iter
+		&& (TokenTableItem::PARAMETER == c_iter->itemtype_
+			|| TokenTableItem::CONST == c_iter->itemtype_)
+		)
+	{
+		++c_iter;
+	}
 	// 如果该过程/函数没有局部变量
 	if(tokentable_.end() == c_iter
 		|| TokenTableItem::PROCEDURE == c_iter->itemtype_
@@ -173,6 +188,9 @@ int AssemblyMaker::GetVariableSpace(TokenTable::const_iterator c_iter) const thr
 	{
 		return 0;
 	}
+	// 现在肯定有变量了
+	// 取得第一个变量的地址
+	int first_var_addr = c_iter->addr_;
 	// 用while跳过当前过程/函数的局部变量
 	while( tokentable_.end() != c_iter
 		&& TokenTableItem::PROCEDURE != c_iter->itemtype_
@@ -180,10 +198,10 @@ int AssemblyMaker::GetVariableSpace(TokenTable::const_iterator c_iter) const thr
 	{
 		++c_iter;
 	}
-	// 找出最后一个变量，得到其地址，再计算局部变量空间（地址+末变量空间）
-	const TokenTableItem &item = (tokentable_.end() == c_iter) ? tokentable_.back() : *(c_iter - 1);
+	// 找出最后一个变量，得到其地址，再计算局部变量空间（末变量地址-首变量地址+末变量长度）
+	const TokenTableItem &item = ((tokentable_.end() == c_iter) ? tokentable_.back() : *(c_iter - 1));
 	// 最后一个变量可能是数组或普通变量，所以有两种不同的空间计算方式
-	return item.addr_ + (TokenTableItem::ARRAY == item.itemtype_) ? item.value_ : 1;
+	return item.addr_ - first_var_addr + ((TokenTableItem::ARRAY == item.itemtype_) ? item.value_ : 1);
 }
 
 // 通过指向符号表的过程/函数的迭代器，找到其在四元式表中对应的BEGIN语句的迭代器
@@ -200,4 +218,29 @@ vector<Quaternary>::const_iterator AssemblyMaker::GetProcFuncIterInQuaternaryTab
 		}
 	}
 	return quaternarytable_.end();
+}
+
+// 通过过程/函数在四元式表中的BEGIN语句的迭代器，找到其过程/函数体的第一条语句的迭代器
+vector<Quaternary>::const_iterator AssemblyMaker::GetFunctionBody(vector<Quaternary>::const_iterator begin_iter) const throw()
+{
+	++begin_iter;
+	if(Quaternary::BEGIN != begin_iter->op_)
+	{
+		return begin_iter;
+	}
+
+	int func_num = 1;	// 已经读到了一个begin
+	while(func_num > 0)
+	{
+		++begin_iter;
+		if(Quaternary::BEGIN == begin_iter->op_)
+		{
+			++func_num;
+		}
+		else if(Quaternary::END == begin_iter->op_)
+		{
+			--func_num;
+		}
+	}
+	return ++begin_iter;
 }

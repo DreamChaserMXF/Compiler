@@ -60,7 +60,7 @@ private:
 	vector<TokenTableItem> rows_;	// 符号表的每一行
 	stack<int> subroutine_tokentableindex_stack_;		// 符号表中分程序的入口下标栈
 	int addr_;
-	stack<int> subroutine_tokentableaddr_stack_;			// 符号表中分程序的入口地址栈
+	stack<int> subroutine_tokentableaddr_stack_;		// 符号表中分程序的入口地址栈
 };
 
 #endif

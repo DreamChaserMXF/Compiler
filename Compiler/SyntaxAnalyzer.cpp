@@ -16,9 +16,18 @@ SyntaxAnalyzer::SyntaxAnalyzer(LexicalAnalyzer &lexical_analyzer,
 								vector<Quaternary> &quaternarytable) 
 								throw()
 	: lexical_analyzer_(lexical_analyzer), stringtable_(stringtable), tokentable_(tokentable), quaternarytable_(quaternarytable), 
-	token_(), level_(0), tempvar_index_(0), label_index_(0), continue_label_(), break_label_(), 
+	token_(), level_(0), tempvar_index_(0), max_local_temp_count_(0), label_index_(0), continue_label_(), break_label_(), 
 	is_successful_(true), syntax_info_buffer_(), syntax_assist_buffer_(), tokenbuffer_()
-{}
+{
+	// 插入主函数的BEGIN
+	Quaternary q_mainbegin(
+		Quaternary::BEGIN,
+		Quaternary::NIL_OPERAND, 0,
+		Quaternary::IMMEDIATE_OPERAND, 0,
+		Quaternary::IMMEDIATE_OPERAND, -1
+		);
+	quaternarytable_.push_back(q_mainbegin);
+}
 
 
 bool SyntaxAnalyzer::Parse() throw()
@@ -29,6 +38,9 @@ bool SyntaxAnalyzer::Parse() throw()
 	PrintFunctionFrame("Parse()", depth);
 	lexical_analyzer_.GetNextToken(token_);
 	Routine(depth + 1);
+	// TODO (不一定需要：)添加主函数的END语句
+	// 修改主函数的BEGIN语句中的临时变量数量
+	quaternarytable_.front().src2_ = max_local_temp_count_;
 	return is_successful_;
 }
 
@@ -441,6 +453,9 @@ void SyntaxAnalyzer::ProcedurePart(int depth) throw()
 		SubRoutine(depth + 1);
 		// 生成过程的END四元式
 		quaternarytable_.push_back(Quaternary(Quaternary::END, Quaternary::NIL_OPERAND, 0, Quaternary::NIL_OPERAND, 0, Quaternary::PROC_FUNC_INDEX, proc_index));
+		// TODO 修改上一个BEGIN四元式中的临时变量数量
+		SetTempVarCount(proc_index, max_local_temp_count_);
+		max_local_temp_count_ = 0;	// 初始化函数的临时变量最大数量
 		tokentable_.Relocate();
 		--level_;
 		if(Token::SEMICOLON != token_.type_)
@@ -489,7 +504,10 @@ int SyntaxAnalyzer::ProcedureHead(int depth) throw()
 	}
 	proc_index = tokentable_.AddProcedureItem(token_, level_++);// 过程名之后leve要+1
 	// 生成过程的BEGIN四元式
-	quaternarytable_.push_back(Quaternary(Quaternary::BEGIN, Quaternary::NIL_OPERAND, 0, Quaternary::NIL_OPERAND, 0, Quaternary::PROC_FUNC_INDEX, proc_index));
+	quaternarytable_.push_back(Quaternary(Quaternary::BEGIN, 
+		Quaternary::NIL_OPERAND, 0, 
+		Quaternary::IMMEDIATE_OPERAND, 0,	// 这里的操作数应该是该过程要用到的临时变量的数量，等过程分析完后补齐
+		Quaternary::PROC_FUNC_INDEX, proc_index));
 	// 定位（将过程名后紧邻的位置设为局部作用域的起始点）
 	tokentable_.Locate();	
 	// 继续读取单词
@@ -559,6 +577,9 @@ void SyntaxAnalyzer::FunctionPart(int depth) throw()
 		SubRoutine(depth + 1);
 		// 生成函数的END四元式
 		quaternarytable_.push_back(Quaternary(Quaternary::END, Quaternary::NIL_OPERAND, 0, Quaternary::NIL_OPERAND, 0, Quaternary::PROC_FUNC_INDEX, func_index));
+		// TODO 修改上一个BEGIN四元式中的临时变量数量
+		SetTempVarCount(func_index, max_local_temp_count_);
+		max_local_temp_count_ = 0;	// 初始化函数的临时变量最大下标
 		tokentable_.Relocate();
 		--level_;
 		if(Token::SEMICOLON != token_.type_)	// 分程序结束后应读入分号
@@ -607,7 +628,10 @@ int SyntaxAnalyzer::FunctionHead(int depth) throw()
 	}
 	func_index = tokentable_.AddFunctionItem(token_, level_++);// 过程名之后leve要+1
 	// 生成函数的BEGIN四元式
-	quaternarytable_.push_back(Quaternary(Quaternary::BEGIN, Quaternary::NIL_OPERAND, 0, Quaternary::NIL_OPERAND, 0, Quaternary::PROC_FUNC_INDEX, func_index));
+	quaternarytable_.push_back(Quaternary(Quaternary::BEGIN, 
+		Quaternary::NIL_OPERAND, 0, 
+		Quaternary::IMMEDIATE_OPERAND, 0, // 这里的操作数应该是该函数要用到的临时变量的数量，等函数分析完后补齐
+		Quaternary::PROC_FUNC_INDEX, func_index));
 	// 定位
 	tokentable_.Locate();
 	lexical_analyzer_.GetNextToken(token_);
@@ -1103,13 +1127,24 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 		// 如果右操作数是临时变量，可优化掉当前的赋值语句。详见《Appendix1 设计备注》
 		if(Quaternary::TEMPORARY_OPERAND == right_attribute.operandtype_)
 		{
-			Quaternary q_last = quaternarytable_.back();
+			Quaternary &q_last = quaternarytable_.back();
 			q_last.type3_ = Quaternary::VARIABLE_OPERAND;
 			q_last.dst_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
-			quaternarytable_.pop_back();
-			quaternarytable_.push_back(q_last);
+			//quaternarytable_.pop_back();
+			//quaternarytable_.push_back(q_last);
 			// 回收右操作数的临时变量
 			--tempvar_index_;
+			// 这里对max_local_temp_count_的优化是不准确的
+			// 因为即使本次的临时变量被优化掉了，但可能以前会用到该临时变量
+			// 所以不能在这里优化max_local_temp_count_
+			//// 检查，是否因为优化而少用了一个临时变量
+			//// 如果是的话，要对max_local_temp_count_进行更新
+			//if((Quaternary::TEMPORARY_OPERAND != q_last.type1_ || tempvar_index_ != q_last.src1_)		// 若src1操作数不是回收的临时变量
+			//	&& (Quaternary::TEMPORARY_OPERAND != q_last.type2_ || tempvar_index_ != q_last.src2_))	// 若src2操作数不是回收的临时变量
+			//{
+			//	// 说明回收的临时变量是上一条四元式新申请的
+			//	--max_local_temp_count_;
+			//}
 		}
 		else
 		{
@@ -1267,6 +1302,11 @@ ExpressionAttribute SyntaxAnalyzer::Expression(int depth) throw()				// 表达式
 		{
 			q_term.type3_ = Quaternary::TEMPORARY_OPERAND;
 			q_term.dst_ = tempvar_index_++;
+			// 更新最大临时变量个数
+			if(tempvar_index_ > max_local_temp_count_)
+			{
+				max_local_temp_count_ = tempvar_index_;
+			}
 		}
 		// 保存四元式
 		quaternarytable_.push_back(q_term);
@@ -1370,6 +1410,11 @@ ExpressionAttribute SyntaxAnalyzer::Term(int depth) throw()						// 项
 		{
 			q_factor.type3_ = Quaternary::TEMPORARY_OPERAND;
 			q_factor.dst_ = tempvar_index_++;
+			// 更新最大临时变量个数
+			if(tempvar_index_ > max_local_temp_count_)
+			{
+				max_local_temp_count_ = tempvar_index_;
+			}
 		}
 		// 保存四元式
 		quaternarytable_.push_back(q_factor);
@@ -1511,11 +1556,22 @@ ExpressionAttribute SyntaxAnalyzer::Factor(int depth) throw()					// 因子
 				Quaternary::PROC_FUNC_INDEX, distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter)));
 			quaternarytable_.push_back(q_functioncall);
 			FunctionCallStatement(idToken, decorate_types, depth + 1);
-			// Important! 
-			// 约定好，函数的返回值放置在temp#tempvar_index的位置
-			// 所以factor_attribute自己的类型与值都是临时变量的类型
+			// 在正常处理流程中，希望将函数的返回值放置在temp#tempvar_index的位置
+			// 但在子函数中，无法判定temp#tempvar_index的位置
+			// 所以子函数将返回值存储在EAX中，再加一条指令，将EAX的值存进某个变量中
+			Quaternary q_store(Quaternary::STORE, 
+				Quaternary::NIL_OPERAND, 0,
+				Quaternary::NIL_OPERAND, 0, 
+				Quaternary::TEMPORARY_OPERAND, tempvar_index_++);
+			quaternarytable_.push_back(q_store);
+			// 更新最大临时变量个数
+			if(tempvar_index_ > max_local_temp_count_)
+			{
+				max_local_temp_count_ = tempvar_index_;
+			}
+			// 所以factor_attribute的属性是临时变量
 			factor_attribute.operandtype_ = Quaternary::TEMPORARY_OPERAND;
-			factor_attribute.value_ = tempvar_index_++;
+			factor_attribute.value_ = q_store.dst_;
 			factor_attribute.offset_operandtype_ = Quaternary::NIL_OPERAND;
 			factor_attribute.offset_ = 0;
 		}
@@ -2581,11 +2637,31 @@ void SyntaxAnalyzer::SimplifyArrayOperand(ExpressionAttribute &attribute) throw(
 		else
 		{
 			q_subscript2temp.dst_ = tempvar_index_++;
+			// 更新最大临时变量个数
+			if(tempvar_index_ > max_local_temp_count_)
+			{
+				max_local_temp_count_ = tempvar_index_;
+			}
 		}
 		quaternarytable_.push_back(q_subscript2temp);
 		attribute.operandtype_ = Quaternary::TEMPORARY_OPERAND;
 		attribute.value_ = q_subscript2temp.dst_;
 		attribute.offset_operandtype_ = Quaternary::NIL_OPERAND;
 		attribute.offset_ = 0;
+	}
+}
+
+// 修改在符号表的位置proc_func_index处的过程/函数对应的四元式的BEGIN语句，设置其临时变量的数量
+void SyntaxAnalyzer::SetTempVarCount(int proc_func_index, int max_tempvar_count) throw()
+{
+	for(vector<Quaternary>::reverse_iterator r_iter = quaternarytable_.rbegin();
+		r_iter != quaternarytable_.rend(); ++r_iter)
+	{
+		if(Quaternary::BEGIN == r_iter->op_
+			&& proc_func_index == r_iter->dst_)
+		{
+			r_iter->src2_ = max_tempvar_count;
+			return;
+		}
 	}
 }

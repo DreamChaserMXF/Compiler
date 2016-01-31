@@ -24,11 +24,13 @@ private:
 	void DataSegment() throw();
 	void CodeBeginSegment() throw();
 	void MainFunction() throw();
-	void OtherFunction(int var_space, vector<Quaternary>::const_iterator func_begin) throw();
-	void OtherProcedure(int var_space, vector<Quaternary>::const_iterator proc_begin) throw();
+	void OtherFunction(TokenTable::const_iterator c_iter) throw();
+	void EndStatement() throw();
+	void TranslateQuaternary(vector<Quaternary>::const_iterator &c_iter) const throw();
 
 	int GetVariableSpace(TokenTable::const_iterator c_iter) const throw();
 	vector<Quaternary>::const_iterator GetProcFuncIterInQuaternaryTable(TokenTable::const_iterator c_iter) const throw();
+	vector<Quaternary>::const_iterator GetFunctionBody(vector<Quaternary>::const_iterator begin_iter) const throw();
 
 	const vector<Quaternary> &quaternarytable_;
 	const TokenTable &tokentable_;

@@ -9,7 +9,7 @@ TokenTable::TokenTable() throw() : rows_(), subroutine_tokentableindex_stack_(),
 { 
 	
 	subroutine_tokentableindex_stack_.push(0);// 这行有必要，因为在SearchDefinitionInCurrentLevel的时候要用到top元素
-	subroutine_tokentableaddr_stack_.push(0);		// 这行似乎没有必要
+	subroutine_tokentableaddr_stack_.push(0); // 这行似乎没有必要
 }
 
 TokenTableItem TokenTable::at(int index) const throw(std::out_of_range)
@@ -61,7 +61,8 @@ bool TokenTable::SearchDefinitionInCurrentLevel(const string &name) throw()
 }
 
 
-// 查找name的定义处
+// 查找token的定义处
+// 重载是因为const函数和非const函数返回的迭代器类型不同
 TokenTable::iterator TokenTable::SearchDefinition(const Token &token) throw()
 {
 	// 先在当前层寻找定义
@@ -124,6 +125,7 @@ TokenTable::iterator TokenTable::SearchDefinition(const Token &token) throw()
 }
 
 // 查找name的定义处
+// 重载是因为const函数和非const函数返回的迭代器类型不同
 TokenTable::const_iterator TokenTable::SearchDefinition(const Token &token) const throw()
 {
 	// 先在当前层寻找定义
@@ -201,7 +203,8 @@ size_t TokenTable::size() const throw()
 	return rows_.size();
 }
 
-// 通过过程/函数的迭代器，返回过程/函数的参数
+// 通过过程/函数的迭代器，返回过程/函数的参数的修饰类型
+// iter指向符号表中的过程/函数项
 vector<TokenTableItem::DecorateType> TokenTable::GetProcFuncParameter(const_iterator iter) throw()
 {
 	assert(iter != rows_.end());
@@ -271,6 +274,7 @@ int TokenTable::AddFunctionItem(Token functionIdentifier, int level) throw()
 	rows_.push_back(item);
 	return rows_.size() - 1;
 }
+// 设置过程/函数的参数个数
 void TokenTable::SetParameterCount(const string &proc_func_name, int parameterCount) throw()
 {
 	reverse_iterator iter = rows_.rbegin();
@@ -291,7 +295,6 @@ void TokenTable::SetFunctionReturnType(const string &func_name, TokenTableItem::
 	assert(iter != rows_.rend());
 	iter->decoratetype_ = decoratetype_;
 }
-
 
 void TokenTable::AddParameterItem(Token parameterIdentifier, TokenTableItem::DecorateType decoratetype_, int level) throw()
 {

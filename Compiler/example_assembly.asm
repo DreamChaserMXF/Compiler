@@ -22,4 +22,23 @@ scanf  PROTO C: ptr sbyte, :vararg
 
 .start:
 
-main:  proc far
+_main:  proc far
+
+    push    0
+    call    ExitProcess
+_main:  endp
+
+
+_sumP      proc near
+
+_sumP      endp
+
+_sumF      proc near
+
+_sumF      endp
+
+_sumFF     proc near
+
+_sumFF     endp
+
+.end start
