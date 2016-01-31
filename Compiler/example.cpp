@@ -48,9 +48,28 @@ begin
 	for j := i to 10 * 10 - 1
 	do
 	begin
-		sequence[j] := j + sequence[j - 1]
+		sequence[j] := j + sequence[j - 1];
+		if 0 = sequence[j]
+		then break;
+		if 1 = sequence[j]
+		then
+		else continue
 	end;
 	sequence[1] := -sequence[1];
+	
+	while i < 10
+	do
+	begin
+		i := i + 1;
+		if 3 = i
+		then 
+		begin
+			i := i + 2;
+		end
+		else if 5 = i
+		then break
+		else continue
+	end	;
 	
 	sequence[sequence[0]] := sequence[sequence[1] + sequence[2] + sequence[1+2]];
 	i := 'a';// hehe

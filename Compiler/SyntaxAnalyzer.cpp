@@ -10,9 +10,14 @@
 
 #define SYNTAXDEBUG
 
-SyntaxAnalyzer::SyntaxAnalyzer(LexicalAnalyzer &lexical_analyzer, const vector<string> &stringtable, TokenTable &tokentable, vector<Quaternary> &quaternarytable)  throw()
+SyntaxAnalyzer::SyntaxAnalyzer(LexicalAnalyzer &lexical_analyzer, 
+								const vector<string> &stringtable, 
+								TokenTable &tokentable, 
+								vector<Quaternary> &quaternarytable) 
+								throw()
 	: lexical_analyzer_(lexical_analyzer), stringtable_(stringtable), tokentable_(tokentable), quaternarytable_(quaternarytable), 
-	  token_(), level_(0), tempvar_index_(0), label_index_(0), is_successful_(true), syntax_info_buffer_(), syntax_assist_buffer_(), tokenbuffer_()
+	token_(), level_(0), tempvar_index_(0), label_index_(0), continue_label_(), break_label_(), 
+	is_successful_(true), syntax_info_buffer_(), syntax_assist_buffer_(), tokenbuffer_()
 {}
 
 
@@ -859,7 +864,8 @@ void SyntaxAnalyzer::StatementBlockPart(int depth) throw()	// 复合语句
 	lexical_analyzer_.GetNextToken(token_);
 }
 
-// <语句> ::= <标识符>(<赋值语句>|<过程调用语句>)|<条件语句>|<情况语句>|<复合语句>|<读语句>|<写语句>|<while循环语句>|<for循环语句>|<空>
+// <语句> ::= <标识符>(<赋值语句>|<过程调用语句>)|<条件语句>|<情况语句>|<复合语句>
+// |<读语句>|<写语句>|<while循环语句>|<for循环语句>|<循环继续语句>|<循环退出语句>|<空>
 void SyntaxAnalyzer::Statement(int depth) throw()
 {
 	PrintFunctionFrame("Statement()", depth);
@@ -951,18 +957,25 @@ void SyntaxAnalyzer::Statement(int depth) throw()
 	case Token::FOR:
 		ForLoopStatement(depth + 1);
 		break;
+	case Token::CONTINUE:
+		ContinueStatement(depth + 1);
+		break;
+	case Token::BREAK:
+		BreakStatement(depth + 1);
+		break;
 		// 检测空语句是否合法（应该合法）
 	case Token::SEMICOLON:	// 空语句
 	case Token::END:		// 空语句
-		break;
 	default:
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  syntax error at the beginning of Statement\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
 		break;
+	//default:
+	//	std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  syntax error at the beginning of Statement\n";
+	//	is_successful_ = false;
+	//	while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
+	//	{ 
+	//		lexical_analyzer_.GetNextToken(token_);
+	//	}
+	//	break;
 	}
 }
 
@@ -975,7 +988,7 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 	// 为四元式生成而定义的变量
 	bool assign2array= false;	// 是否为对数组的赋值操作
 	
-	ExpressionAttribute offset_attribute;	// 当对数组元素赋值时，存储偏移量的属性
+	ExpressionAttribute offset_attribute;	// 当对数组元素赋值时，存储偏移量（数组下标）的属性
 
 	if(Token::LEFT_BRACKET == token_.type_)	// 对数组元素赋值
 	{
@@ -993,7 +1006,7 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 		}
 		// 读入表示下标的表达式
 		lexical_analyzer_.GetNextToken(token_);
-		offset_attribute = Expression(depth + 1);	// 这里的结果一定是在temp#tempvar_index_中存储的
+		offset_attribute = Expression(depth + 1);
 		// 若数组下标仍是数组元素
 		// 则插入四元式，将数组下标值赋给一个临时变量
 		SimplifyArrayOperand(offset_attribute);
@@ -1087,27 +1100,41 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 	else if(TokenTableItem::PARAMETER == iter->itemtype_
 			|| TokenTableItem::VARIABLE == iter->itemtype_)	// 普通变量/参数的赋值
 	{
-		Quaternary q_asg;
-		q_asg.op_ = Quaternary::ASG;
-		q_asg.type1_ = right_attribute.operandtype_;
-		q_asg.src1_ = right_attribute.value_;
-		q_asg.type2_ = right_attribute.offset_operandtype_;
-		q_asg.offset2_ = right_attribute.offset_;
-		q_asg.type3_ = Quaternary::VARIABLE_OPERAND;
-		q_asg.dst_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
-		quaternarytable_.push_back(q_asg);
-		// 如果右操作数是临时变量，可回收
+		// 如果右操作数是临时变量，可优化掉当前的赋值语句。详见《Appendix1 设计备注》
 		if(Quaternary::TEMPORARY_OPERAND == right_attribute.operandtype_)
 		{
+			Quaternary q_last = quaternarytable_.back();
+			q_last.type3_ = Quaternary::VARIABLE_OPERAND;
+			q_last.dst_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
+			quaternarytable_.pop_back();
+			quaternarytable_.push_back(q_last);
+			// 回收右操作数的临时变量
 			--tempvar_index_;
 		}
-		// 如果右操作数是数组，且其数组下标是临时变量，可回收
-		else if(Quaternary::TEMPORARY_OPERAND == offset_attribute.offset_operandtype_)
+		else
 		{
-			// 这里有一个程序鲁棒性的假定，即如果operandtype_不是ARRAY的话，那么operandtype_一定是NIL_OPERAND
-			// 所以用下面的assert检测一下程序逻辑有无问题
-			assert(Quaternary::ARRAY_OPERAND == offset_attribute.operandtype_);
-			--tempvar_index_;
+			Quaternary q_asg;
+			q_asg.op_ = Quaternary::ASG;
+			q_asg.type1_ = right_attribute.operandtype_;
+			q_asg.src1_ = right_attribute.value_;
+			q_asg.type2_ = right_attribute.offset_operandtype_;
+			q_asg.offset2_ = right_attribute.offset_;
+			q_asg.type3_ = Quaternary::VARIABLE_OPERAND;
+			q_asg.dst_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
+			quaternarytable_.push_back(q_asg);
+			//// 如果右操作数是临时变量，可回收
+			//if(Quaternary::TEMPORARY_OPERAND == right_attribute.operandtype_)
+			//{
+			//	--tempvar_index_;
+			//}
+			// 如果右操作数是数组，且其数组下标是临时变量，可回收
+			if(Quaternary::TEMPORARY_OPERAND == offset_attribute.offset_operandtype_)
+			{
+				// 这里有一个程序鲁棒性的假定，即如果operandtype_不是ARRAY的话，那么operandtype_一定是NIL_OPERAND
+				// 所以用下面的assert检测一下程序逻辑有无问题
+				assert(Quaternary::ARRAY_OPERAND == offset_attribute.operandtype_);
+				--tempvar_index_;
+			}
 		}
 	}
 	else	// 函数返回值
@@ -1508,7 +1535,7 @@ ExpressionAttribute SyntaxAnalyzer::Factor(int depth) throw()					// 因子
 			// factor_attribute的属性
 			if(TokenTableItem::CONST == iter->itemtype_)	// 常变量
 			{
-				// 这里直接将常变量转换成常数类型，详见《F1 设计备注》
+				// 这里直接将常变量转换成常数类型，详见《Appendix1 设计备注》
 				factor_attribute.operandtype_ = Quaternary::IMMEDIATE_OPERAND;
 				factor_attribute.value_ = iter->value_;
 				factor_attribute.offset_operandtype_ = Quaternary::NIL_OPERAND;
@@ -2099,12 +2126,16 @@ void SyntaxAnalyzer::WhileLoopStatement(int depth) throw()			// while循环语句
 	// 申请条件语句前面的label<check>和结束时的label<end>
 	int checklabel = label_index_++;
 	int endlabel = label_index_++;
+	// 更新continue_label_栈与break_label_栈
+	continue_label_.push(checklabel);
+	break_label_.push(endlabel);
 	// 放下label<check>
 	Quaternary q_checklabel(Quaternary::LABEL,
 		Quaternary::NIL_OPERAND, 0,
 		Quaternary::NIL_OPERAND, 0,
 		Quaternary::IMMEDIATE_OPERAND, checklabel);
 	quaternarytable_.push_back(q_checklabel);
+	
 	// 读取下一个单词，并进入条件语句
 	lexical_analyzer_.GetNextToken(token_);
 	Condition(endlabel, depth + 1);	// 条件语句中会执行动作@JZLabel<end>
@@ -2123,6 +2154,9 @@ void SyntaxAnalyzer::WhileLoopStatement(int depth) throw()			// while循环语句
 	lexical_analyzer_.GetNextToken(token_);
 	// 读入循环体
 	Statement(depth + 1);
+	// 更新continue_label_栈与break_label_栈
+	continue_label_.pop();
+	break_label_.pop();
 	// 循环体结束后的跳转
 	Quaternary q_jmp(Quaternary::JMP,
 		Quaternary::NIL_OPERAND, 0,
@@ -2219,6 +2253,9 @@ void SyntaxAnalyzer::ForLoopStatement(int depth) throw()			// for循环语句
 	int varylabel = label_index_++;
 	int checklabel = label_index_++;
 	int endlabel = label_index_++;
+	// 更新continue_label_栈与break_label_栈
+	continue_label_.push(varylabel);
+	break_label_.push(endlabel);
 	// 生成for的循环变量的初始化（赋值）四元式
 	Quaternary q_init(Quaternary::ASG,
 		init_attribute.operandtype_, init_attribute.value_,
@@ -2288,7 +2325,9 @@ void SyntaxAnalyzer::ForLoopStatement(int depth) throw()			// for循环语句
 	lexical_analyzer_.GetNextToken(token_);
 	// 读取循环体
 	Statement(depth + 1);
-
+	// 更新continue_label_栈与break_label_栈
+	continue_label_.pop();
+	break_label_.pop();
 	// 跳转回循环变量递增/减的label<vary>
 	Quaternary q_jmpvary(Quaternary::JMP,
 		Quaternary::NIL_OPERAND, 0,
@@ -2302,6 +2341,58 @@ void SyntaxAnalyzer::ForLoopStatement(int depth) throw()			// for循环语句
 		Quaternary::IMMEDIATE_OPERAND, endlabel);
 	quaternarytable_.push_back(q_endlabel);
 }
+
+void SyntaxAnalyzer::ContinueStatement(int depth) throw()	// continue
+{
+	assert(Token::CONTINUE == token_.type_);
+	if(continue_label_.size() != 0)
+	{
+		Quaternary q_continue(Quaternary::JMP,
+			Quaternary::NIL_OPERAND, 0,
+			Quaternary::NIL_OPERAND, 0,
+			Quaternary::IMMEDIATE_OPERAND, continue_label_.top());
+		quaternarytable_.push_back(q_continue);
+	}
+	else
+	{
+		// 报错
+		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  no loop body found around \"continue\"\n";
+		is_successful_ = false;
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
+		{ 
+			lexical_analyzer_.GetNextToken(token_);
+		}
+		return;
+	}
+	// 读入下一个单词并返回
+	lexical_analyzer_.GetNextToken(token_);
+}
+void SyntaxAnalyzer::BreakStatement(int depth) throw()		// break
+{
+	assert(Token::BREAK == token_.type_);
+	if(break_label_.size() != 0)
+	{
+		Quaternary q_break(Quaternary::JMP,
+			Quaternary::NIL_OPERAND, 0,
+			Quaternary::NIL_OPERAND, 0,
+			Quaternary::IMMEDIATE_OPERAND, break_label_.top());
+		quaternarytable_.push_back(q_break);
+	}
+	else
+	{
+		// 报错
+		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  no loop body found around \"break\"\n";
+		is_successful_ = false;
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
+		{ 
+			lexical_analyzer_.GetNextToken(token_);
+		}
+		return;
+	}
+	// 读入下一个单词并返回
+	lexical_analyzer_.GetNextToken(token_);
+}
+
 
 // <过程调用语句> ::= '('[<实在参数表>]')'
 void SyntaxAnalyzer::ProcedureCallStatement(const Token proc_token, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, int depth)	// 过程调用语句

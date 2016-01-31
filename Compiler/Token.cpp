@@ -77,6 +77,8 @@ map<Token::TokenType, string> Token::InitTokenTypeToStringMap() throw()
 	tsMap.insert(map<TokenType,string>::value_type(DOWNTO,				"DOWNTO"				));
 	tsMap.insert(map<TokenType,string>::value_type(TO,					"TO"					));
 	tsMap.insert(map<TokenType,string>::value_type(DO,					"DO"					));
+	tsMap.insert(map<TokenType,string>::value_type(CONTINUE,			"CONTINUE"				));
+	tsMap.insert(map<TokenType,string>::value_type(BREAK,				"BREAK"					));
 	tsMap.insert(map<TokenType,string>::value_type(BEGIN,				"BEGIN"					));
 	tsMap.insert(map<TokenType,string>::value_type(END,					"END"					));
 	tsMap.insert(map<TokenType,string>::value_type(READ,				"READ"					));
@@ -130,6 +132,8 @@ map<string, Token::TokenType> Token::InitReserveWordToTokenTypeMap() throw()
 	stMap.insert(map<string, TokenType>::value_type("downto",		DOWNTO		));	
 	stMap.insert(map<string, TokenType>::value_type("to",			TO			));	
 	stMap.insert(map<string, TokenType>::value_type("do",			DO			));	
+	stMap.insert(map<string, TokenType>::value_type("continue",		CONTINUE	));	
+	stMap.insert(map<string, TokenType>::value_type("break",		BREAK		));	
 	stMap.insert(map<string, TokenType>::value_type("begin",		BEGIN		));	
 	stMap.insert(map<string, TokenType>::value_type("end",			END			));	
 	stMap.insert(map<string, TokenType>::value_type("read",			READ		));	

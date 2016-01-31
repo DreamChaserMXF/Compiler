@@ -54,7 +54,7 @@ void AssemblyMaker::Head() throw()
 	// 标题
 	assemble_buffer << "TITLE MXF_AssemblyCode\n";
 	
-	// 指令模式（16/32位），寻址模式（平坦寻址），大小写模式（敏感）
+	// 指令模式（32位），寻址模式（平坦寻址），大小写模式（敏感）
 	assemble_buffer << "\n.386";
 	assemble_buffer << "\n.model flat, stdcall";
 	assemble_buffer << "\noption casemap: none\n";

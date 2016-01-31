@@ -1,10 +1,15 @@
 #ifndef SYNTAXANALYZER_H
 #define SYNTAXANALYZER_H
 
+#include <stack>
+using std::stack;
+
 #include "LexicalAnalyzer.h"
 #include "TokenTable.h"
 #include "Quaternary.h"
 #include "ExpressionAttribute.h"
+
+
 
 class SyntaxAnalyzer
 {
@@ -50,8 +55,10 @@ private:
 	vector<int> CaseElement(const ExpressionAttribute &exp_attribute, int caselabel, int endlabel, int depth) throw();				// 情况表元素
 	void ReadStatement(int depth) throw();			// 读语句
 	void WriteStatement(int depth) throw();			// 写语句
-	void WhileLoopStatement(int depth) throw();		// for循环语句
+	void WhileLoopStatement(int depth) throw();		// while循环语句
 	void ForLoopStatement(int depth) throw();		// for循环语句
+	void ContinueStatement(int depth) throw();	// continue
+	void BreakStatement(int depth) throw();		// break
 	void ProcedureCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, int depth) throw();	// 过程调用语句
 	void FunctionCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, int depth) throw();	// 函数调用语句
 
@@ -61,13 +68,14 @@ private:
 	LexicalAnalyzer &lexical_analyzer_;		// 绑定的词法分析器
 	TokenTable &tokentable_;				// 绑定的符号表
 	const vector<string> &stringtable_;		// 绑定的常量字符表
-	vector<Quaternary> &quaternarytable_;		// 四元式表
+	vector<Quaternary> &quaternarytable_;	// 四元式表
 
 	Token token_;							// 当前解析的token_
 	int level_;								// 当前的分程序层次。初始值为0
-//	int quaternary_index;					// 下一条生成的四元式的下标（初始为0）
 	int tempvar_index_;						// 将要使用的下一个临时变量的下标
 	int label_index_;						// 将要使用的下一个label的下标
+	stack<int> continue_label_;	// continue语句的跳转标号栈
+	stack<int> break_label_;		// breal语句的跳转标号栈
 
 	bool is_successful_;					// 语法分析是否成功
 
