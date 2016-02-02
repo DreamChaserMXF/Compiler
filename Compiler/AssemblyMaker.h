@@ -19,7 +19,6 @@ public:
 private:
 	AssemblyMaker(const AssemblyMaker &) throw();
 	enum REGISTER{EAX, EDX};
-	static const char * const RegisterName[2];
 
 	void Head() throw();
 	void StackSegment() throw();
@@ -28,18 +27,17 @@ private:
 	void MainFunction() throw();
 	void OtherFunction(TokenTable::const_iterator c_iter) throw();
 	void EndStatement() throw();
-	
 	vector<Quaternary>::const_iterator GetProcFuncIterInQuaternaryTable(TokenTable::const_iterator c_iter) const throw();
+	
 	void TranslateQuaternary(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 
-	//void TranslateNEG(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateNeg(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateAdd(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	//void TranslateSub(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateSub(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	//void TranslateMul(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	//void TranslateDiv(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateAssign(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateArrayAssign(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	//void TranslateStore(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 
 	//void TranslateJmp(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	//void TranslateJe(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
@@ -49,11 +47,12 @@ private:
 	//void TranslateJl(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	//void TranslateJnl(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	//
+	//void TranslateSetP(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateCall(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateRet(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateStore(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	//void TranslateRead(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateWrite(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	//void TranslateSetP(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	//void TranslateRet(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	//
 	//void TranslateLabel(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 
@@ -67,6 +66,10 @@ private:
 	void StoreVar(int tokentable_index, int para_num, int level) throw();
 	void StoreArray(int tokentable_index, int array_offset, int para_num, int level) throw();
 	void StoreTemp(int index, int var_space) throw();
+
+	string FindExitLabel(vector<Quaternary>::const_iterator c_iter) throw();
+
+	static const char * const RegisterName[2];	// ¼Ä´æÆ÷Ãû
 
 	const vector<Quaternary> &quaternarytable_;
 	const TokenTable &tokentable_;

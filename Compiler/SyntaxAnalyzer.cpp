@@ -1139,27 +1139,14 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 	else if(TokenTableItem::PARAMETER == iter->itemtype_
 			|| TokenTableItem::VARIABLE == iter->itemtype_)	// 普通变量/参数的赋值
 	{
-		// 如果右操作数是临时变量，可优化掉当前的赋值语句。详见《Appendix1 设计备注》
+		// 如果赋值号右边的表达式是临时变量，则可优化掉当前的赋值语句。
+		// 详见《Appendix1 设计备注》 - chapter 4
 		if(Quaternary::TEMPORARY_ADDRESSING == right_attribute.addressingmethod_)
 		{
-			Quaternary &q_last = quaternarytable_.back();
-			q_last.method3_ = Quaternary::VARIABLE_ADDRESSING;
-			q_last.dst_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
-			//quaternarytable_.pop_back();
-			//quaternarytable_.push_back(q_last);
+			quaternarytable_.back().method3_ = Quaternary::VARIABLE_ADDRESSING;
+			quaternarytable_.back().dst_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
 			// 回收右操作数的临时变量
 			--tempvar_index_;
-			// 这里对max_local_temp_count_的优化是不准确的
-			// 因为即使本次的临时变量被优化掉了，但可能以前会用到该临时变量
-			// 所以不能在这里优化max_local_temp_count_
-			//// 检查，是否因为优化而少用了一个临时变量
-			//// 如果是的话，要对max_local_temp_count_进行更新
-			//if((Quaternary::TEMPORARY_ADDRESSING != q_last.method1_ || tempvar_index_ != q_last.src1_)		// 若src1操作数不是回收的临时变量
-			//	&& (Quaternary::TEMPORARY_ADDRESSING != q_last.method2_ || tempvar_index_ != q_last.src2_))	// 若src2操作数不是回收的临时变量
-			//{
-			//	// 说明回收的临时变量是上一条四元式新申请的
-			//	--max_local_temp_count_;
-			//}
 		}
 		else
 		{
@@ -1221,7 +1208,7 @@ ExpressionAttribute SyntaxAnalyzer::Expression(int depth) throw()				// 表达式
 	if(	Token::PLUS == token_.type_
 		|| Token::MINUS == token_.type_)
 	{
-		if(Token::MINUS == token_.type_)	// 如果是减号，就要生成一项四元式
+		if(Token::MINUS == token_.type_)	// 如果是减号，就可能会生成一项四元式
 		{
 			q_neg.op_ = Quaternary::NEG;
 		}
@@ -1236,13 +1223,27 @@ ExpressionAttribute SyntaxAnalyzer::Expression(int depth) throw()				// 表达式
 		{
 			first_term.value_ = -first_term.value_;
 		}
-		else		// 生成NEG的四元式
+		else	// 生成NEG的四元式
 		{
+			q_neg.method1_ = first_term.addressingmethod_;
+			q_neg.src1_ = first_term.value_;
 			q_neg.method2_ = first_term.offset_addressingmethod_;
 			q_neg.offset2_ = first_term.offset_;
-			q_neg.method3_ = first_term.addressingmethod_;
-			q_neg.dst_ = first_term.value_;
+			q_neg.method3_ = Quaternary::TEMPORARY_ADDRESSING;
+			if(Quaternary::TEMPORARY_ADDRESSING == q_neg.method1_)
+			{
+				q_neg.dst_ = q_neg.src1_;
+			}
+			else
+			{
+				q_neg.dst_ = tempvar_index_++;
+			}
 			quaternarytable_.push_back(q_neg);
+			// 修改first_term的属性(NEG操作不影响decoratetype)
+			first_term.addressingmethod_ = Quaternary::TEMPORARY_ADDRESSING;
+			first_term.value_ = q_neg.dst_;
+			first_term.offset_addressingmethod_ = Quaternary::NIL_ADDRESSING;
+			first_term.offset_ = 0;
 		}
 	}
 

@@ -149,7 +149,7 @@ void AssemblyMaker::OtherFunction(TokenTable::const_iterator c_iter) throw()
 	//assemble_buffer << "\n_" << std::setiosflags(ios::right)<< std::setw(8) << c_iter->name_ << "  proc near";
 	//assemble_buffer.width(8);
 	//assemble_buffer.setf(std::ios::left);
-	assemble_buffer << "\n_" << c_iter->name_ << "  proc near";
+	assemble_buffer << "\n_" << c_iter->name_ << distance(tokentable_.begin(), c_iter) <<"  proc near";
 	assemble_buffer << "\n    push    ebp"
 					<< "\n    mov     ebp,   esp"
 					<< "\n    sub     esp,   " << 4 * (var_space + temp_space);
@@ -163,7 +163,9 @@ void AssemblyMaker::OtherFunction(TokenTable::const_iterator c_iter) throw()
 		TranslateQuaternary(q_iter, para_space, var_space, c_iter->level_);	
 	}
 	// 七. 输出函数尾
-	assemble_buffer << '\n';
+	// 函数返回的标号，使得在函数体中，任意地方返回时，只要跳转到这个标号就可以了
+	assemble_buffer << '\n' << c_iter->name_ << distance(tokentable_.begin(), c_iter) << "_Exit:";
+	// 函数返回语句
 	assemble_buffer << "\n    add     esp,   " << 4 * (var_space + temp_space)	// 还原栈顶指针
 					<< "\n    pop     ebp"
 					<< "\n    ret";
@@ -171,7 +173,7 @@ void AssemblyMaker::OtherFunction(TokenTable::const_iterator c_iter) throw()
 //	assemble_buffer.width(8);
 //	assemble_buffer.setf(std::ios::left);
 	//assemble_buffer << "\n_" << std::setiosflags(ios::left)<< std::setw(8) << c_iter->name_ << "  endp\n";
-	assemble_buffer << "\n_" << c_iter->name_ << "  endp\n";
+	assemble_buffer << "\n_" << c_iter->name_ << distance(tokentable_.begin(), c_iter) << "  endp\n";
 }
 
 void AssemblyMaker::EndStatement() throw()
@@ -216,10 +218,19 @@ void AssemblyMaker::TranslateQuaternary(vector<Quaternary>::const_iterator &c_it
 	switch(c_iter->op_)
 	{
 	case Quaternary::NEG:
-		//TranslateNeg(c_iter, para_num, var_space, level);
+		TranslateNeg(c_iter, para_num, var_space, level);
 		break;
 	case Quaternary::ADD:
 		TranslateAdd(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::SUB:
+		TranslateSub(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::MUL:
+		//TranslateMul(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::DIV:
+		//TranslateDiv(c_iter, para_num, var_space, level);
 		break;
 	case Quaternary::ASG:
 		TranslateAssign(c_iter, para_num, var_space, level);
@@ -227,19 +238,76 @@ void AssemblyMaker::TranslateQuaternary(vector<Quaternary>::const_iterator &c_it
 	case Quaternary::AASG:
 		TranslateArrayAssign(c_iter, para_num, var_space, level);
 		break;
-	case Quaternary::WRITE:
-		TranslateWrite(c_iter, para_num, var_space, level);
+	
+	case Quaternary::JMP:
+		//TranslateJmp(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::JE:
+		//TranslateJe(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::JNE:
+		//TranslateJne(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::JG:
+		//TranslateJg(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::JNG:
+		//TranslateJng(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::JL:
+		//TranslateJl(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::JNL:
+		//TranslateJnl(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::SETP:
+		//TranslateSetP(c_iter, para_num, var_space, level);
 		break;
 	case Quaternary::PROC_CALL:
 	case Quaternary::FUNC_CALL:
 		TranslateCall(c_iter, para_num, var_space, level);
 		break;
+	case Quaternary::RET:
+		TranslateRet(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::STORE:
+		TranslateStore(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::READ:
+		//TranslateRead(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::WRITE:
+		TranslateWrite(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::LABEL:
+		//TranslateLabel(c_iter, para_num, var_space, level);
+		break;
+	// 以下三种情况不出现
+	case Quaternary::BEGIN:
+	case Quaternary::END:
 	default:
+		assert(false);
 		break;
 	}
 }
 
+// dst = -src1[offset]
+// 源操作数可能是普通变量、数组变量或临时变量
+// 注意，如果源操作数是立即数，则不需要装载至EAX再取反，而是直接在编译过程中取反，再存储至内存，这样可以只用一条汇编指令
+// 然而，聪明的我已经在中间代码生成时，优化掉了立即数的取反，所以这里的源操作数不可能是立即数
+void AssemblyMaker::TranslateNeg(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+{
+	assert(Quaternary::IMMEDIATE_ADDRESSING != c_iter->method1_);	// 不信我们试试看？
+	// 装载源操作数至EAX
+	LoadGeneral(c_iter->method1_, c_iter->src1_, c_iter->offset2_, para_num, var_space, level, EAX);
+	// 取反
+	assemble_buffer << "\n    neg     eax";
+	// 将EAX存回内存
+	StoreGeneral(c_iter->method3_, c_iter->dst_, 0, para_num, var_space, level);
+}
+
 // Add的左右操作数只可能是：立即数、普通变量、临时变量，不会是数组
+// 且不可能两个同时是立即数（已在expression的中间代码生成中优化）
 // 目的操作数只可能是普通变量或临时变量
 void AssemblyMaker::TranslateAdd(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
@@ -365,6 +433,30 @@ void AssemblyMaker::TranslateAdd(vector<Quaternary>::const_iterator &c_iter, int
 	//}
 }
 
+// 减法
+// 两个源操作数都不可能是数组（指令格式不支持）
+// 也都不可能是常数（中间代码生成时在Expression项被优化）
+void AssemblyMaker::TranslateSub(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+{
+	// 装载被减数到EAX
+	LoadGeneral(c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level, EAX);
+	// 根据减数是否为立即数，进行处理
+	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)
+	{
+		// EAX 减去立即数
+		assemble_buffer << "\n    sub     eax, " << c_iter->src2_;
+	}
+	else
+	{
+		// 装载第二个操作数到EDX
+		LoadGeneral(c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level, EDX);
+		// EAX 减去 EDX
+		assemble_buffer << "\n    sub     eax, edx";
+	}
+	// 存储结果
+	StoreGeneral(c_iter->method3_, c_iter->dst_, 0, para_num, var_space, level);
+}
+
 // 赋值语句
 // 源操作数可以是立即数、普通变量、临时变量和数组元素
 // 目的操作数可以是普通变量和临时变量
@@ -472,6 +564,13 @@ void AssemblyMaker::TranslateArrayAssign(vector<Quaternary>::const_iterator &c_i
 	
 }
 
+// 将EAX的数据储存起来
+// 用在函数调用返回后，取得函数的返回值
+// 储存的目的一般是临时变量，在优化过后也可能是普通变量，但不可能是数组或立即数
+void AssemblyMaker::TranslateStore(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+{
+	StoreGeneral(c_iter->method3_, c_iter->dst_, 0, para_num, var_space, level);
+}
 
 void AssemblyMaker::TranslateWrite(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
@@ -588,12 +687,20 @@ void AssemblyMaker::TranslateCall(vector<Quaternary>::const_iterator &c_iter, in
 	// 三. 调整栈顶指针
 	assemble_buffer << "\n    sub     esp, " << 4 * subfunc_level;
 	// 三. call调用
-	assemble_buffer << "\n    call    _" << tokentable_.at(c_iter->dst_).name_;
+	assemble_buffer << "\n    call    _" << tokentable_.at(c_iter->dst_).name_ << c_iter->dst_;
 	// 四. 恢复栈顶指针
 	int subfunc_para_num = tokentable_.GetParameterNum(c_iter->dst_);
 	assemble_buffer  << "\n    add     esp, " << 4 * (subfunc_level + subfunc_para_num);
 }
 
+// 将目的操作数装入EAX，并进行函数返回
+void AssemblyMaker::TranslateRet(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+{
+	LoadGeneral(c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level, EAX);
+	// 找到函数的返回语句前的标号
+	string exit_label = FindExitLabel(c_iter);
+	assemble_buffer  << "\n    jmp     " << exit_label;
+}
 
 // 将立即数/普通变量/数组变量/临时变量装载到寄存器reg
 // 根据取址方式的不同，调用不同的装载函数
@@ -829,6 +936,24 @@ void AssemblyMaker::StoreTemp(int index, int var_space) throw()
 	int offset = 4 * (var_space + index + 1);
 	assemble_buffer << "\n    mov     SS:[ebp - " << offset << "], eax";
 }
+
+// 根据四元式表中某项的迭代器，找到它所在的函数的返回语句块前的标号
+string AssemblyMaker::FindExitLabel(vector<Quaternary>::const_iterator c_iter) throw()
+{
+	// 一. 找到函数在四元式表中的BEGIN语句
+	while(Quaternary::BEGIN != c_iter->op_)
+	{
+		--c_iter;
+	}
+	// 二. 找到函数在符号表中的下标
+	int tokentable_index = c_iter->dst_;
+	// 三. 找到函数的名字
+	std::ostringstream buffer;
+	// 四. 返回函数的返回语句块前的标号
+	buffer << tokentable_.at(tokentable_index).name_ << tokentable_index << "_Exit";
+	return buffer.str();
+}
+
 // 寄存器名
  const char * const AssemblyMaker::RegisterName[2] = 
  {"eax", "edx"};

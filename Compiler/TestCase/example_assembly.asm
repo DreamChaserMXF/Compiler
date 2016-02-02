@@ -17,8 +17,7 @@ scanf  PROTO C: ptr sbyte, :vararg
     _integer_format    db '%d ', 0
     _char_format       db '%c ', 0
     _string_format     db '%s ', 0
-    _String0           db 'I like writing', 0
-    _String1           db 'print calling', 0
+    _String0           db 'begin', 0
 
 .CODE
 
@@ -30,75 +29,23 @@ _main  proc far
     push    edx
     push    ebp
     mov     ebp,   esp
-    sub     esp,   48
+    sub     esp,   4
 
-    ;  6        ASG              109               0      lastChar#3
-    mov     eax, 109
-    mov     SS:[ebp - 44], eax
-    ;  7       AASG       lastChar#3               4           seq#2
-    mov     eax, SS:[ebp - 44]
-    mov     SS:[ebp - 20], eax
-    ;  8       AASG                5               5           seq#2
-    mov     eax, 5
-    mov     SS:[ebp - 24], eax
-    ;  9      WRITE                0               4           seq#2
-    mov     eax, SS:[ebp - 20]
-    push    eax
-    push    offset  _integer_format
-    call    printf
-    add     esp, 8
-    ; 10      WRITE                0               5           seq#2
-    mov     eax, SS:[ebp - 24]
-    push    eax
-    push    offset  _integer_format
-    call    printf
-    add     esp, 8
-    ; 11      WRITE                0               0               1
-    push    1
-    push    offset  _integer_format
-    call    printf
-    add     esp, 8
-    ; 12      WRITE                0               0             318
-    push    318
-    push    offset  _integer_format
-    call    printf
-    add     esp, 8
-    ; 13  PROC_CALL                0               0               4
+    ;  7  FUNC_CALL                0               0               0
     mov     SS:[esp - 4], ebp
     sub     esp, 4
-    call    _Print
+    call    _func0
     add     esp, 4
-    ; 14      WRITE                0               0      lastChar#3
-    mov     eax, SS:[ebp - 44]
-    push    eax
-    push    offset  _char_format
-    call    printf
-    add     esp, 8
-    ; 15      WRITE                0               0              99
-    push    99
-    push    offset  _char_format
-    call    printf
-    add     esp, 8
-    ; 16        ASG            seq#2               5         _temp#0
-    mov     eax, SS:[ebp - 24]
-    mov     SS:[ebp - 48], eax
-    ; 17        ADD              109         _temp#0         _temp#0
-    mov     eax, SS:[ebp - 48]
-    add     eax, 109
-    mov     SS:[ebp - 48], eax
-    ; 18      WRITE                0               0         _temp#0
-    mov     eax, SS:[ebp - 48]
+    ;  8      STORE                0               0         _temp#0
+    mov     SS:[ebp - 4], eax
+    ;  9      WRITE                0               0         _temp#0
+    mov     eax, SS:[ebp - 4]
     push    eax
     push    offset  _integer_format
     call    printf
     add     esp, 8
-    ; 19      WRITE                0               0       _string#0
-    push    offset  _String0
-    push    offset  _string_format
-    call    printf
-    add     esp, 8
 
-    add     esp,   48
+    add     esp,   4
     pop     ebp
     pop     edx
     pop     ebx
@@ -107,34 +54,31 @@ _main  proc far
 _main  endp
 
 
-_Print  proc near
+_func0  proc near
     push    ebp
     mov     ebp,   esp
-    sub     esp,   0
+    sub     esp,   8
 
-    ;  2      WRITE                0               0       _string#1
-    push    offset  _String1
+    ;  2       AASG               99               1           seq#1
+    mov     eax, 99
+    mov     SS:[ebp - 8], eax
+    ;  3      WRITE                0               0       _string#0
+    push    offset  _String0
     push    offset  _string_format
     call    printf
     add     esp, 8
-    ;  3      WRITE                0               0      lastChar#3
-    mov     ebx, SS:[ebp + 8]
-    mov     eax, SS:[ebx - 44]
-    push    eax
-    push    offset  _char_format
-    call    printf
-    add     esp, 8
-    ;  4      WRITE                0               5           seq#2
-    mov     ebx, SS:[ebp + 8]
-    mov     eax, SS:[ebx - 24]
-    push    eax
+    ;  4        RET                0               1           seq#1
+    mov     eax, SS:[ebp - 8]
+    jmp     func0_Exit
+    ;  5      WRITE                0               0               1
+    push    1
     push    offset  _integer_format
     call    printf
     add     esp, 8
-
-    add     esp,   0
+func0_Exit:
+    add     esp,   8
     pop     ebp
     ret
-_Print  endp
+_func0  endp
 
 end start
