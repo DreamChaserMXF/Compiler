@@ -32,58 +32,67 @@ _main  proc far
     mov     ebp,   esp
     sub     esp,   48
 
-    ;  6       AASG                5               5           seq#2
+    ;  6        ASG              109               0      lastChar#3
+    mov     eax, 109
+    mov     SS:[ebp - 44], eax
+    ;  7       AASG       lastChar#3               4           seq#2
+    mov     eax, SS:[ebp - 44]
+    mov     SS:[ebp - 20], eax
+    ;  8       AASG                5               5           seq#2
     mov     eax, 5
     mov     SS:[ebp - 24], eax
-    ;  7      WRITE                0               5           seq#2
+    ;  9      WRITE                0               4           seq#2
+    mov     eax, SS:[ebp - 20]
+    push    eax
+    push    offset  _integer_format
+    call    printf
+    add     esp, 8
+    ; 10      WRITE                0               5           seq#2
     mov     eax, SS:[ebp - 24]
     push    eax
     push    offset  _integer_format
     call    printf
     add     esp, 8
-    ;  8      WRITE                0               0               1
+    ; 11      WRITE                0               0               1
     push    1
     push    offset  _integer_format
     call    printf
     add     esp, 8
-    ;  9      WRITE                0               0             318
+    ; 12      WRITE                0               0             318
     push    318
     push    offset  _integer_format
     call    printf
     add     esp, 8
-    ; 10        ASG              109               0      lastChar#3
-    mov     eax, 109
-    mov     SS:[ebp - 44], eax
-    ; 11  PROC_CALL                0               0               4
+    ; 13  PROC_CALL                0               0               4
     mov     SS:[esp - 4], ebp
     sub     esp, 4
     call    _Print
     add     esp, 4
-    ; 12      WRITE                0               0      lastChar#3
+    ; 14      WRITE                0               0      lastChar#3
     mov     eax, SS:[ebp - 44]
     push    eax
     push    offset  _char_format
     call    printf
     add     esp, 8
-    ; 13      WRITE                0               0              99
+    ; 15      WRITE                0               0              99
     push    99
     push    offset  _char_format
     call    printf
     add     esp, 8
-    ; 14        ASG            seq#2               5         _temp#0
+    ; 16        ASG            seq#2               5         _temp#0
     mov     eax, SS:[ebp - 24]
     mov     SS:[ebp - 48], eax
-    ; 15        ADD              109         _temp#0         _temp#0
+    ; 17        ADD              109         _temp#0         _temp#0
     mov     eax, SS:[ebp - 48]
     add     eax, 109
     mov     SS:[ebp - 48], eax
-    ; 16      WRITE                0               0         _temp#0
+    ; 18      WRITE                0               0         _temp#0
     mov     eax, SS:[ebp - 48]
     push    eax
     push    offset  _integer_format
     call    printf
     add     esp, 8
-    ; 17      WRITE                0               0       _string#0
+    ; 19      WRITE                0               0       _string#0
     push    offset  _String0
     push    offset  _string_format
     call    printf

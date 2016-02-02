@@ -216,7 +216,7 @@ void AssemblyMaker::TranslateQuaternary(vector<Quaternary>::const_iterator &c_it
 	switch(c_iter->op_)
 	{
 	case Quaternary::NEG:
-		TranslateNeg(c_iter, para_num, var_space, level);
+		//TranslateNeg(c_iter, para_num, var_space, level);
 		break;
 	case Quaternary::ADD:
 		TranslateAdd(c_iter, para_num, var_space, level);
@@ -243,99 +243,126 @@ void AssemblyMaker::TranslateQuaternary(vector<Quaternary>::const_iterator &c_it
 // 目的操作数只可能是普通变量或临时变量
 void AssemblyMaker::TranslateAdd(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
+	// 当第一个操作数是立即数时
 	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
 	{
-		if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)
-		{
-			// 因为在四元式生成时有过对两个常数的运算的优化，所以不可能有两个立即数的情况
-			assert(false);
-		}
-		else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method2_)
-		{
-			// 加载第二个普通变量到EAX
-			LoadVar(c_iter->src2_, para_num, level, EAX);
-		}
-		else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method2_)
-		{
-			// 加载第二个临时变量到EAX
-			LoadTemp(c_iter->src2_, var_space, EAX);
-		}
-		else
-		{
-			assert(false);
-		}
+		// 加载第二个操作数到EAX
+		LoadGeneral(c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level, EAX);
 		// 加上第一个立即数
 		assemble_buffer << "\n    add     eax, " << c_iter->src1_;
 	}
-	else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method1_)
+	else if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)	// 当第二个操作数是立即数时
 	{
-		// 加载第一个普通变量到EAX
-		LoadVar(c_iter->src1_, para_num, level, EAX);
-		if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)
-		{
-			// 加上第二个立即数
-			assemble_buffer << "\n    add     eax, " << c_iter->src2_;
-		}
-		else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method2_)
-		{
-			// 加载第二个普通变量到EDX
-			LoadVar(c_iter->src2_, para_num, level, EDX);
-			// EAX与EDX相加
-			assemble_buffer << "\n    add     eax, edx";
-		}
-		else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method2_)
-		{
-			// 加载第二个临时变量到EDX
-			LoadTemp(c_iter->src2_, var_space, EDX);
-			// EAX与EDX相加
-			assemble_buffer << "\n    add     eax, edx";
-		}
-		else
-		{
-			assert(false);
-		}
+		// 加载第一个操作数到EAX
+		LoadGeneral(c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level, EAX);
+		// 加上第二个立即数
+		assemble_buffer << "\n    add     eax, " << c_iter->src2_;
 	}
-	else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method1_)
+	else	// 左右操作数都不是立即数
 	{
-		// 加载第一个临时变量到EAX
-		LoadTemp(c_iter->src1_, var_space, EAX);
-		if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)
-		{
-			// 加上第二个立即数
-			assemble_buffer << "\n    add     eax, " << c_iter->src2_;
-		}
-		else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method2_)
-		{
-			// 加载第二个普通变量到EDX
-			LoadVar(c_iter->src2_, para_num, level, EDX);
-			// EAX与EDX相加
-			assemble_buffer << "\n    add     eax, edx";
-		}
-		else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method2_)
-		{
-			// 加载第二个临时变量到EDX
-			LoadTemp(c_iter->src2_, var_space, EDX);
-			// EAX与EDX相加
-			assemble_buffer << "\n    add     eax, edx";
-		}
-		else
-		{
-			assert(false);
-		}
+		// 加载第一个操作数到EAX
+		LoadGeneral(c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level, EAX);
+		// 加载第二个操作数到EDX
+		LoadGeneral(c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level, EDX);
+		// 相加
+		assemble_buffer << "\n    add     eax, edx";
 	}
-	else
-	{
-		assert(false);
-	}
-	// 将EAX存储给目的操作数（普通变量或临时变量）
-	if(Quaternary::VARIABLE_ADDRESSING == c_iter->method3_)
-	{
-		StoreVar(c_iter->dst_, para_num, level);
-	}
-	else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method3_)
-	{
-		StoreTemp(c_iter->dst_, var_space);
-	}
+	// 将EAX中的结果保存到目的操作数
+	StoreGeneral(c_iter->method3_, c_iter->dst_, 0, para_num, var_space, level);
+
+	//if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
+	//{
+	//	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)
+	//	{
+	//		// 因为在四元式生成时有过对两个常数的运算的优化，所以不可能有两个立即数的情况
+	//		assert(false);
+	//	}
+	//	else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method2_)
+	//	{
+	//		// 加载第二个普通变量到EAX
+	//		LoadVar(c_iter->src2_, para_num, level, EAX);
+	//	}
+	//	else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method2_)
+	//	{
+	//		// 加载第二个临时变量到EAX
+	//		LoadTemp(c_iter->src2_, var_space, EAX);
+	//	}
+	//	else
+	//	{
+	//		assert(false);
+	//	}
+	//	// 加上第一个立即数
+	//	assemble_buffer << "\n    add     eax, " << c_iter->src1_;
+	//}
+	//else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method1_)
+	//{
+	//	// 加载第一个普通变量到EAX
+	//	LoadVar(c_iter->src1_, para_num, level, EAX);
+	//	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)
+	//	{
+	//		// 加上第二个立即数
+	//		assemble_buffer << "\n    add     eax, " << c_iter->src2_;
+	//	}
+	//	else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method2_)
+	//	{
+	//		// 加载第二个普通变量到EDX
+	//		LoadVar(c_iter->src2_, para_num, level, EDX);
+	//		// EAX与EDX相加
+	//		assemble_buffer << "\n    add     eax, edx";
+	//	}
+	//	else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method2_)
+	//	{
+	//		// 加载第二个临时变量到EDX
+	//		LoadTemp(c_iter->src2_, var_space, EDX);
+	//		// EAX与EDX相加
+	//		assemble_buffer << "\n    add     eax, edx";
+	//	}
+	//	else
+	//	{
+	//		assert(false);
+	//	}
+	//}
+	//else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method1_)
+	//{
+	//	// 加载第一个临时变量到EAX
+	//	LoadTemp(c_iter->src1_, var_space, EAX);
+	//	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)
+	//	{
+	//		// 加上第二个立即数
+	//		assemble_buffer << "\n    add     eax, " << c_iter->src2_;
+	//	}
+	//	else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method2_)
+	//	{
+	//		// 加载第二个普通变量到EDX
+	//		LoadVar(c_iter->src2_, para_num, level, EDX);
+	//		// EAX与EDX相加
+	//		assemble_buffer << "\n    add     eax, edx";
+	//	}
+	//	else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method2_)
+	//	{
+	//		// 加载第二个临时变量到EDX
+	//		LoadTemp(c_iter->src2_, var_space, EDX);
+	//		// EAX与EDX相加
+	//		assemble_buffer << "\n    add     eax, edx";
+	//	}
+	//	else
+	//	{
+	//		assert(false);
+	//	}
+	//}
+	//else
+	//{
+	//	assert(false);
+	//}
+	//// 将EAX存储给目的操作数（普通变量或临时变量）
+	//if(Quaternary::VARIABLE_ADDRESSING == c_iter->method3_)
+	//{
+	//	StoreVar(c_iter->dst_, para_num, level);
+	//}
+	//else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method3_)
+	//{
+	//	StoreTemp(c_iter->dst_, var_space);
+	//}
 }
 
 // 赋值语句
@@ -343,68 +370,72 @@ void AssemblyMaker::TranslateAdd(vector<Quaternary>::const_iterator &c_iter, int
 // 目的操作数可以是普通变量和临时变量
 void AssemblyMaker::TranslateAssign(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	if(Quaternary::VARIABLE_ADDRESSING == c_iter->method3_)
-	{
-		if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
-		{
-			// 将立即数放在EAX中
-			assemble_buffer << "\n    mov     eax, " << c_iter->src1_;
-		}
-		else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method1_)
-		{
-			// 将普通变量加载到EAX中
-			LoadVar(c_iter->src1_, para_num, level, EAX);
-		}
-		else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method1_)
-		{
-			// 将临时变量加载到EAX中
-			LoadTemp(c_iter->src1_, var_space, EAX);
-		}
-		else if(Quaternary::ARRAY_ADDRESSING == c_iter->method1_)
-		{
-			// 将数组元素加载到EAX中
-			LoadArray(c_iter->src1_, c_iter->src2_, para_num, level, EAX);
-		}
-		else
-		{
-			assert(false);
-		}
-		// 将EAX的数据存储在普通变量里
-		StoreVar(c_iter->dst_, para_num, level);
-	}
-	else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method3_)
-	{
-		if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
-		{
-			// 将立即数放在EAX中
-			assemble_buffer << "\n    mov     eax, " << c_iter->src1_;
-		}
-		else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method1_)
-		{
-			// 将普通变量加载到EAX中
-			LoadVar(c_iter->src1_, para_num, level, EAX);
-		}
-		else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method1_)
-		{
-			// 将临时变量加载到EAX中
-			LoadTemp(c_iter->src1_, var_space, EAX);
-		}
-		else if(Quaternary::ARRAY_ADDRESSING == c_iter->method1_)
-		{
-			// 将数组元素加载到EAX中
-			LoadArray(c_iter->src1_, c_iter->src2_, para_num, level, EAX);
-		}
-		else
-		{
-			assert(false);
-		}
-		// 将EAX的数据存储在临时变量里
-		StoreTemp(c_iter->dst_, var_space);
-	}
-	else
-	{
-		assert(false);
-	}
+	// 将源操作数装载到EAX中
+	LoadGeneral(c_iter->method1_, c_iter->src1_, c_iter->offset2_, para_num, var_space, level, EAX);
+	// 将EAX存储到目的操作数中
+	StoreGeneral(c_iter->method3_, c_iter->dst_, 0, para_num, var_space, 0);
+	//if(Quaternary::VARIABLE_ADDRESSING == c_iter->method3_)
+	//{
+	//	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
+	//	{
+	//		// 将立即数放在EAX中
+	//		assemble_buffer << "\n    mov     eax, " << c_iter->src1_;
+	//	}
+	//	else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method1_)
+	//	{
+	//		// 将普通变量加载到EAX中
+	//		LoadVar(c_iter->src1_, para_num, level, EAX);
+	//	}
+	//	else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method1_)
+	//	{
+	//		// 将临时变量加载到EAX中
+	//		LoadTemp(c_iter->src1_, var_space, EAX);
+	//	}
+	//	else if(Quaternary::ARRAY_ADDRESSING == c_iter->method1_)
+	//	{
+	//		// 将数组元素加载到EAX中
+	//		LoadArray(c_iter->src1_, c_iter->src2_, para_num, level, EAX);
+	//	}
+	//	else
+	//	{
+	//		assert(false);
+	//	}
+	//	// 将EAX的数据存储在普通变量里
+	//	StoreVar(c_iter->dst_, para_num, level);
+	//}
+	//else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method3_)
+	//{
+	//	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
+	//	{
+	//		// 将立即数放在EAX中
+	//		assemble_buffer << "\n    mov     eax, " << c_iter->src1_;
+	//	}
+	//	else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method1_)
+	//	{
+	//		// 将普通变量加载到EAX中
+	//		LoadVar(c_iter->src1_, para_num, level, EAX);
+	//	}
+	//	else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method1_)
+	//	{
+	//		// 将临时变量加载到EAX中
+	//		LoadTemp(c_iter->src1_, var_space, EAX);
+	//	}
+	//	else if(Quaternary::ARRAY_ADDRESSING == c_iter->method1_)
+	//	{
+	//		// 将数组元素加载到EAX中
+	//		LoadArray(c_iter->src1_, c_iter->src2_, para_num, level, EAX);
+	//	}
+	//	else
+	//	{
+	//		assert(false);
+	//	}
+	//	// 将EAX的数据存储在临时变量里
+	//	StoreTemp(c_iter->dst_, var_space);
+	//}
+	//else
+	//{
+	//	assert(false);
+	//}
 }
 
 
@@ -413,25 +444,29 @@ void AssemblyMaker::TranslateAssign(vector<Quaternary>::const_iterator &c_iter, 
 // 目的操作数为数组
 void AssemblyMaker::TranslateArrayAssign(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
-	{
-		// 将立即数放在EAX中
-		assemble_buffer << "\n    mov     eax, " << c_iter->src1_;
-	}
-	else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method1_)
-	{
-		// 将普通变量加载到EAX中
-		LoadVar(c_iter->src1_, para_num, level, EAX);
-	}
-	else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method1_)
-	{
-		// 将临时变量加载到EAX中
-		LoadTemp(c_iter->src1_, var_space, EAX);
-	}
-	else
-	{
-		assert(false);
-	}
+	// 加载立即数或变量到EAX
+	// 这里的操作数不可能是数组，故第三个参数为任意数（这里给零）
+	LoadGeneral(c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level, EAX);
+	//if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
+	//{
+	//	// 将立即数放在EAX中
+	//	assemble_buffer << "\n    mov     eax, " << c_iter->src1_;
+	//}
+	//else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method1_)
+	//{
+	//	// 将普通变量加载到EAX中
+	//	LoadVar(c_iter->src1_, para_num, level, EAX);
+	//}
+	//else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method1_)
+	//{
+	//	// 将临时变量加载到EAX中
+	//	LoadTemp(c_iter->src1_, var_space, EAX);
+	//}
+	//else
+	//{
+	//	assert(false);
+	//}
+
 	// 将EAX的数据存储在数组里
 	StoreArray(c_iter->dst_, c_iter->src2_, para_num, level);
 	
@@ -462,42 +497,60 @@ void AssemblyMaker::TranslateWrite(vector<Quaternary>::const_iterator &c_iter, i
 		assemble_buffer << "\n    push    offset  _String" << c_iter->dst_
 						<< "\n    push    offset  _string_format";
 	}
-	else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method3_)	// 写普通变量
+	else	// 加载变量到EAX，将EAX压栈并加载格式字符串到栈顶
 	{
-		LoadVar(c_iter->dst_, para_num, level, EAX);
-		assemble_buffer << "\n    push    eax";
-		if(TokenTableItem::INTEGER == tokentable_.at(c_iter->dst_).decoratetype_)	// 整型变量
+		
+		LoadGeneral(c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level, EAX);// 加载变量
+		assemble_buffer << "\n    push    eax";	// EAX压栈
+		// 加载格式字符串
+		if((Quaternary::VARIABLE_ADDRESSING == c_iter->method3_
+			|| Quaternary::ARRAY_ADDRESSING == c_iter->method3_)
+			&& TokenTableItem::CHAR == tokentable_.at(c_iter->dst_).decoratetype_)	// 字符型的情况（操作数是变量或数组，且修饰类型为字符型）
+		{
+			assemble_buffer << "\n    push    offset  _char_format";
+		}
+		else	// 整型的情况（操作数为临时变量或非字符型的变量/数组）
 		{
 			assemble_buffer << "\n    push    offset  _integer_format";
 		}
-		else if(TokenTableItem::CHAR == tokentable_.at(c_iter->dst_).decoratetype_)	// 字符型变量
-		{			
-			assemble_buffer << "\n    push    offset  _char_format";
-		}
 	}
-	else if(Quaternary::ARRAY_ADDRESSING == c_iter->method3_)	// 写数组变量
-	{
-		LoadArray(c_iter->dst_, c_iter->offset2_, para_num, level, EAX);
-		assemble_buffer << "\n    push    eax";
-		if(TokenTableItem::INTEGER == tokentable_.at(c_iter->dst_).decoratetype_)	// 整型变量
-		{
-			assemble_buffer << "\n    push    offset  _integer_format";
-		}
-		else if(TokenTableItem::CHAR == tokentable_.at(c_iter->dst_).decoratetype_)	// 字符型变量
-		{			
-			assemble_buffer << "\n    push    offset  _char_format";
-		}
-	}
-	else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method3_)	// 写临时变量
-	{
-		LoadTemp(c_iter->dst_, var_space, EAX);
-		assemble_buffer << "\n    push    eax"
-						<< "\n    push    offset  _integer_format";
-	}
-	else
-	{
-		assert(false);
-	}
+	//else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method3_)	// 写普通变量或数组变量
+	//{
+	//	LoadVar(c_iter->dst_, para_num, level, EAX);
+	//	assemble_buffer << "\n    push    eax";
+	//	if(TokenTableItem::INTEGER == tokentable_.at(c_iter->dst_).decoratetype_)	// 整型变量
+	//	{
+	//		assemble_buffer << "\n    push    offset  _integer_format";
+	//	}
+	//	else if(TokenTableItem::CHAR == tokentable_.at(c_iter->dst_).decoratetype_)	// 字符型变量
+	//	{			
+	//		assemble_buffer << "\n    push    offset  _char_format";
+	//	}
+	//}
+	//else if(Quaternary::ARRAY_ADDRESSING == c_iter->method3_)	// 写数组变量
+	//{
+	//	LoadArray(c_iter->dst_, c_iter->offset2_, para_num, level, EAX);
+	//	assemble_buffer << "\n    push    eax";
+	//	if(TokenTableItem::INTEGER == tokentable_.at(c_iter->dst_).decoratetype_)	// 整型变量
+	//	{
+	//		assemble_buffer << "\n    push    offset  _integer_format";
+	//	}
+	//	else if(TokenTableItem::CHAR == tokentable_.at(c_iter->dst_).decoratetype_)	// 字符型变量
+	//	{			
+	//		assemble_buffer << "\n    push    offset  _char_format";
+	//	}
+	//}
+	//else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method3_)	// 写临时变量
+	//{
+	//	LoadTemp(c_iter->dst_, var_space, EAX);
+	//	assemble_buffer << "\n    push    eax"
+	//					<< "\n    push    offset  _integer_format";
+	//}
+	//else
+	//{
+	//	assert(false);
+	//}
+	// 调用printf函数
 	assemble_buffer << "\n    call    printf"
 					<< "\n    add     esp, 8";
 }
@@ -539,6 +592,48 @@ void AssemblyMaker::TranslateCall(vector<Quaternary>::const_iterator &c_iter, in
 	// 四. 恢复栈顶指针
 	int subfunc_para_num = tokentable_.GetParameterNum(c_iter->dst_);
 	assemble_buffer  << "\n    add     esp, " << 4 * (subfunc_level + subfunc_para_num);
+}
+
+
+// 将立即数/普通变量/数组变量/临时变量装载到寄存器reg
+// 根据取址方式的不同，调用不同的装载函数
+// 第二个参数可能是符号表index，可能是临时变量的index，也可能是立即数值，故命名为index_or_value
+// 每次调用时，第一个参数，即取址方式，和最后一个参数，寄存器的值，都是必须有效的。且所有调用的意义都相同。
+// 除此之外，立即数依赖的参数为：index_or_value
+// 普通变量依赖的参数为：index_or_value, para_num, level
+// 数组变量依赖的参数为：index_or_value, array_offset, var_space, level
+// 临时变量依赖的参数为：index_or_value, var_space
+// 严格地说，只要在调用时，将可能依赖的参数赋予有效的值即可
+// 但在一般调用时，往往不确定变量类型的情况，所以就将参数全部填入有效值
+// 当不可能是数组元素时，一般地，array_offset赋0即可（实际上无影响）
+void AssemblyMaker::LoadGeneral(Quaternary::AddressingMethod addressingmethod, int index_or_value, int array_offset, int para_num, int var_space, int level, enum REGISTER reg) throw()
+{
+	if(Quaternary::IMMEDIATE_ADDRESSING == addressingmethod)
+	{
+		LoadImmediate(index_or_value, reg);
+	}
+	else if(Quaternary::VARIABLE_ADDRESSING == addressingmethod)
+	{
+		LoadVar(index_or_value, para_num, level, reg);
+	}
+	else if(Quaternary::ARRAY_ADDRESSING == addressingmethod)
+	{
+		LoadArray(index_or_value, array_offset, para_num, level, reg);
+	}
+	else if(Quaternary::TEMPORARY_ADDRESSING == addressingmethod)
+	{
+		LoadTemp(index_or_value, var_space, reg);
+	}
+	else
+	{
+		assert(false);
+	}
+}
+
+// 将常数value装载到寄存器reg
+void AssemblyMaker::LoadImmediate(int value, enum REGISTER reg) throw()
+{
+	assemble_buffer << "\n    mov     " << RegisterName[reg] << ", " << value;
 }
 
 // 将变量装载到寄存器中
@@ -626,6 +721,30 @@ void AssemblyMaker::LoadTemp(int index, int var_space, enum REGISTER reg) throw(
 	// 这里的index就是上式中的n
 	int offset = 4 * (var_space + index + 1);
 	assemble_buffer << "\n    mov     " << RegisterName[reg] << ", SS:[ebp - " << offset << "]";
+}
+
+// 将寄存器EAX的数据存储到内存中
+// 可能的内存类型为：普通变量、数组变量、临时变量
+// 根据取址方式的不同，调用不同的存储函数
+// 第二个参数可能表示符号表中的index，也可能表示临时变量的index，故只命名为index
+void AssemblyMaker::StoreGeneral(Quaternary::AddressingMethod addressingmethod, int index, int array_offset, int para_num, int var_space, int level) throw()
+{
+	if(Quaternary::VARIABLE_ADDRESSING == addressingmethod)
+	{
+		StoreVar(index, para_num, level);
+	}
+	else if(Quaternary::ARRAY_ADDRESSING == addressingmethod)
+	{
+		StoreArray(index, array_offset, para_num, level);
+	}
+	else if(Quaternary::TEMPORARY_ADDRESSING == addressingmethod)
+	{
+		StoreTemp(index, var_space);
+	}
+	else
+	{
+		assert(false);
+	}
 }
 
 // 将变量从寄存器EAX存储到内存

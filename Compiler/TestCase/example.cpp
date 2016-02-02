@@ -9,11 +9,14 @@ procedure Print();
 	end;
 
 begin
+	lastChar := 'm';
+	seq[4] := lastChar;
 	seq[5] := 5;
+	write(seq[4]);
 	write(seq[5]);
 	write(1);
 	write(('a' + 1) * 6 / 2 + 3 * 8);
-	lastChar := 'm';
+	
 	Print();
 	write(lastChar);
 	write(Symbol);
