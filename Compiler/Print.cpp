@@ -1,42 +1,42 @@
 #include "Print.h"
 
-void PrintOperand(Quaternary::OperandType type, int value, const TokenTable &tokentable, ostream &out) throw()
+void PrintOperand(Quaternary::AddressingMethod type, int value, const TokenTable &tokentable, ostream &out, int space_width) throw()
 {
 	std::ostringstream buffer;
 	switch(type)
 	{
-	case Quaternary::IMMEDIATE_OPERAND:
+	case Quaternary::IMMEDIATE_ADDRESSING:
 		buffer << value;
 		break;
-	//case Quaternary::CONSTANT_OPERAND:
+	//case Quaternary::CONSTANT_ADDRESSING:
 	//	buffer << tokentable.at(value).name_ << "<" << tokentable.at(value).value_ << ">#" << value;
 	//	break;
-	case Quaternary::STRING_OPERAND:
+	case Quaternary::STRING_ADDRESSING:
 		buffer << "_string#" << value;
 		break;
-	case Quaternary::VARIABLE_OPERAND:
+	case Quaternary::VARIABLE_ADDRESSING:
 		buffer << tokentable.at(value).name_ << "#" << value;
 		break;
-	case Quaternary::ARRAY_OPERAND:
+	case Quaternary::ARRAY_ADDRESSING:
 		buffer << tokentable.at(value).name_ << "#" << value;
 		break;
-	case Quaternary::TEMPORARY_OPERAND:
+	case Quaternary::TEMPORARY_ADDRESSING:
 		buffer << "_temp#" << value;
 		break;
-	case Quaternary::LABEL_OPERAND:
-		buffer << "_label#" << value;
-		break;
-	case Quaternary::PROC_FUNC_INDEX:
-		buffer << tokentable.at(value).name_ << "#" << value;
-		break;
-	case Quaternary::PARANUM_OPERAND:
-		buffer << value;
-		break;
+	//case Quaternary::LABEL_ADDRESSING:
+	//	buffer << "_label#" << value;
+	//	break;
+	//case Quaternary::PROC_FUNC_INDEX:
+	//	buffer << tokentable.at(value).name_ << "#" << value;
+	//	break;
+	//case Quaternary::PARANUM_ADDRESSING:
+	//	buffer << "PARA#" << value;
+	//	break;
 	default:
 		buffer << value;
 		break;
 	}
-	out.width(16);
+	out.width(space_width);
 	out.setf(ios::right);
 	out << buffer.str();
 }
@@ -55,9 +55,9 @@ void PrintQuaternaryVector(const vector<Quaternary> &quaternarytable, const Toke
 		out.setf(ios::right);
 		out << Quaternary::OPCodeString[iter->op_];
 		// 输出操作数
-		PrintOperand(iter->type1_, iter->src1_, tokentable, out);
-		PrintOperand(iter->type2_, iter->src2_, tokentable, out);
-		PrintOperand(iter->type3_, iter->dst_, tokentable, out);
+		PrintOperand(iter->method1_, iter->src1_, tokentable, out);
+		PrintOperand(iter->method2_, iter->src2_, tokentable, out);
+		PrintOperand(iter->method3_, iter->dst_, tokentable, out);
 		// 输出换行
 		out << '\n';
 	}

@@ -1,0 +1,2 @@
+0	I like writing
+1	print calling

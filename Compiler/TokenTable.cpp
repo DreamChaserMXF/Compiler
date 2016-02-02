@@ -194,10 +194,10 @@ TokenTable::const_iterator TokenTable::end() const throw()
 {
 	return rows_.end();
 }
-const TokenTableItem& TokenTable::back() const throw()
-{
-	return rows_.back();
-}
+//const TokenTableItem& TokenTable::back() const throw()
+//{
+//	return rows_.back();
+//}
 size_t TokenTable::size() const throw()
 {
 	return rows_.size();
@@ -246,7 +246,7 @@ void TokenTable::Print(std::ostream &output) const throw()
 
 void TokenTable::AddConstItem(Token constIdentifier, TokenTableItem::DecorateType decoratetype_, int value, int level) throw()
 {
-	TokenTableItem item(constIdentifier.value_.identifier, TokenTableItem::CONST, decoratetype_, value, level, constIdentifier.lineNumber_, addr_++);
+	TokenTableItem item(constIdentifier.value_.identifier, TokenTableItem::CONST, decoratetype_, value, level, constIdentifier.lineNumber_, 0);
 	rows_.push_back(item);
 }
 void TokenTable::AddVariableItem(Token variableIdentifier, TokenTableItem::DecorateType decoratetype_, int level) throw()
@@ -300,4 +300,60 @@ void TokenTable::AddParameterItem(Token parameterIdentifier, TokenTableItem::Dec
 {
 	TokenTableItem item(parameterIdentifier.value_.identifier, TokenTableItem::PARAMETER, decoratetype_, 0, level, parameterIdentifier.lineNumber_, addr_++);
 	rows_.push_back(item);
+}
+
+// 返回过程/函数的局部变量所占的空间（单位：4bytes）
+// c_iter为过程/函数在符号表中的位置的下一个位置
+// 之所以这么要求，是因为主函数在符号表中没有位置，只能提供下一个位置
+int TokenTable::GetVariableSpace(TokenTable::const_iterator c_iter) const throw()
+{
+	// 先用while跳过当前过程/函数的参数及常量
+	while( rows_.end() != c_iter
+		&& (TokenTableItem::PARAMETER == c_iter->itemtype_
+			|| TokenTableItem::CONST == c_iter->itemtype_)
+		)
+	{
+		++c_iter;
+	}
+	// 如果该过程/函数没有局部变量
+	if(rows_.end() == c_iter
+		|| TokenTableItem::PROCEDURE == c_iter->itemtype_
+		|| TokenTableItem::FUNCTION == c_iter->itemtype_)
+	{
+		return 0;
+	}
+	// 现在肯定有变量了
+	// 取得第一个变量的地址
+	int first_var_addr = c_iter->addr_;
+	// 用while跳过当前过程/函数的局部变量
+	while( rows_.end() != c_iter
+		&& TokenTableItem::PROCEDURE != c_iter->itemtype_
+		&& TokenTableItem::FUNCTION != c_iter->itemtype_)
+	{
+		++c_iter;
+	}
+	// 找出最后一个变量，得到其地址，再计算局部变量空间（末变量地址-首变量地址+末变量长度）
+	const TokenTableItem &item = ((rows_.end() == c_iter) ? rows_.back() : *(c_iter - 1));
+	// 最后一个变量可能是数组或普通变量，所以有两种不同的空间计算方式
+	return item.addr_ - first_var_addr + ((TokenTableItem::ARRAY == item.itemtype_) ? item.value_ : 1);
+}
+
+// 给定符号表中某个变量的位置，确定其所在的函数的参数的个数
+int TokenTable::GetParameterNum(int var_index) const throw()
+{
+	do
+	{
+		--var_index;
+	}while(var_index >= 0
+		&& TokenTableItem::PROCEDURE != rows_[var_index].itemtype_
+		&& TokenTableItem::PROCEDURE != rows_[var_index].itemtype_);
+	// 在符号表中是找不到主函数的名称的，此时直接返回0
+	if(-1 == var_index)
+	{
+		return 0;
+	}
+	else	// 正常情况
+	{
+		return rows_[var_index].value_;
+	}
 }

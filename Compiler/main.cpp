@@ -15,19 +15,19 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
+	// 分析器的状态
 	bool lex_legitimate = false;
 	bool syntax_legitimate = false;
 	bool assemble_legitimate = false;
 
-	const string kCodeFileName = "example.cpp";
-	const string kTokenFileName = "example_token.txt";
-	const string kTokenTableFileName = "example_tokentable.txt";
-	const string kStringTableFileName = "example_stringtable.txt";
-	const string kSyntaxFileName = "example_syntax.txt";
-	const string kQuaternaryCodeFileName = "example_quaternary.txt";
-	const string kAssemblyCodeFileName = "example_assembly.asm";
-
-	//Quaternary q(Quaternary::ADD, Quaternary::IMMEDIATE_OPERAND, 3, Quaternary::CONSTANT_OPERAND, 5, Quaternary::VARIABLE_OPERAND, 7);
+	// 输入输出文件名
+	const string kCodeFileName = "TestCase/example.cpp";
+	const string kTokenFileName = "TestCase/example_token.txt";
+	const string kTokenTableFileName = "TestCase/example_tokentable.txt";
+	const string kStringTableFileName = "TestCase/example_stringtable.txt";
+	const string kSyntaxFileName = "TestCase/example_syntax.txt";
+	const string kQuaternaryCodeFileName = "TestCase/example_quaternary.txt";
+	const string kAssemblyCodeFileName = "TestCase/example_assembly.asm";
 
 	// 词法分析
 	LexicalAnalyzer lex_analyzer(kCodeFileName);
@@ -44,39 +44,43 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	// 过渡
+	// 得到字符串表，建立符号表和四元式表
 	vector<string> stringtable = lex_analyzer.getStringTable();						// 字符串表
 	TokenTable tokentable;															// 符号表
 	vector<Quaternary> quaternarytable;												// 四元式表
 
 	// 语法分析
-	// 用词法分析器、符号表、字符串表和四元式表对语法分析器进行初始化
-	SyntaxAnalyzer syntax_analyzer(lex_analyzer, stringtable, tokentable, quaternarytable);
+	SyntaxAnalyzer syntax_analyzer(lex_analyzer, 
+		stringtable, tokentable, quaternarytable);// 用词法分析器、符号表、字符串表和四元式表对语法分析器进行初始化
 	syntax_legitimate = syntax_analyzer.Parse();									// 进行语法分析并返回状态
 	syntax_analyzer.Print(kSyntaxFileName);											// 输出语法分析过程
 	tokentable.Print(kTokenTableFileName);											// 输出符号表
 	PrintStringVector(stringtable, kStringTableFileName);							// 输出字符串表
 	PrintQuaternaryVector(quaternarytable, tokentable, kQuaternaryCodeFileName);	// 输出四元式
-	PrintQuaternaryVector(quaternarytable, tokentable, cout);						// 输出四元式
+//	PrintQuaternaryVector(quaternarytable, tokentable, cout);						// 输出四元式
 	if(!syntax_legitimate)// 出错提示
 	{
 		cout << "语法分析出错！" << endl;
 		return -1;
 	}
 
+	// 目标代码生成
 	// 用四元式表、符号表、字符串表初始化汇编器
 	AssemblyMaker assembly_maker(quaternarytable, tokentable, stringtable);
 	assemble_legitimate = assembly_maker.Assemble();
 	assembly_maker.Print(kAssemblyCodeFileName);
 	assembly_maker.Print(cout);
-	
-	// 这里好像不应该有错
-	if(!assemble_legitimate)
+	//出错检查
+	if(!assemble_legitimate)// 这里好像不应该有错
 	{
 		cout << "汇编过程出错！" << endl;
 		return -1;
 	}
 
+	// 汇编过程
+	system("masm32\\bin\\ml.exe /c /coff ./TestCase/example_assembly.asm");	// 这里的执行应用程序的目录一定要用右斜杠
+	system("masm32\\bin\\link.exe /SUBSYSTEM:CONSOLE /OPT:NOREF example_assembly.obj");
+	system("example_assembly.exe");
 	return 0;
 }
 /*
@@ -90,7 +94,7 @@ int main(int argc, char *argv[])
 	const string kTokenTableFileName = "example_tokentable.txt";
 	const string kSyntaxFileName = "example_syntax.txt";
 
-	//Quaternary q(Quaternary::ADD, Quaternary::IMMEDIATE_OPERAND, 3, Quaternary::CONSTANT_OPERAND, 5, Quaternary::VARIABLE_OPERAND, 7);
+	//Quaternary q(Quaternary::ADD, Quaternary::IMMEDIATE_ADDRESSING, 3, Quaternary::CONSTANT_ADDRESSING, 5, Quaternary::VARIABLE_ADDRESSING, 7);
 
 	// 词法分析
 	LexicalAnalyzer lex_analyzer(kCodeFileName);

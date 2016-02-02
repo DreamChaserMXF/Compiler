@@ -46,9 +46,11 @@ private:
 	void Statement(int depth) throw();				// 语句
 
 	void AssigningStatement(const Token &idToken, TokenTable::iterator &iter, int depth) throw();	// 赋值语句
+
 	ExpressionAttribute Expression(int depth) throw();				// 表达式，返回表达式的类型
 	ExpressionAttribute Term(int depth) throw();					// 项
 	ExpressionAttribute Factor(int depth) throw();					// 因子
+
 	void IfStatement(int depth) throw();			// 条件语句
 	void Condition(int endlabel, int depth) throw();// 条件
 	void CaseStatement(int depth) throw();			// 情况语句
@@ -63,7 +65,7 @@ private:
 	void FunctionCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, int depth) throw();	// 函数调用语句
 
 	void SimplifyArrayOperand(ExpressionAttribute &attribute) throw();
-	void SetTempVarCount(int proc_func_index, int max_tempvar_count) throw();
+//	void SetTempVarCount(int proc_func_index, int max_tempvar_count) throw();
 
 	// 数据成员
 	LexicalAnalyzer &lexical_analyzer_;		// 绑定的词法分析器
@@ -72,9 +74,9 @@ private:
 	vector<Quaternary> &quaternarytable_;	// 四元式表
 
 	Token token_;							// 当前解析的token_
-	int level_;								// 当前的分程序层次。初始值为0
+	int level_;								// 当前的分程序层次。初始值为1。主函数层次为0。《详见Appendix 1设计备注 15》
 	int tempvar_index_;						// 将要使用的下一个临时变量的下标
-	int max_local_temp_count_;				// 最大的临时变量个数(构造函数和每次END四元式生成时中都要初始化为0)
+//	int max_local_temp_count_;				// 最大的临时变量个数(构造函数和每次END四元式生成时中都要初始化为0)
 	int label_index_;						// 将要使用的下一个label的下标
 	stack<int> continue_label_;	// continue语句的跳转标号栈
 	stack<int> break_label_;		// breal语句的跳转标号栈

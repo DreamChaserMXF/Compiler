@@ -1,0 +1,6 @@
+NO.	Valid Name        ItemType DecorateType Value Addr Level DefLine UsedLine
+0	1     Symbol      CONST      CHAR         99   0     1     1     {19, 20}  
+1	1     ten         CONST      INTEGER      10   0     1     1     {20}  
+2	1     seq         ARRAY      INTEGER      10   0     1     2     {8 , 12, 13, 20}  
+3	1     lastChar    VARIABLE   CHAR          0   10    1     3     {7 , 16, 18}  
+4	1     Print       PROCEDURE  VOID          0   11    1     4     {17}  

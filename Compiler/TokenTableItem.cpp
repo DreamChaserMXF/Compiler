@@ -53,10 +53,16 @@ string TokenTableItem::toString() const throw()
 // 注意，这里矩阵的行列排布严格依赖于DecorateType中的定义顺序
 const TokenTableItem::DecorateType TokenTableItem::TypeConversionMatrix[3][3] = 
 {
+///*               VOID                              CHAR                          INTEGER*/
+///* VOID    */    {TokenTableItem::VOID,             TokenTableItem::CHAR,         TokenTableItem::INTEGER},
+///* CHAR    */    {TokenTableItem::CHAR,             TokenTableItem::CHAR,         TokenTableItem::INTEGER},
+///* INTEGER */    {TokenTableItem::INTEGER,          TokenTableItem::INTEGER,      TokenTableItem::INTEGER}
+
+// 注：VOID不参与类型转换，故VOID所在的行和列的元素都是VOID
 /*               VOID                              CHAR                          INTEGER*/
-/* VOID    */    {TokenTableItem::VOID,             TokenTableItem::CHAR,         TokenTableItem::INTEGER},
-/* CHAR    */    {TokenTableItem::CHAR,             TokenTableItem::CHAR,         TokenTableItem::INTEGER},
-/* INTEGER */    {TokenTableItem::INTEGER,          TokenTableItem::INTEGER,      TokenTableItem::INTEGER}
+/* VOID    */    {TokenTableItem::VOID,             TokenTableItem::VOID,         TokenTableItem::VOID},
+/* CHAR    */    {TokenTableItem::VOID,             TokenTableItem::CHAR,         TokenTableItem::INTEGER},
+/* INTEGER */    {TokenTableItem::VOID,             TokenTableItem::INTEGER,      TokenTableItem::INTEGER}
 };
 const char* TokenTableItem::DecorateTypeString[3] = {"void", "char", "integer"};
 

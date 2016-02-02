@@ -13,72 +13,102 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Lexical">
+      <UniqueIdentifier>{6a0c80b0-fd5a-4695-9734-8058cd1edda2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\TokenTable">
+      <UniqueIdentifier>{0f46ef8b-68e9-4494-a566-0e2e5cae848d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MidCode">
+      <UniqueIdentifier>{1b5ab5d8-0115-41cb-a43f-2449ee2efa9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lexical">
+      <UniqueIdentifier>{b4612070-67ce-408d-94a5-4fb2c9bf1935}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MidCode">
+      <UniqueIdentifier>{14dfc341-5584-4dd9-ac44-66aedd81a24d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Assembly">
+      <UniqueIdentifier>{ade49bed-f022-4c6c-b953-435717ea27ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\TokenTable">
+      <UniqueIdentifier>{681d96de-e43c-4f87-9e83-e699b2c23d26}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Syntax">
+      <UniqueIdentifier>{c5a48ca4-5fb4-4f99-9683-71c831afc86b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Assembly">
+      <UniqueIdentifier>{b17f673b-0824-47c1-8e07-b862e932940c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Syntax">
+      <UniqueIdentifier>{fca74da2-c544-44d2-833e-32f5da72aa8a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Print.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Token.h">
+      <Filter>Header Files\Lexical</Filter>
+    </ClInclude>
+    <ClInclude Include="LexicalAnalyzer.h">
+      <Filter>Header Files\Lexical</Filter>
+    </ClInclude>
+    <ClInclude Include="LexException.h">
+      <Filter>Header Files\Lexical</Filter>
+    </ClInclude>
+    <ClInclude Include="ExpressionAttribute.h">
+      <Filter>Header Files\MidCode</Filter>
+    </ClInclude>
+    <ClInclude Include="AssemblyMaker.h">
+      <Filter>Header Files\Assembly</Filter>
+    </ClInclude>
+    <ClInclude Include="Quaternary.h">
+      <Filter>Header Files\MidCode</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenTable.h">
+      <Filter>Header Files\TokenTable</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenTableException.h">
+      <Filter>Header Files\TokenTable</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenTableItem.h">
+      <Filter>Header Files\TokenTable</Filter>
+    </ClInclude>
+    <ClInclude Include="SyntaxAnalyzer.h">
+      <Filter>Header Files\Syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="SyntaxException.h">
+      <Filter>Header Files\Syntax</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LexicalAnalyzer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Token.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SyntaxAnalyzer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TokenTable.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TokenTableItem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Quaternary.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AssemblyMaker.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Print.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="LexicalAnalyzer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LexException.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Token.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SyntaxAnalyzer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SyntaxException.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TokenTableItem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TokenTable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TokenTableException.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Quaternary.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AssemblyMaker.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ExpressionAttribute.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Print.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClCompile Include="LexicalAnalyzer.cpp">
+      <Filter>Source Files\Lexical</Filter>
+    </ClCompile>
+    <ClCompile Include="Token.cpp">
+      <Filter>Source Files\Lexical</Filter>
+    </ClCompile>
+    <ClCompile Include="Quaternary.cpp">
+      <Filter>Source Files\MidCode</Filter>
+    </ClCompile>
+    <ClCompile Include="AssemblyMaker.cpp">
+      <Filter>Source Files\Assembly</Filter>
+    </ClCompile>
+    <ClCompile Include="TokenTable.cpp">
+      <Filter>Source Files\TokenTable</Filter>
+    </ClCompile>
+    <ClCompile Include="TokenTableItem.cpp">
+      <Filter>Source Files\TokenTable</Filter>
+    </ClCompile>
+    <ClCompile Include="SyntaxAnalyzer.cpp">
+      <Filter>Source Files\Syntax</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

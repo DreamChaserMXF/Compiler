@@ -1,0 +1,147 @@
+Parse()
+|   Routine()
+|   |   SubRoutine()
+|   |   |   ConstantPart()
+|   |   |   |   constantDefination()
+|   |   |   |     IDENTIFIER  Symbol
+|   |   |   |     CONST_CHAR  c
+|   |   |   |   constantDefination()
+|   |   |   |     IDENTIFIER  ten
+|   |   |   |     CONST_INTEGER  10
+|   |   |   VariablePart()
+|   |   |   |   VariableDefinition()
+|   |   |   |     IDENTIFIER  seq
+|   |   |   |   |   TypeSpecification()
+|   |   |   |   |     ARRAY
+|   |   |   |   |     CONST_INTEGER  10
+|   |   |   |   |     RW_INTEGER
+|   |   |   |   VariableDefinition()
+|   |   |   |     IDENTIFIER  lastChar
+|   |   |   |   |   TypeSpecification()
+|   |   |   |   |     RW_CHAR
+|   |   |   ProcedurePart()
+|   |   |   |   ProcedureHead()
+|   |   |   |     IDENTIFIER  Print
+|   |   |   |   SubRoutine()
+|   |   |   |   |   StatementBlockPart()
+|   |   |   |   |   |   Statement()
+|   |   |   |   |   |   |   WriteStatement()
+|   |   |   |   |   |   |     WRITE
+|   |   |   |   |   |   |     CONST_STRING  print calling
+|   |   |   |   |   |   Statement()
+|   |   |   |   |   |   |   WriteStatement()
+|   |   |   |   |   |   |     WRITE
+|   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |     IDENTIFIER  lastChar
+|   |   |   |   |   |   Statement()
+|   |   |   |   |   |   |   WriteStatement()
+|   |   |   |   |   |   |     WRITE
+|   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |     IDENTIFIER  seq
+|   |   |   |   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  5
+|   |   |   |   |   |   Statement()
+|   |   |   StatementBlockPart()
+|   |   |   |   Statement()
+|   |   |   |     IDENTIFIER  seq
+|   |   |   |   |   AssigningStatement()
+|   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     CONST_INTEGER  5
+|   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     CONST_INTEGER  5
+|   |   |   |   Statement()
+|   |   |   |   |   WriteStatement()
+|   |   |   |   |     WRITE
+|   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     IDENTIFIER  seq
+|   |   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  5
+|   |   |   |   Statement()
+|   |   |   |   |   WriteStatement()
+|   |   |   |   |     WRITE
+|   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     CONST_INTEGER  1
+|   |   |   |   Statement()
+|   |   |   |   |   WriteStatement()
+|   |   |   |   |     WRITE
+|   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |     CONST_CHAR  a
+|   |   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  1
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     CONST_INTEGER  6
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     CONST_INTEGER  2
+|   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     CONST_INTEGER  3
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     CONST_INTEGER  8
+|   |   |   |   Statement()
+|   |   |   |     IDENTIFIER  lastChar
+|   |   |   |   |   AssigningStatement()
+|   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     CONST_CHAR  m
+|   |   |   |   Statement()
+|   |   |   |     IDENTIFIER  Print
+|   |   |   |   |   ProcedureCallStatement()
+|   |   |   |   Statement()
+|   |   |   |   |   WriteStatement()
+|   |   |   |   |     WRITE
+|   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     IDENTIFIER  lastChar
+|   |   |   |   Statement()
+|   |   |   |   |   WriteStatement()
+|   |   |   |   |     WRITE
+|   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     IDENTIFIER  Symbol
+|   |   |   |   Statement()
+|   |   |   |   |   WriteStatement()
+|   |   |   |   |     WRITE
+|   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     IDENTIFIER  Symbol
+|   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     IDENTIFIER  ten
+|   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     IDENTIFIER  seq
+|   |   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  5
+|   |   |   |   Statement()
+|   |   |   |   |   WriteStatement()
+|   |   |   |   |     WRITE
+|   |   |   |   |     CONST_STRING  I like writing
+

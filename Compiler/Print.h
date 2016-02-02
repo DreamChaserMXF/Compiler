@@ -10,7 +10,7 @@ using std::ofstream;
 using std::vector;
 using std::ios;
 
-void PrintOperand(Quaternary::OperandType type, int value, const TokenTable &tokentable, ostream &out) throw();
+void PrintOperand(Quaternary::AddressingMethod type, int value, const TokenTable &tokentable, ostream &out, int space_width = 16) throw();
 void PrintQuaternaryVector(const vector<Quaternary> &quaternarytable, const TokenTable &tokentable, ostream &out) throw();
 bool PrintQuaternaryVector(const vector<Quaternary> &quaternarytable, const TokenTable &tokentable, const string &filename) throw();
 

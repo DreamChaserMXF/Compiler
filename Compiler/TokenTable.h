@@ -35,7 +35,7 @@ public:
 	iterator SearchDefinition(const Token &token) throw();					// 查找定义处
 	const_iterator begin() const throw();
 	const_iterator end() const throw();
-	const TokenTableItem& back() const throw();
+	//const TokenTableItem& back() const throw();
 	size_t size() const throw();
 	
 	vector<TokenTableItem::DecorateType> GetProcFuncParameter(const_iterator iter) throw();
@@ -47,6 +47,10 @@ public:
 	void SetParameterCount(const string &proc_func_name, int parameterCount) throw();
 	void SetFunctionReturnType(const string &func_name, TokenTableItem::DecorateType decoratetype_) throw();
 	void AddParameterItem(Token parameterIdentifier, TokenTableItem::DecorateType decoratetype_, int level) throw();
+
+	// 汇编过程中需要
+	int GetVariableSpace(TokenTable::const_iterator c_iter) const throw();
+	int GetParameterNum(int var_index) const throw();
 	
 	string toString() const throw();
 	void Print(const string &fileName) const throw();	// 输出到文件

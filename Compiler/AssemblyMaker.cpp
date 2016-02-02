@@ -1,6 +1,9 @@
 #include "AssemblyMaker.h"
+#include "Print.h"
+#include <iomanip>
 #include <iostream>
 #include <fstream>
+#include <assert.h>
 using std::cout;
 using std::endl;
 
@@ -42,16 +45,6 @@ bool AssemblyMaker::Assemble() throw()
 		{
 			OtherFunction(c_iter);
 		}
-//		if(TokenTableItem::PROCEDURE == c_iter->itemtype_)
-//		{
-//			OtherProcedure(c_iter);
-////			OtherProcedure(GetVariableSpace(c_iter + 1), GetProcFuncIterInQuaternaryTable(c_iter));
-//		}
-//		else if(TokenTableItem::FUNCTION == c_iter->itemtype_)
-//		{
-//			OtherFunction(c_iter);
-////			OtherFunction(GetVariableSpace(c_iter + 1), GetProcFuncIterInQuaternaryTable(c_iter));
-//		}
 	}
 	EndStatement();
 	return true;
@@ -69,8 +62,8 @@ void AssemblyMaker::Head() throw()
 	// 包含的库
 	assemble_buffer << "\nincludelib .\\masm32\\lib\\msvcrt.lib";
 	assemble_buffer << "\nincludelib .\\masm32\\lib\\kernel32.lib";
-	assemble_buffer << "\nincludelib .\\masm32\\include\\msvcrt.inc";
-	assemble_buffer << "\nincludelib .\\masm32\\include\\kernel32.inc";
+	assemble_buffer << "\ninclude .\\masm32\\include\\msvcrt.inc";
+	assemble_buffer << "\ninclude .\\masm32\\include\\kernel32.inc";
 	// 输入输出函数调用
 	assemble_buffer << "\nprintf PROTO C: ptr sbyte, :vararg";
 	assemble_buffer << "\nscanf  PROTO C: ptr sbyte, :vararg";
@@ -85,7 +78,12 @@ void AssemblyMaker::DataSegment() throw()
 	assemble_buffer << "\n.DATA";
 	assemble_buffer << "\n    _integer_format    db '%d ', 0";
 	assemble_buffer << "\n    _char_format       db '%c ', 0";
-	assemble_buffer << "\n    _str_format        db '%s ', 0";
+	assemble_buffer << "\n    _string_format     db '%s ', 0";
+//	assemble_buffer << "\n    _String0		DB	'123', 0";
+	for(size_t i = 0; i < stringtable_.size(); ++i)
+	{
+		assemble_buffer << "\n    _String" << i << "           db '" << stringtable_[i] << "', 0"; 
+	}
 	assemble_buffer << endl;
 }
 void AssemblyMaker::CodeBeginSegment() throw()
@@ -95,38 +93,48 @@ void AssemblyMaker::CodeBeginSegment() throw()
 void AssemblyMaker::MainFunction() throw()
 {
 	// 主函数声明
-	assemble_buffer << "\n.start:\n";				// 开始位置
-	assemble_buffer << "\n_main:  proc far\n";		// 跳转方式
+	assemble_buffer << "\nstart:\n";				// 开始位置
+	assemble_buffer << "\n_main  proc far";		// 跳转方式
 	// 主函数头
-	// 一. 找出主函数中局部变量与TODO:临时变量的存储空间
-	int var_space = GetVariableSpace(tokentable_.begin());;
+	// 一. 找出主函数中局部变量与临时变量的存储空间
+	int var_space = tokentable_.GetVariableSpace(tokentable_.begin());;
 	int temp_space = quaternarytable_.front().src2_;
-	// TODO 二. 构造运行栈
-
-	// TODO 三. 为变量在栈上分配空间
-
-	// 四. 在四元式表中找到主函数的开始地址，对四元式进行汇编
-	vector<Quaternary>::const_reverse_iterator rc_quaternary_iter = quaternarytable_.rbegin();
-	while(rc_quaternary_iter != quaternarytable_.rend() 
-		&& Quaternary::END != rc_quaternary_iter->op_)
+	// 二. 保存寄存器并构造运行栈
+	// 会用到 eax ebx edx ebp esp
+	// esp不能压栈保存
+	assemble_buffer << "\n    push    eax"
+					<< "\n    push    ebx"
+					<< "\n    push    edx";
+	assemble_buffer	<< "\n    push    ebp"
+					<< "\n    mov     ebp,   esp"
+					<< "\n    sub     esp,   " << 4 * (var_space + temp_space);
+	assemble_buffer << '\n';
+	// 三. 在四元式表中找到主函数的开始地址，对四元式进行汇编
+	for(vector<Quaternary>::const_iterator q_iter = Quaternary::GetFunctionBody(quaternarytable_.begin());
+		Quaternary::END != q_iter->op_;
+		++q_iter)
 	{
-		++rc_quaternary_iter;
+		// 转换汇编码
+		TranslateQuaternary(q_iter, 0, var_space, 0);
 	}
-	// 从c_iter指向的四元式直到结束，都是属于主函数的四元式
-	for(vector<Quaternary>::const_iterator c_quaternary_iter = rc_quaternary_iter.base();
-		c_quaternary_iter != quaternarytable_.end(); ++c_quaternary_iter)
-	{
-		// TODO 转换汇编码
-		TranslateQuaternary(c_quaternary_iter);
-	}
-	// TODO 五. 函数尾
-	assemble_buffer << "\n    push    0";
+	//assemble_buffer << "\n    push    offset  _String0"
+	//				<< "\n    push    offset  _str_format"
+	//				<< "\n    call    printf"
+	//				<< "\n    add     esp,   8";
+	// 四. 主函数尾：还原工作
+	assemble_buffer << '\n';
+	assemble_buffer << "\n    add     esp,   " << 4 * (var_space + temp_space)	// 还原栈顶指针
+					<< "\n    pop     ebp";
+	assemble_buffer << "\n    pop     edx"
+					<< "\n    pop     ebx"
+					<< "\n    pop     eax";
+	//assemble_buffer << "\n    pop     0";
 	assemble_buffer << "\n    call    ExitProcess";
-	assemble_buffer << "\n_main:  endp\n" << endl;
+	assemble_buffer << "\n_main  endp\n" << endl;
 }
 
 // 普通函数的汇编过程
-// c_iter是该函数名在符号表中的位置
+// c_iter是该函数名在符号表中的表项的迭代器
 void AssemblyMaker::OtherFunction(TokenTable::const_iterator c_iter) throw()
 {
 	// 一. 找到函数在四元式的BEGIN语句
@@ -134,74 +142,41 @@ void AssemblyMaker::OtherFunction(TokenTable::const_iterator c_iter) throw()
 	// 二. 得到参数所占的空间（单位：4bytes）
 	int para_space = c_iter->value_;
 	// 三. 得到局部变量的空间（单位：4bytes）
-	int var_space = GetVariableSpace(c_iter + 1);
+	int var_space = tokentable_.GetVariableSpace(c_iter + 1);
 	// 四. 得到临时变量的空间（单位：4bytes）
 	int temp_space = q_iter->src2_;
-	// 五. TODO 输出函数头，为局部变量和临时变量分配空间
-	assemble_buffer << "\n_";
-	assemble_buffer.width(8);
-	assemble_buffer.setf(std::ios::left);
-	assemble_buffer << c_iter->name_ << "  proc near\n";
-	// 六. TODO 找到函数主体在四元式中的语句
+	// 五. 输出函数头，构造运行栈（为局部变量和临时变量分配空间）
+	//assemble_buffer << "\n_" << std::setiosflags(ios::right)<< std::setw(8) << c_iter->name_ << "  proc near";
+	//assemble_buffer.width(8);
+	//assemble_buffer.setf(std::ios::left);
+	assemble_buffer << "\n_" << c_iter->name_ << "  proc near";
+	assemble_buffer << "\n    push    ebp"
+					<< "\n    mov     ebp,   esp"
+					<< "\n    sub     esp,   " << 4 * (var_space + temp_space);
+	assemble_buffer << '\n';
+	// 六. 找到函数主体在四元式中的语句
 	//     然后逐个四元式生成汇编码
-	for(q_iter = GetFunctionBody(q_iter);
+	for(q_iter = Quaternary::GetFunctionBody(q_iter);
 		Quaternary::END != q_iter->op_;
 		++q_iter)
 	{
-		TranslateQuaternary(q_iter);	
+		TranslateQuaternary(q_iter, para_space, var_space, c_iter->level_);	
 	}
-	// 七. TODO 输出函数尾
-	assemble_buffer << "\n_";
-	assemble_buffer.width(8);
-	assemble_buffer.setf(std::ios::left);
-	assemble_buffer << c_iter->name_ << "  endp\n";
+	// 七. 输出函数尾
+	assemble_buffer << '\n';
+	assemble_buffer << "\n    add     esp,   " << 4 * (var_space + temp_space)	// 还原栈顶指针
+					<< "\n    pop     ebp"
+					<< "\n    ret";
+	//assemble_buffer ;
+//	assemble_buffer.width(8);
+//	assemble_buffer.setf(std::ios::left);
+	//assemble_buffer << "\n_" << std::setiosflags(ios::left)<< std::setw(8) << c_iter->name_ << "  endp\n";
+	assemble_buffer << "\n_" << c_iter->name_ << "  endp\n";
 }
 
 void AssemblyMaker::EndStatement() throw()
 {
-	assemble_buffer << "\n.end start" << endl;
-}
-
-// TODO 翻译四元式
-void AssemblyMaker::TranslateQuaternary(vector<Quaternary>::const_iterator &c_iter) const throw()
-{
-	
-}
-
-// 返回过程/函数的局部变量所占的空间（单位：4bytes）
-// c_iter为过程/函数在符号表中的位置的下一个位置
-// 之所以这么要求，是因为主函数在符号表中没有位置，只能提供下一个位置
-int AssemblyMaker::GetVariableSpace(TokenTable::const_iterator c_iter) const throw()
-{
-	// 先用while跳过当前过程/函数的参数及常量
-	while( tokentable_.end() != c_iter
-		&& (TokenTableItem::PARAMETER == c_iter->itemtype_
-			|| TokenTableItem::CONST == c_iter->itemtype_)
-		)
-	{
-		++c_iter;
-	}
-	// 如果该过程/函数没有局部变量
-	if(tokentable_.end() == c_iter
-		|| TokenTableItem::PROCEDURE == c_iter->itemtype_
-		|| TokenTableItem::FUNCTION == c_iter->itemtype_)
-	{
-		return 0;
-	}
-	// 现在肯定有变量了
-	// 取得第一个变量的地址
-	int first_var_addr = c_iter->addr_;
-	// 用while跳过当前过程/函数的局部变量
-	while( tokentable_.end() != c_iter
-		&& TokenTableItem::PROCEDURE != c_iter->itemtype_
-		&& TokenTableItem::FUNCTION != c_iter->itemtype_)
-	{
-		++c_iter;
-	}
-	// 找出最后一个变量，得到其地址，再计算局部变量空间（末变量地址-首变量地址+末变量长度）
-	const TokenTableItem &item = ((tokentable_.end() == c_iter) ? tokentable_.back() : *(c_iter - 1));
-	// 最后一个变量可能是数组或普通变量，所以有两种不同的空间计算方式
-	return item.addr_ - first_var_addr + ((TokenTableItem::ARRAY == item.itemtype_) ? item.value_ : 1);
+	assemble_buffer << "\nend start" << endl;
 }
 
 // 通过指向符号表的过程/函数的迭代器，找到其在四元式表中对应的BEGIN语句的迭代器
@@ -220,27 +195,521 @@ vector<Quaternary>::const_iterator AssemblyMaker::GetProcFuncIterInQuaternaryTab
 	return quaternarytable_.end();
 }
 
-// 通过过程/函数在四元式表中的BEGIN语句的迭代器，找到其过程/函数体的第一条语句的迭代器
-vector<Quaternary>::const_iterator AssemblyMaker::GetFunctionBody(vector<Quaternary>::const_iterator begin_iter) const throw()
+// TODO 翻译四元式
+void AssemblyMaker::TranslateQuaternary(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	++begin_iter;
-	if(Quaternary::BEGIN != begin_iter->op_)
+	// 先以注释形式输出待翻译的四元式
+	assemble_buffer << "\n    ;";
+	// 输出序号
+	assemble_buffer.width(3);
+	assemble_buffer.setf(ios::right);
+	assemble_buffer << distance(quaternarytable_.begin(), c_iter) << "  ";
+	// 输出操作符
+	assemble_buffer.width(9);
+	assemble_buffer.setf(ios::right);
+	assemble_buffer << Quaternary::OPCodeString[c_iter->op_] << " ";
+	// 输出操作数
+	PrintOperand(c_iter->method1_, c_iter->src1_, tokentable_, assemble_buffer);
+	PrintOperand(c_iter->method2_, c_iter->src2_, tokentable_, assemble_buffer);
+	PrintOperand(c_iter->method3_, c_iter->dst_, tokentable_, assemble_buffer);
+	// 将四元式翻译为汇编码
+	switch(c_iter->op_)
 	{
-		return begin_iter;
+	case Quaternary::NEG:
+		TranslateNeg(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::ADD:
+		TranslateAdd(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::ASG:
+		TranslateAssign(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::AASG:
+		TranslateArrayAssign(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::WRITE:
+		TranslateWrite(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::PROC_CALL:
+	case Quaternary::FUNC_CALL:
+		TranslateCall(c_iter, para_num, var_space, level);
+		break;
+	default:
+		break;
 	}
-
-	int func_num = 1;	// 已经读到了一个begin
-	while(func_num > 0)
-	{
-		++begin_iter;
-		if(Quaternary::BEGIN == begin_iter->op_)
-		{
-			++func_num;
-		}
-		else if(Quaternary::END == begin_iter->op_)
-		{
-			--func_num;
-		}
-	}
-	return ++begin_iter;
 }
+
+// Add的左右操作数只可能是：立即数、普通变量、临时变量，不会是数组
+// 目的操作数只可能是普通变量或临时变量
+void AssemblyMaker::TranslateAdd(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+{
+	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
+	{
+		if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)
+		{
+			// 因为在四元式生成时有过对两个常数的运算的优化，所以不可能有两个立即数的情况
+			assert(false);
+		}
+		else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method2_)
+		{
+			// 加载第二个普通变量到EAX
+			LoadVar(c_iter->src2_, para_num, level, EAX);
+		}
+		else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method2_)
+		{
+			// 加载第二个临时变量到EAX
+			LoadTemp(c_iter->src2_, var_space, EAX);
+		}
+		else
+		{
+			assert(false);
+		}
+		// 加上第一个立即数
+		assemble_buffer << "\n    add     eax, " << c_iter->src1_;
+	}
+	else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method1_)
+	{
+		// 加载第一个普通变量到EAX
+		LoadVar(c_iter->src1_, para_num, level, EAX);
+		if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)
+		{
+			// 加上第二个立即数
+			assemble_buffer << "\n    add     eax, " << c_iter->src2_;
+		}
+		else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method2_)
+		{
+			// 加载第二个普通变量到EDX
+			LoadVar(c_iter->src2_, para_num, level, EDX);
+			// EAX与EDX相加
+			assemble_buffer << "\n    add     eax, edx";
+		}
+		else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method2_)
+		{
+			// 加载第二个临时变量到EDX
+			LoadTemp(c_iter->src2_, var_space, EDX);
+			// EAX与EDX相加
+			assemble_buffer << "\n    add     eax, edx";
+		}
+		else
+		{
+			assert(false);
+		}
+	}
+	else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method1_)
+	{
+		// 加载第一个临时变量到EAX
+		LoadTemp(c_iter->src1_, var_space, EAX);
+		if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)
+		{
+			// 加上第二个立即数
+			assemble_buffer << "\n    add     eax, " << c_iter->src2_;
+		}
+		else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method2_)
+		{
+			// 加载第二个普通变量到EDX
+			LoadVar(c_iter->src2_, para_num, level, EDX);
+			// EAX与EDX相加
+			assemble_buffer << "\n    add     eax, edx";
+		}
+		else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method2_)
+		{
+			// 加载第二个临时变量到EDX
+			LoadTemp(c_iter->src2_, var_space, EDX);
+			// EAX与EDX相加
+			assemble_buffer << "\n    add     eax, edx";
+		}
+		else
+		{
+			assert(false);
+		}
+	}
+	else
+	{
+		assert(false);
+	}
+	// 将EAX存储给目的操作数（普通变量或临时变量）
+	if(Quaternary::VARIABLE_ADDRESSING == c_iter->method3_)
+	{
+		StoreVar(c_iter->dst_, para_num, level);
+	}
+	else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method3_)
+	{
+		StoreTemp(c_iter->dst_, var_space);
+	}
+}
+
+// 赋值语句
+// 源操作数可以是立即数、普通变量、临时变量和数组元素
+// 目的操作数可以是普通变量和临时变量
+void AssemblyMaker::TranslateAssign(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+{
+	if(Quaternary::VARIABLE_ADDRESSING == c_iter->method3_)
+	{
+		if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
+		{
+			// 将立即数放在EAX中
+			assemble_buffer << "\n    mov     eax, " << c_iter->src1_;
+		}
+		else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method1_)
+		{
+			// 将普通变量加载到EAX中
+			LoadVar(c_iter->src1_, para_num, level, EAX);
+		}
+		else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method1_)
+		{
+			// 将临时变量加载到EAX中
+			LoadTemp(c_iter->src1_, var_space, EAX);
+		}
+		else if(Quaternary::ARRAY_ADDRESSING == c_iter->method1_)
+		{
+			// 将数组元素加载到EAX中
+			LoadArray(c_iter->src1_, c_iter->src2_, para_num, level, EAX);
+		}
+		else
+		{
+			assert(false);
+		}
+		// 将EAX的数据存储在普通变量里
+		StoreVar(c_iter->dst_, para_num, level);
+	}
+	else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method3_)
+	{
+		if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
+		{
+			// 将立即数放在EAX中
+			assemble_buffer << "\n    mov     eax, " << c_iter->src1_;
+		}
+		else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method1_)
+		{
+			// 将普通变量加载到EAX中
+			LoadVar(c_iter->src1_, para_num, level, EAX);
+		}
+		else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method1_)
+		{
+			// 将临时变量加载到EAX中
+			LoadTemp(c_iter->src1_, var_space, EAX);
+		}
+		else if(Quaternary::ARRAY_ADDRESSING == c_iter->method1_)
+		{
+			// 将数组元素加载到EAX中
+			LoadArray(c_iter->src1_, c_iter->src2_, para_num, level, EAX);
+		}
+		else
+		{
+			assert(false);
+		}
+		// 将EAX的数据存储在临时变量里
+		StoreTemp(c_iter->dst_, var_space);
+	}
+	else
+	{
+		assert(false);
+	}
+}
+
+
+// 数组赋值语句
+// 源操作数可以是立即数、普通变量、临时变量
+// 目的操作数为数组
+void AssemblyMaker::TranslateArrayAssign(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+{
+	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
+	{
+		// 将立即数放在EAX中
+		assemble_buffer << "\n    mov     eax, " << c_iter->src1_;
+	}
+	else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method1_)
+	{
+		// 将普通变量加载到EAX中
+		LoadVar(c_iter->src1_, para_num, level, EAX);
+	}
+	else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method1_)
+	{
+		// 将临时变量加载到EAX中
+		LoadTemp(c_iter->src1_, var_space, EAX);
+	}
+	else
+	{
+		assert(false);
+	}
+	// 将EAX的数据存储在数组里
+	StoreArray(c_iter->dst_, c_iter->src2_, para_num, level);
+	
+}
+
+
+void AssemblyMaker::TranslateWrite(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+{
+	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method3_)		// 写立即数
+	{
+		if(TokenTableItem::INTEGER == c_iter->dst_decoratetype_)
+		{
+			assemble_buffer << "\n    push    " << c_iter->dst_
+							<< "\n    push    offset  _integer_format";
+		}
+		else if(TokenTableItem::CHAR == c_iter->dst_decoratetype_)
+		{
+			assemble_buffer << "\n    push    " << c_iter->dst_
+							<< "\n    push    offset  _char_format";
+		}
+		else
+		{
+			assert(false);
+		}
+	}
+	else if(Quaternary::STRING_ADDRESSING == c_iter->method3_)	// 写字符串
+	{
+		assemble_buffer << "\n    push    offset  _String" << c_iter->dst_
+						<< "\n    push    offset  _string_format";
+	}
+	else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method3_)	// 写普通变量
+	{
+		LoadVar(c_iter->dst_, para_num, level, EAX);
+		assemble_buffer << "\n    push    eax";
+		if(TokenTableItem::INTEGER == tokentable_.at(c_iter->dst_).decoratetype_)	// 整型变量
+		{
+			assemble_buffer << "\n    push    offset  _integer_format";
+		}
+		else if(TokenTableItem::CHAR == tokentable_.at(c_iter->dst_).decoratetype_)	// 字符型变量
+		{			
+			assemble_buffer << "\n    push    offset  _char_format";
+		}
+	}
+	else if(Quaternary::ARRAY_ADDRESSING == c_iter->method3_)	// 写数组变量
+	{
+		LoadArray(c_iter->dst_, c_iter->offset2_, para_num, level, EAX);
+		assemble_buffer << "\n    push    eax";
+		if(TokenTableItem::INTEGER == tokentable_.at(c_iter->dst_).decoratetype_)	// 整型变量
+		{
+			assemble_buffer << "\n    push    offset  _integer_format";
+		}
+		else if(TokenTableItem::CHAR == tokentable_.at(c_iter->dst_).decoratetype_)	// 字符型变量
+		{			
+			assemble_buffer << "\n    push    offset  _char_format";
+		}
+	}
+	else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method3_)	// 写临时变量
+	{
+		LoadTemp(c_iter->dst_, var_space, EAX);
+		assemble_buffer << "\n    push    eax"
+						<< "\n    push    offset  _integer_format";
+	}
+	else
+	{
+		assert(false);
+	}
+	assemble_buffer << "\n    call    printf"
+					<< "\n    add     esp, 8";
+}
+
+
+// 这里的难度主要在于display区的控制
+// 新函数的subfunc_level的取值为[1, level + 1]
+// 当subfunc_level <= level时，复制当前函数的display区的前subfunc_level个表项
+// 当subfunc_level == level + 1时，将当前函数的display区（共level项）复制给子函数后，再将EBP作为子函数新的一个display表项
+void AssemblyMaker::TranslateCall(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+{
+	// 一. 获得被调用函数的level
+	int subfunc_level = tokentable_.at(c_iter->dst_).level_;
+	// 二. 根据调用者和被调用者的level复制display区
+	int offset = 0;
+	if(subfunc_level <= level)
+	{
+		for(int i = 0; i < subfunc_level; ++i)
+		{
+			offset = 4 * (1 + level - i);
+			assemble_buffer << "\n    mov     eax, SS:[ebp + " << offset << "]"
+							<< "\n    mov     SS:[esp - " << 4 * (i + 1) <<"], eax";
+		}
+	}
+	else if(subfunc_level == level + 1)
+	{
+		for(int i = 0; i < level; ++i)
+		{
+			offset = 4 * (1 + level - i);
+			assemble_buffer << "\n    mov     eax, SS:[ebp + " << offset << "]"
+							<< "\n    mov     SS:[esp - " << 4 * (i + 1) <<"], eax";
+		}
+		assemble_buffer << "\n    mov     SS:[esp - " << 4 * subfunc_level <<"], ebp";
+	}
+	// 三. 调整栈顶指针
+	assemble_buffer << "\n    sub     esp, " << 4 * subfunc_level;
+	// 三. call调用
+	assemble_buffer << "\n    call    _" << tokentable_.at(c_iter->dst_).name_;
+	// 四. 恢复栈顶指针
+	int subfunc_para_num = tokentable_.GetParameterNum(c_iter->dst_);
+	assemble_buffer  << "\n    add     esp, " << 4 * (subfunc_level + subfunc_para_num);
+}
+
+// 将变量装载到寄存器中
+// tokentable_index为变量在符号表中的位置
+// para_num表示当前函数的参数个数
+// level表示当前函数的静态层次（即在符号表中的层次）
+// reg代表装入哪个寄存器
+// 地址计算公式：
+// para#n.addr = EBP + 4 * (1 + level + para_num - n)
+// var#n.addr = EBP - 4 * (n + 1)
+// display#n.addr = EBP + 4 * (1 + level - n)
+void AssemblyMaker::LoadVar(int tokentable_index, int para_num, int level, enum REGISTER reg) throw()
+{
+	// 确定变量的层次
+	int var_level = tokentable_.at(tokentable_index).level_;
+	// 确定函数的层次（比变量层次少1）
+	int func_level = var_level - 1;
+	int n = tokentable_.at(tokentable_index).addr_;	// 计算该变量的相对地址
+	if(level == func_level)	// 判断是否为局部变量
+	{
+		int offset = 0;
+		if(n < para_num)	// 说明是参数
+		{
+			offset = 4 * (1 + level + para_num - n);
+		}
+		else				// 说明是局部变量
+		{
+			offset = 4 * (n + 1);
+		}
+		assemble_buffer << "\n    mov     " << RegisterName[reg] << ", SS:[ebp - " << offset << "]";
+	}
+	else	// 外层次的变量
+	{
+		// 一. 获得外层次的参数个数
+		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
+		// 二. 获得外层次的EBP的值，加载到EBX中
+		int offset = 4 * (1 + level - func_level);
+		assemble_buffer << "\n    mov     ebx, SS:[ebp + " << offset << "]";
+		// 三. 加载外层的变量
+		if(n < extern_para_num)	// 说明是外层参数
+		{
+			int offset = 4 * (1 + func_level + extern_para_num - n);
+			assemble_buffer << "\n    mov     " << RegisterName[reg] << ", SS:[ebx + " << offset << "]";
+		}
+		else				    // 说明是外层局部变量
+		{
+			int offset = 4 * (n + 1);
+			assemble_buffer << "\n    mov     " << RegisterName[reg] << ", SS:[ebx - " << offset << "]";
+		}
+	}
+}
+
+// 注意：array不可能是参数
+// 地址计算公式：
+// array#n.addr = EBP - 4 * (n + 1 + array_offset)
+// display#n.addr = EBP + 4 * (1 + level - n)	这里的n即为外层函数的层次
+void AssemblyMaker::LoadArray(int tokentable_index, int array_offset, int para_num, int level, enum REGISTER reg) throw()
+{
+	// 确定变量的层次
+	int var_level = tokentable_.at(tokentable_index).level_;
+	// 确定函数的层次（比变量层次少1）
+	int func_level = var_level - 1;
+	int n = tokentable_.at(tokentable_index).addr_;	// 计算该变量的相对地址
+	if(level == func_level)	// 判断是否为局部变量
+	{
+		int offset = 4 * (n + 1 + array_offset);
+		assemble_buffer << "\n    mov     " << RegisterName[reg] << ", SS:[ebp - " << offset << "]";
+	}
+	else	// 外层次的变量
+	{
+		// 一. 获得外层次的参数个数
+		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
+		// 二. 获得外层次的EBP的值，加载到EBX中
+		int offset = 4 * (1 + level - func_level);
+		assemble_buffer << "\n    mov     ebx, SS:[ebp + " << offset << "]";
+		// 三. 加载外层的变量
+		offset = 4 * (n + 1 + array_offset);
+		assemble_buffer << "\n    mov     " << RegisterName[reg] << ", SS:[ebx - " << offset << "]";
+	}
+}
+// 地址计算公式：
+// temp#n.addr = EBP - 4 * (var_space + n + 1)
+void AssemblyMaker::LoadTemp(int index, int var_space, enum REGISTER reg) throw()
+{
+	// 这里的index就是上式中的n
+	int offset = 4 * (var_space + index + 1);
+	assemble_buffer << "\n    mov     " << RegisterName[reg] << ", SS:[ebp - " << offset << "]";
+}
+
+// 将变量从寄存器EAX存储到内存
+// 地址计算公式：
+// para#n.addr = EBP + 4 * (1 + level + para_num - n)
+// var#n.addr = EBP - 4 * (n + 1)
+// display#n.addr = EBP + 4 * (1 + level - n)
+void AssemblyMaker::StoreVar(int tokentable_index, int para_num, int level) throw()
+{
+	// 确定变量的层次
+	int var_level = tokentable_.at(tokentable_index).level_;
+	// 确定函数的层次（比变量层次少1）
+	int func_level = var_level - 1;
+	int n = tokentable_.at(tokentable_index).addr_;	// 计算该变量的相对地址
+	if(level == func_level)	// 判断变量是否为函数的局部变量
+	{
+		int offset = 0;
+		if(n < para_num)	// 说明是参数
+		{
+			offset = 4 * (1 + level + para_num - n);
+		}
+		else				// 说明是局部变量
+		{
+			offset = 4 * (n + 1);
+		}
+		assemble_buffer << "\n    mov     SS:[ebp - " << offset << "], eax";
+	}
+	else	// 外层次的变量
+	{
+		// 一. 获得外层次的参数个数
+		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
+		// 二. 获得外层次的EBP的值，加载到EBX中
+		int offset = 4 * (1 + level - func_level);
+		assemble_buffer << "\n    mov     ebx, SS:[ebp + " << offset << "]";
+		// 三. 加载外层的变量
+		if(n < extern_para_num)	// 说明是外层参数
+		{
+			int offset = 4 * (1 + func_level + extern_para_num - n);
+		}
+		else				    // 说明是外层局部变量
+		{
+			int offset = 4 * (n + 1);
+		}
+		assemble_buffer << "\n    mov     SS:[ebx - " << offset << "], eax";
+	}
+}
+
+// 注意：array不可能是参数
+// 地址计算公式：
+// array#n.addr = EBP - 4 * (n + 1 + array_offset)
+// display#n.addr = EBP + 4 * (1 + level - n)
+void AssemblyMaker::StoreArray(int tokentable_index, int array_offset, int para_num, int level) throw()
+{
+	// 确定变量的层次
+	int var_level = tokentable_.at(tokentable_index).level_;
+	// 确定函数的层次（比变量层次少1）
+	int func_level = var_level - 1;
+	int n = tokentable_.at(tokentable_index).addr_;	// 计算该变量的相对地址
+	if(level == func_level)	// 判断是否为局部变量
+	{
+		int offset = 4 * (n + 1 + array_offset);
+		assemble_buffer << "\n    mov     SS:[ebp - " << offset << "], eax";
+	}
+	else	// 外层次的变量
+	{
+		// 一. 获得外层次的参数个数
+		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
+		// 二. 获得外层次的EBP的值，加载到EBX中
+		int offset = 4 * (1 + level - func_level);
+		assemble_buffer << "\n    mov     ebx, SS:[ebp + " << offset << "]";
+		// 三. 加载外层的变量
+		offset = 4 * (n + 1 + array_offset);
+		assemble_buffer << "\n    mov     SS:[ebx - " << offset << "], eax";
+	}
+}
+
+// 地址计算公式：
+// temp#n.addr = EBP - 4 * (var_space + n + 1)
+void AssemblyMaker::StoreTemp(int index, int var_space) throw()
+{
+	// 这里的index就是上式中的n
+	int offset = 4 * (var_space + index + 1);
+	assemble_buffer << "\n    mov     SS:[ebp - " << offset << "], eax";
+}
+// 寄存器名
+ const char * const AssemblyMaker::RegisterName[2] = 
+ {"eax", "edx"};

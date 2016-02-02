@@ -10,6 +10,31 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AssemblyMaker.h" />
+    <ClInclude Include="ExpressionAttribute.h" />
+    <ClInclude Include="LexException.h" />
+    <ClInclude Include="LexicalAnalyzer.h" />
+    <ClInclude Include="Print.h" />
+    <ClInclude Include="Quaternary.h" />
+    <ClInclude Include="SyntaxAnalyzer.h" />
+    <ClInclude Include="SyntaxException.h" />
+    <ClInclude Include="Token.h" />
+    <ClInclude Include="TokenTable.h" />
+    <ClInclude Include="TokenTableException.h" />
+    <ClInclude Include="TokenTableItem.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AssemblyMaker.cpp" />
+    <ClCompile Include="LexicalAnalyzer.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Print.cpp" />
+    <ClCompile Include="Quaternary.cpp" />
+    <ClCompile Include="SyntaxAnalyzer.cpp" />
+    <ClCompile Include="Token.cpp" />
+    <ClCompile Include="TokenTable.cpp" />
+    <ClCompile Include="TokenTableItem.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{5DB7E04D-8EE9-4FB0-A910-1EF4DC3FC53A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -73,31 +98,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="AssemblyMaker.cpp" />
-    <ClCompile Include="LexicalAnalyzer.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="Print.cpp" />
-    <ClCompile Include="Quaternary.cpp" />
-    <ClCompile Include="SyntaxAnalyzer.cpp" />
-    <ClCompile Include="Token.cpp" />
-    <ClCompile Include="TokenTable.cpp" />
-    <ClCompile Include="TokenTableItem.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="AssemblyMaker.h" />
-    <ClInclude Include="ExpressionAttribute.h" />
-    <ClInclude Include="LexException.h" />
-    <ClInclude Include="LexicalAnalyzer.h" />
-    <ClInclude Include="Print.h" />
-    <ClInclude Include="Quaternary.h" />
-    <ClInclude Include="SyntaxAnalyzer.h" />
-    <ClInclude Include="SyntaxException.h" />
-    <ClInclude Include="Token.h" />
-    <ClInclude Include="TokenTable.h" />
-    <ClInclude Include="TokenTableException.h" />
-    <ClInclude Include="TokenTableItem.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
