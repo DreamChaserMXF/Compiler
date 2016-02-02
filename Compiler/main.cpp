@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 	bool assemble_legitimate = false;
 
 	// 输入输出文件名
-	const string kCodeFileName = "TestCase/example.cpp";
+	const string kCodeFileName = "TestCase/test01.txt";
 	const string kTokenFileName = "TestCase/example_token.txt";
 	const string kTokenTableFileName = "TestCase/example_tokentable.txt";
 	const string kStringTableFileName = "TestCase/example_stringtable.txt";
@@ -69,7 +69,6 @@ int main(int argc, char *argv[])
 	AssemblyMaker assembly_maker(quaternarytable, tokentable, stringtable);
 	assemble_legitimate = assembly_maker.Assemble();
 	assembly_maker.Print(kAssemblyCodeFileName);
-	assembly_maker.Print(cout);
 	//出错检查
 	if(!assemble_legitimate)// 这里好像不应该有错
 	{

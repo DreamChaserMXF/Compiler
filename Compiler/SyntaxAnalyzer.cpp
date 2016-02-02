@@ -1994,7 +1994,7 @@ vector<int> SyntaxAnalyzer::CaseElement(const ExpressionAttribute &exp_attribute
 }
 
 // <读语句> ::= read'('<标识符>{,<标识符>}')'
-// 可扩展出对数组的支持
+// TODO 扩展出对数组的支持
 void SyntaxAnalyzer::ReadStatement(int depth) throw()			// 读语句
 {
 	PrintFunctionFrame("ReadStatement()", depth);
@@ -2523,15 +2523,12 @@ void SyntaxAnalyzer::ProcedureCallStatement(const Token proc_token, const vector
 	}
 	for(int i = 0; i < static_cast<int>(parameter_decorate_types.size()); ++i)
 	{
-		//assert(parameter_decorate_types[i] != TokenTableItem::VOID);	// 这里的数据类型只能为CHAR或INTEGER
-		//assert(arg_decoratetypes[i] != TokenTableItem::VOID);
 		// 左小于右小于表示不能从右操作数类型转到左操作数类型
 		if(parameter_decorate_types[i] < arg_decoratetypes[i])
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() 
-				<< "  cannot convert parameter " << i + 1 << " from " << TokenTableItem::DecorateTypeString[parameter_decorate_types[i]]
-				<< " to " <<  TokenTableItem::DecorateTypeString[arg_decoratetypes[i]] <<"\n";
-			is_successful_ = false;
+			std::cout << "warning: line " << token_.lineNumber_ << ":  " << token_.toString() 
+				<< "  cannot convert parameter " << i + 1 << " from " << TokenTableItem::DecorateTypeString[arg_decoratetypes[i]]
+				<< " to " <<  TokenTableItem::DecorateTypeString[parameter_decorate_types[i]] <<"\n";
 			// 这里仅仅是检查了参数类型不匹配，语法分析还可继续，故不返回
 		}
 		//if(parameter_decorate_types[i] == TokenTableItem::CHAR && arg_decoratetypes[i] == TokenTableItem::INTEGER)

@@ -76,6 +76,24 @@ bool PrintQuaternaryVector(const vector<Quaternary> &quaternarytable, const Toke
 	return true;
 }
 
+void PrintQuaternaryComment(const vector<Quaternary> &quaternarytable, const TokenTable &tokentable, const vector<Quaternary>::const_iterator &c_iter, ostream &out) throw()
+{
+	// 先以注释形式输出待翻译的四元式
+	out << "\n    ;";
+	// 输出序号
+	out.width(3);
+	out.setf(ios::right);
+	out << distance(quaternarytable.begin(), c_iter) << "  ";
+	// 输出操作符
+	out.width(9);
+	out.setf(ios::right);
+	out << Quaternary::OPCodeString[c_iter->op_] << " ";
+	// 输出操作数
+	PrintOperand(c_iter->method1_, c_iter->src1_, tokentable, out);
+	PrintOperand(c_iter->method2_, c_iter->src2_, tokentable, out);
+	PrintOperand(c_iter->method3_, c_iter->dst_, tokentable, out);
+}
+
 void PrintStringVector(const vector<string> &stringtable, ostream &out) throw()
 {
 	for(vector<string>::const_iterator iter = stringtable.begin();
