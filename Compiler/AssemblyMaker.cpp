@@ -73,6 +73,8 @@ void AssemblyMaker::StackSegment() throw()
 {
 	assemble_buffer << "\n.STACK" << endl;
 }
+
+
 void AssemblyMaker::DataSegment() throw()
 {
 	assemble_buffer << "\n.DATA";
@@ -80,10 +82,24 @@ void AssemblyMaker::DataSegment() throw()
 	assemble_buffer << "\n    _integer_format_p    db '%d ', 0   ; for printf";
 	assemble_buffer << "\n    _char_format_s       db '%c' , 0   ; for scanf";
 	assemble_buffer << "\n    _char_format_p       db '%c ', 0   ; for printf";
-	assemble_buffer << "\n    _string_format       db '%s ', 0";
+	assemble_buffer << "\n    _string_format       db '%s', 0";
 	for(size_t i = 0; i < stringtable_.size(); ++i)
 	{
-		assemble_buffer << "\n    _String" << i << "           db '" << stringtable_[i] << "', 0"; 
+		assemble_buffer << "\n    _String" << i << "             db ";
+		for(string::const_iterator iter = stringtable_[i].begin();
+			iter != stringtable_[i].end(); ++iter)
+		{
+			// 每48个整数换一行（如果设为极限，即49个数换行，但最后还有一个0，加上之后可能就超了）
+			if(iter != stringtable_[i].begin() && distance(iter, stringtable_[i].begin()) % 47 == 0)	
+			{
+				assemble_buffer << static_cast<int>(*iter) << "\n	                     db ";
+			}
+			else
+			{
+				assemble_buffer << static_cast<int>(*iter) << ",";
+			}
+		}
+		assemble_buffer << "0";
 	}
 	assemble_buffer << endl;
 }
@@ -166,7 +182,8 @@ void AssemblyMaker::OtherFunction(TokenTable::const_iterator c_iter) throw()
 	PrintQuaternaryComment(quaternarytable_, tokentable_, q_iter, assemble_buffer);
 	assemble_buffer << '\n' << c_iter->name_ << distance(tokentable_.begin(), c_iter) << "_Exit:";
 	// 函数返回语句
-	assemble_buffer << "\n    add     esp,   " << 4 * (var_space + temp_space)	// 还原栈顶指针
+	//assemble_buffer << "\n    add     esp,   " << 4 * (var_space + temp_space)	// 还原栈顶指针(这样也可以，但如果中间栈会变动，就不好了。比如将函数返回值压栈存储时，可能会压入多个值，导致add的数量不确定。)
+	assemble_buffer << "\n    mov     esp, ebp"										// 还原栈顶指针
 					<< "\n    pop     ebp"
 					<< "\n    ret";
 	//assemble_buffer ;
@@ -198,7 +215,7 @@ vector<Quaternary>::const_iterator AssemblyMaker::GetProcFuncIterInQuaternaryTab
 }
 
 // 翻译四元式
-void AssemblyMaker::TranslateQuaternary(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateQuaternary(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	PrintQuaternaryComment(quaternarytable_, tokentable_, c_iter, assemble_buffer);
 	// 将四元式翻译为汇编码
@@ -282,11 +299,11 @@ void AssemblyMaker::TranslateQuaternary(vector<Quaternary>::const_iterator &c_it
 // 源操作数可能是普通变量、数组变量或临时变量
 // 注意，如果源操作数是立即数，则不需要装载至EAX再取反，而是直接在编译过程中取反，再存储至内存，这样可以只用一条汇编指令
 // 然而，聪明的我已经在中间代码生成时，优化掉了立即数的取反，所以这里的源操作数不可能是立即数
-void AssemblyMaker::TranslateNeg(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateNeg(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	assert(Quaternary::IMMEDIATE_ADDRESSING != c_iter->method1_);	// 不信我们试试看？
 	// 装载源操作数至EAX
-	LoadGeneral(c_iter->method1_, c_iter->src1_, c_iter->offset2_, para_num, var_space, level, EAX);
+	DoubleOperation2General(MOV, EAX, c_iter->method1_, c_iter->src1_, c_iter->offset2_, para_num, var_space, level);
 	// 取反
 	assemble_buffer << "\n    neg     eax";
 	// 将EAX存回内存
@@ -296,31 +313,22 @@ void AssemblyMaker::TranslateNeg(vector<Quaternary>::const_iterator &c_iter, int
 // Add的左右操作数只可能是：立即数、普通变量、临时变量，不会是数组
 // 且不可能两个同时是立即数（已在expression的中间代码生成中优化）
 // 目的操作数只可能是普通变量或临时变量
-void AssemblyMaker::TranslateAdd(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateAdd(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	// 当第一个操作数是立即数时
 	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
 	{
 		// 加载第二个操作数到EAX
-		LoadGeneral(c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level, EAX);
+		DoubleOperation2General(MOV, EAX, c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level);
 		// 加上第一个立即数
-		assemble_buffer << "\n    add     eax, " << c_iter->src1_;
+		DoubleOperation2General(ADD, EAX, c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level);
 	}
-	else if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)	// 当第二个操作数是立即数时
+	else // 当第一个操作数不是立即数时
 	{
 		// 加载第一个操作数到EAX
-		LoadGeneral(c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level, EAX);
-		// 加上第二个立即数
-		assemble_buffer << "\n    add     eax, " << c_iter->src2_;
-	}
-	else	// 左右操作数都不是立即数
-	{
-		// 加载第一个操作数到EAX
-		LoadGeneral(c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level, EAX);
-		// 加载第二个操作数到EDX
-		LoadGeneral(c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level, EDX);
-		// 相加
-		assemble_buffer << "\n    add     eax, edx";
+		DoubleOperation2General(MOV, EAX, c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level);
+		// 加上第二个操作数
+		DoubleOperation2General(ADD, EAX, c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level);
 	}
 	// 将EAX中的结果保存到目的操作数
 	StoreGeneral(c_iter->method3_, c_iter->dst_, 0, para_num, var_space, level);
@@ -329,23 +337,12 @@ void AssemblyMaker::TranslateAdd(vector<Quaternary>::const_iterator &c_iter, int
 // 减法
 // 两个源操作数都不可能是数组（指令格式不支持）
 // 也都不可能是常数（中间代码生成时在Expression项被优化）
-void AssemblyMaker::TranslateSub(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateSub(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	// 装载被减数到EAX
-	LoadGeneral(c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level, EAX);
-	// 根据减数是否为立即数，进行处理
-	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)
-	{
-		// EAX 减去立即数
-		assemble_buffer << "\n    sub     eax, " << c_iter->src2_;
-	}
-	else
-	{
-		// 装载第二个操作数到EDX
-		LoadGeneral(c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level, EDX);
-		// EAX 减去 EDX
-		assemble_buffer << "\n    sub     eax, edx";
-	}
+	DoubleOperation2General(MOV, EAX, c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level);
+	// 减去第二个数
+	DoubleOperation2General(SUB, EAX, c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level);
 	// 存储结果
 	StoreGeneral(c_iter->method3_, c_iter->dst_, 0, para_num, var_space, level);
 }
@@ -355,14 +352,23 @@ void AssemblyMaker::TranslateSub(vector<Quaternary>::const_iterator &c_iter, int
 // 目的操作数只可能是普通变量或临时变量
 // 这里还可进一步优化。因为mul指令可以对内存进行操作，故实际上只需要加载一个操作数到EAX，用mul指令对另一个操作数的内存空间直接进行乘法
 // 但那样实现起来比较麻烦。所以这里就统一加载到EAX和EDX中，再去做乘法
-void AssemblyMaker::TranslateMul(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateMul(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	// 加载第一个操作数到EAX
-	LoadGeneral(c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level, EAX);
-	// 加载第二个操作数到EDX
-	LoadGeneral(c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level, EDX);
-	// 相乘
-	assemble_buffer << "\n    mul     edx";
+	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)	// 第一个操作数是立即数的情况
+	{
+		// 加载第一个操作数到EAX（因为立即数不能作IMUL的操作数）
+		DoubleOperation2General(MOV, EAX, c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level);
+		// 乘上第二个操作数
+		SingleOperation2General(IMUL, c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level);
+	}
+	else
+	{
+		// 加载第二个操作数到EAX
+		DoubleOperation2General(MOV, EAX, c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level);
+		// 乘上第一个操作数
+		SingleOperation2General(IMUL, c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level);
+	}
+
 	// 将EAX中的结果保存到目的操作数
 	StoreGeneral(c_iter->method3_, c_iter->dst_, 0, para_num, var_space, level);
 }
@@ -370,20 +376,25 @@ void AssemblyMaker::TranslateMul(vector<Quaternary>::const_iterator &c_iter, int
 // Div的左右操作数只可能是：立即数、普通变量、临时变量，不会是数组
 // 且不可能两个同时是立即数（已在term的中间代码生成中优化）
 // 目的操作数只可能是普通变量或临时变量
-// 类似乘法，这里还可进一步优化。但由于实现过于复杂，故暂不优化。
 // 这里比较重要的是，被除数的符号扩展。因为被除数是用EDX和EAX分别表示的高32位和低32位，故要用符号扩展设置EDX
 // 同时要改成有符号的除法，这样才不会在输入负数时溢出
-// 但乘法中的有无符号的乘法（mul, imul）似乎都差不多。
-void AssemblyMaker::TranslateDiv(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+// 但乘法中的有无符号的乘法（mul, imul）似乎都差不多。影响的应该是结果中的EDX（64位结果中的高32位）
+void AssemblyMaker::TranslateDiv(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	// 加载第一个操作数到EAX
-	LoadGeneral(c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level, EAX);
-	// 加载第二个操作数到EBX
-	LoadGeneral(c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level, EBX);
-	// Imp! 除法时，EDX是被除数的高位，要进行符号扩展	
-	assemble_buffer << "\n    CDQ";
-	// 相除
-	assemble_buffer << "\n    idiv     ebx";	// Imp! idiv:有符号的除法，如果是div的话，操作数为负数时容易溢出报错
+	DoubleOperation2General(MOV, EAX, c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level);
+	// 第二个操作数，如果是立即数，要加载到寄存器中才可以除
+	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)
+	{
+		DoubleOperation2General(MOV, EBX, c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level);
+		assemble_buffer << "\n    CDQ";				// EDX相对EAX的符号位扩展
+		assemble_buffer << "\n    idiv     ebx";	// 除寄存器
+	}
+	else	// 不是立即数，则可直接除
+	{
+		assemble_buffer << "\n    CDQ";				// EDX相对EAX的符号位扩展
+		SingleOperation2General(IDIV, c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level);
+	}
 	// 将EAX中的结果保存到目的操作数
 	StoreGeneral(c_iter->method3_, c_iter->dst_, 0, para_num, var_space, level);
 }
@@ -391,10 +402,10 @@ void AssemblyMaker::TranslateDiv(vector<Quaternary>::const_iterator &c_iter, int
 // 赋值语句
 // 源操作数可以是立即数、普通变量、临时变量和数组元素
 // 目的操作数可以是普通变量和临时变量
-void AssemblyMaker::TranslateAssign(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateAssign(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	// 将源操作数装载到EAX中
-	LoadGeneral(c_iter->method1_, c_iter->src1_, c_iter->offset2_, para_num, var_space, level, EAX);
+	DoubleOperation2General(MOV, EAX, c_iter->method1_, c_iter->src1_, c_iter->offset2_, para_num, var_space, level);
 	// 将EAX存储到目的操作数中
 	StoreGeneral(c_iter->method3_, c_iter->dst_, 0, para_num, var_space, level);	// stupid bug fixed by mxf at 20:17 2/2 2016
 }
@@ -403,179 +414,87 @@ void AssemblyMaker::TranslateAssign(vector<Quaternary>::const_iterator &c_iter, 
 // 数组赋值语句
 // 源操作数可以是立即数、普通变量、临时变量
 // 目的操作数为数组
-void AssemblyMaker::TranslateArrayAssign(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateArrayAssign(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	// 加载立即数或变量到EAX
-	// 这里的操作数不可能是数组，故第三个参数为任意数（这里给零）
-	LoadGeneral(c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level, EAX);
-	//if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
-	//{
-	//	// 将立即数放在EAX中
-	//	assemble_buffer << "\n    mov     eax, " << c_iter->src1_;
-	//}
-	//else if(Quaternary::VARIABLE_ADDRESSING == c_iter->method1_)
-	//{
-	//	// 将普通变量加载到EAX中
-	//	LoadVar(c_iter->src1_, para_num, level, EAX);
-	//}
-	//else if(Quaternary::TEMPORARY_ADDRESSING == c_iter->method1_)
-	//{
-	//	// 将临时变量加载到EAX中
-	//	LoadTemp(c_iter->src1_, var_space, EAX);
-	//}
-	//else
-	//{
-	//	assert(false);
-	//}
-
+	// 这里的操作数不可能是数组，故数组下标可为任意数（这里给零）
+	DoubleOperation2General(MOV, EAX, c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level);
 	// 将EAX的数据存储在数组里
-	StoreArray(c_iter->dst_, c_iter->src2_, para_num, level);
-	
-}
-
-// 将EAX的数据储存起来
-// 用在函数调用返回后，取得函数的返回值
-// 储存的目的一般是临时变量，在优化过后也可能是普通变量，但不可能是数组或立即数
-void AssemblyMaker::TranslateStore(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
-{
-	StoreGeneral(c_iter->method3_, c_iter->dst_, 0, para_num, var_space, level);
-}
-
-// 输入到dst[offset]
-// 注：文法还没有支持到数组，但可以在这里先支持，最后再扩展文法
-// 这里支持：普通变量和数组变量【临时变量不支持，因为不可能往临时变量中读数】
-void AssemblyMaker::TranslateRead(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
-{
-	// 将要读取的变量的地址装入EAX
-	LoadGeneral(c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level, EAX, true);
-	// 将地址压栈
-	assemble_buffer << "\n    push    eax";
-	// 将输入格式字符串压栈
-	if(TokenTableItem::CHAR == tokentable_.at(c_iter->dst_).decoratetype_)
-	{
-		assemble_buffer << "\n    push    offset  _char_format_s";
-	}
-	else
-	{
-		assemble_buffer << "\n    push    offset  _integer_format_s";	
-	}
-	assemble_buffer << "\n    call    scanf"
-					<< "\n    add     esp, 8";
-}
-
-// 输出dst[offset]
-void AssemblyMaker::TranslateWrite(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
-{
-	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method3_)		// 写立即数
-	{
-		if(TokenTableItem::INTEGER == c_iter->dst_decoratetype_)
-		{
-			assemble_buffer << "\n    push    " << c_iter->dst_
-							<< "\n    push    offset  _integer_format_p";
-		}
-		else if(TokenTableItem::CHAR == c_iter->dst_decoratetype_)
-		{
-			assemble_buffer << "\n    push    " << c_iter->dst_
-							<< "\n    push    offset  _char_format_p";
-		}
-		else
-		{
-			assert(false);
-		}
-	}
-	else if(Quaternary::STRING_ADDRESSING == c_iter->method3_)	// 写字符串
-	{
-		assemble_buffer << "\n    push    offset  _String" << c_iter->dst_
-						<< "\n    push    offset  _string_format";
-	}
-	else	// 加载变量到EAX，将EAX压栈并加载格式字符串到栈顶
-	{
-		
-		LoadGeneral(c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level, EAX);// 加载变量
-		assemble_buffer << "\n    push    eax";	// EAX压栈
-		// 加载格式字符串
-		if((Quaternary::VARIABLE_ADDRESSING == c_iter->method3_
-			|| Quaternary::ARRAY_ADDRESSING == c_iter->method3_)
-			&& TokenTableItem::CHAR == tokentable_.at(c_iter->dst_).decoratetype_)	// 字符型的情况（操作数是变量或数组，且修饰类型为字符型）
-		{
-			assemble_buffer << "\n    push    offset  _char_format_p";
-		}
-		else	// 整型的情况（操作数为临时变量或非字符型的变量/数组）
-		{
-			assemble_buffer << "\n    push    offset  _integer_format_p";
-		}
-	}
-	// 调用printf函数
-	assemble_buffer << "\n    call    printf"
-					<< "\n    add     esp, 8";
+	StoreArray(c_iter->dst_, c_iter->src2_, level);
 }
 
 // 无条件跳转
-void AssemblyMaker::TranslateJmp(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateJmp(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	assemble_buffer << "\n    jmp     " << LabelStringFormat(c_iter->dst_);
+	assemble_buffer << "\n    jmp     " << GenerateLabelString(c_iter->dst_);
 }
 // 左右操作数相等时跳转
-void AssemblyMaker::TranslateJe(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateJe(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	LoadGeneral(c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level, EAX);
-	LoadGeneral(c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level, EDX);
+	DoubleOperation2General(MOV, EAX, c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level);
+	DoubleOperation2General(MOV, EDX, c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level);
 	assemble_buffer << "\n    cmp     eax, edx"
-					<< "\n    je      " << LabelStringFormat(c_iter->dst_);
+					<< "\n    je      " << GenerateLabelString(c_iter->dst_);
 }
 // 左右操作数不等时跳转
-void AssemblyMaker::TranslateJne(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateJne(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	LoadGeneral(c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level, EAX);
-	LoadGeneral(c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level, EDX);
+	DoubleOperation2General(MOV, EAX, c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level);
+	DoubleOperation2General(MOV, EDX, c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level);
 	assemble_buffer << "\n    cmp     eax, edx"
-					<< "\n    jne     " << LabelStringFormat(c_iter->dst_);
+					<< "\n    jne     " << GenerateLabelString(c_iter->dst_);
 }
 // 左>右则跳转
-void AssemblyMaker::TranslateJg(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateJg(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	LoadGeneral(c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level, EAX);
-	LoadGeneral(c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level, EDX);
+	DoubleOperation2General(MOV, EAX, c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level);
+	DoubleOperation2General(MOV, EDX, c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level);
 	assemble_buffer << "\n    cmp     eax, edx"
-					<< "\n    jg      " << LabelStringFormat(c_iter->dst_);
+					<< "\n    jg      " << GenerateLabelString(c_iter->dst_);
 }
 // 左<=右则跳转
-void AssemblyMaker::TranslateJng(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateJng(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	LoadGeneral(c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level, EAX);
-	LoadGeneral(c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level, EDX);
+	DoubleOperation2General(MOV, EAX, c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level);
+	DoubleOperation2General(MOV, EDX, c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level);
 	assemble_buffer << "\n    cmp     eax, edx"
-					<< "\n    jng     " << LabelStringFormat(c_iter->dst_);
+					<< "\n    jng     " << GenerateLabelString(c_iter->dst_);
 }
 // 左<右则跳转
-void AssemblyMaker::TranslateJl(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateJl(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	LoadGeneral(c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level, EAX);
-	LoadGeneral(c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level, EDX);
+	DoubleOperation2General(MOV, EAX, c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level);
+	DoubleOperation2General(MOV, EDX, c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level);
 	assemble_buffer << "\n    cmp     eax, edx"
-					<< "\n    jl      " << LabelStringFormat(c_iter->dst_);
+					<< "\n    jl      " << GenerateLabelString(c_iter->dst_);
 }
 // 左<=右则跳转
-void AssemblyMaker::TranslateJnl(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateJnl(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	LoadGeneral(c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level, EAX);
-	LoadGeneral(c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level, EDX);
+	DoubleOperation2General(MOV, EAX, c_iter->method1_, c_iter->src1_, 0, para_num, var_space, level);
+	DoubleOperation2General(MOV, EDX, c_iter->method2_, c_iter->src2_, 0, para_num, var_space, level);
 	assemble_buffer << "\n    cmp     eax, edx"
-					<< "\n    jnl     " << LabelStringFormat(c_iter->dst_);
+					<< "\n    jnl     " << GenerateLabelString(c_iter->dst_);
+}
+
+void AssemblyMaker::TranslateLabel(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+{
+	assemble_buffer  << "\n" << GenerateLabelString(c_iter->dst_) << ":";
 }
 
 // 将参数压栈
 // 参数可能是立即数、普通变量、数组、临时变量
-void AssemblyMaker::TranslateSetP(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateSetP(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	PushGeneral(c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level);
+	SingleOperation2General(PUSH, c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level);
+	//PushGeneral(c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level);
 }
 
 // 这里的难度主要在于display区的控制
 // 新函数的subfunc_level的取值为[1, level + 1]
 // 当subfunc_level <= level时，复制当前函数的display区的前subfunc_level个表项
 // 当subfunc_level == level + 1时，将当前函数的display区（共level项）复制给子函数后，再将EBP作为子函数新的一个display表项
-void AssemblyMaker::TranslateCall(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateCall(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	// 一. 获得被调用函数的level
 	int subfunc_level = tokentable_.at(c_iter->dst_).level_;
@@ -610,152 +529,71 @@ void AssemblyMaker::TranslateCall(vector<Quaternary>::const_iterator &c_iter, in
 }
 
 // 将目的操作数装入EAX，并进行函数返回
-void AssemblyMaker::TranslateRet(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+void AssemblyMaker::TranslateRet(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	LoadGeneral(c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level, EAX);
+	DoubleOperation2General(MOV, EAX, c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level);
+	//LoadGeneral(c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level, EAX);
 	// 找到函数的返回语句前的标号
 	string exit_label = FindExitLabel(c_iter);
 	assemble_buffer  << "\n    jmp     " << exit_label;
 }
 
-void AssemblyMaker::TranslateLabel(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+
+// 将EAX的数据储存起来
+// 用在函数调用返回后，取得函数的返回值
+// 储存的目的一般是临时变量，在优化过后也可能是普通变量，但不可能是数组（未予以数组优化）或立即数（非法）
+void AssemblyMaker::TranslateStore(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	assemble_buffer  << "\n" << LabelStringFormat(c_iter->dst_) << ":";
+	StoreGeneral(c_iter->method3_, c_iter->dst_, 0, para_num, var_space, level);
 }
 
-// 将立即数/普通变量/数组变量/临时变量装载到寄存器reg
-// 根据取址方式的不同，调用不同的装载函数
-// 第二个参数可能是符号表index，可能是临时变量的index，也可能是立即数值，故命名为index_or_value
-// 每次调用时，第一个参数，即取址方式，和最后一个参数，寄存器的值，都是必须有效的。且所有调用的意义都相同。
-// 除此之外，立即数依赖的参数为：index_or_value
-// 普通变量依赖的参数为：index_or_value, para_num, level
-// 数组变量依赖的参数为：index_or_value, array_offset, var_space, level
-// 临时变量依赖的参数为：index_or_value, var_space
-// 严格地说，只要在调用时，将可能依赖的参数赋予有效的值即可
-// 但在一般调用时，往往不确定变量类型的情况，所以就将参数全部填入有效值
-// 当不可能是数组元素时，一般地，array_offset赋0即可（实际上无影响）
-void AssemblyMaker::LoadGeneral(Quaternary::AddressingMethod addressingmethod, int index_or_value, int array_offset, int para_num, int var_space, int level, enum REGISTER reg, bool load_addr) throw()
+// 输入到dst[offset]
+// 注：文法还没有支持到数组，但可以在这里先支持，最后再扩展文法
+// 这里支持：普通变量和数组变量【临时变量不支持，因为不可能往临时变量中读数】
+void AssemblyMaker::TranslateRead(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	if(Quaternary::IMMEDIATE_ADDRESSING == addressingmethod)
+	// 将要读取的变量的地址装入EAX
+	//LoadGeneral(c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level, EAX, true);
+	DoubleOperation2General(LEA, EAX, c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level);
+	// 将地址压栈
+	assemble_buffer << "\n    push    eax";
+	// 将输入格式字符串压栈
+	if(TokenTableItem::CHAR == tokentable_.at(c_iter->dst_).decoratetype_)
 	{
-		LoadImmediate(index_or_value, reg);
-	}
-	else if(Quaternary::VARIABLE_ADDRESSING == addressingmethod)
-	{
-		LoadVar(index_or_value, para_num, level, reg, load_addr);
-	}
-	else if(Quaternary::ARRAY_ADDRESSING == addressingmethod)
-	{
-		LoadArray(index_or_value, array_offset, para_num, level, reg, load_addr);
-	}
-	else if(Quaternary::TEMPORARY_ADDRESSING == addressingmethod)
-	{
-		LoadTemp(index_or_value, var_space, reg);
+		assemble_buffer << "\n    push    offset  _char_format_s";
 	}
 	else
 	{
-		assert(false);
+		assemble_buffer << "\n    push    offset  _integer_format_s";	
 	}
+	assemble_buffer << "\n    call    scanf"
+					<< "\n    add     esp, 8";
 }
 
-// 将常数value装载到寄存器reg
-void AssemblyMaker::LoadImmediate(int value, enum REGISTER reg) throw()
+// 输出dst[offset]
+void AssemblyMaker::TranslateWrite(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	assemble_buffer << "\n    mov     " << RegisterName[reg] << ", " << value;
+	// 将操作数压栈
+	//PushGeneral(c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level);
+	SingleOperation2General(PUSH, c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level);	// 两者都可
+	// 将格式字符串压栈
+	if(Quaternary::STRING_ADDRESSING == c_iter->method3_)
+	{
+		assemble_buffer << "\n    push    offset  _string_format";
+	}
+	else if(TokenTableItem::CHAR == c_iter->dst_decoratetype_)
+	{
+		assemble_buffer << "\n    push    offset  _char_format_p";
+	}
+	else
+	{
+		assemble_buffer << "\n    push    offset  _integer_format_p";
+	}
+	// 调用printf函数
+	assemble_buffer << "\n    call    printf"
+					<< "\n    add     esp, 8";
 }
 
-// 将变量或变量的地址装载到寄存器中
-// tokentable_index为变量在符号表中的位置
-// para_num表示当前函数的参数个数
-// level表示当前函数的静态层次（即在符号表中的层次）
-// reg代表装入哪个寄存器
-// 地址计算公式：
-// para#n.addr = EBP + 4 * (1 + level + para_num - n)
-// var#n.addr = EBP - 4 * (n + 1)
-// display#n.addr = EBP + 4 * (1 + level - n)
-void AssemblyMaker::LoadVar(int tokentable_index, int para_num, int level, enum REGISTER reg, bool load_addr) throw()
-{
-	// 确定操作的方式：装载变量还是装载变量的地址
-	const char *action = load_addr ? "lea" : "mov";
-	// 确定变量的层次
-	int var_level = tokentable_.at(tokentable_index).level_;
-	// 确定函数的层次（比变量层次少1）
-	int func_level = var_level - 1;
-	int n = tokentable_.at(tokentable_index).addr_;	// 计算该变量在所属函数的相对地址
-	if(level == func_level)	// 判断是否为局部变量
-	{
-		int offset = 0;
-		if(n < para_num)	// 说明是参数
-		{
-			offset = 4 * (1 + level + para_num - n);
-			assemble_buffer << "\n    " << action << "     " << RegisterName[reg] << ", SS:[ebp + " << offset << "]";
-		}
-		else				// 说明是局部变量
-		{
-			offset = 4 * (n + 1);
-			assemble_buffer << "\n    " << action << "     " << RegisterName[reg] << ", SS:[ebp - " << offset << "]";
-		}
-	}
-	else	// 外层次的变量
-	{
-		// 一. 获得外层次的参数个数
-		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
-		// 二. 获得外层次的EBP的值，加载到EBX中
-		int offset = 4 * (1 + level - func_level);
-		assemble_buffer << "\n    " << action << "     ebx, SS:[ebp + " << offset << "]";
-		// 三. 加载外层的变量
-		if(n < extern_para_num)	// 说明是外层参数
-		{
-			int offset = 4 * (1 + func_level + extern_para_num - n);
-			assemble_buffer << "\n    " << action << "     " << RegisterName[reg] << ", SS:[ebx + " << offset << "]";
-		}
-		else				    // 说明是外层局部变量
-		{
-			int offset = 4 * (n + 1);
-			assemble_buffer << "\n    " << action << "     " << RegisterName[reg] << ", SS:[ebx - " << offset << "]";
-		}
-	}
-}
-
-// 装载数组元素或其地址到寄存器reg
-// 注意：array不可能是函数的参数，故比LoadArray要少一个判断
-// 地址计算公式：
-// array#n.addr = EBP - 4 * (n + 1 + array_offset)
-// display#n.addr = EBP + 4 * (1 + level - n)	这里的n即为外层函数的层次
-void AssemblyMaker::LoadArray(int tokentable_index, int array_offset, int para_num, int level, enum REGISTER reg, bool load_addr) throw()
-{
-	// 确定操作的方式：装载变量还是装载变量的地址
-	const char *action = load_addr ? "lea" : "mov";
-	// 确定变量的层次
-	int var_level = tokentable_.at(tokentable_index).level_;
-	// 确定函数的层次（比变量层次少1）
-	int func_level = var_level - 1;
-	int n = tokentable_.at(tokentable_index).addr_;	// 计算该变量的相对地址
-	if(level == func_level)	// 判断是否为局部变量
-	{
-		int offset = 4 * (n + 1 + array_offset);
-		assemble_buffer << "\n    " << action << "     " << RegisterName[reg] << ", SS:[ebp - " << offset << "]";
-	}
-	else	// 外层次的变量
-	{
-		// 一. 获得外层次的参数个数
-		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
-		// 二. 获得外层次的EBP的值，加载到EBX中
-		int offset = 4 * (1 + level - func_level);
-		assemble_buffer << "\n    " << action << "     ebx, SS:[ebp + " << offset << "]";
-		// 三. 加载外层的变量
-		offset = 4 * (n + 1 + array_offset);
-		assemble_buffer << "\n    " << action << "     " << RegisterName[reg] << ", SS:[ebx - " << offset << "]";
-	}
-}
-// 地址计算公式：
-// temp#n.addr = EBP - 4 * (var_space + n + 1)
-void AssemblyMaker::LoadTemp(int index, int var_space, enum REGISTER reg) throw()
-{
-	// 这里的index就是上式中的n
-	int offset = 4 * (var_space + index + 1);
-	assemble_buffer << "\n    mov     " << RegisterName[reg] << ", SS:[ebp - " << offset << "]";
-}
 
 // 将寄存器EAX的数据存储到内存中
 // 可能的内存类型为：普通变量、数组变量、临时变量
@@ -769,7 +607,7 @@ void AssemblyMaker::StoreGeneral(Quaternary::AddressingMethod addressingmethod, 
 	}
 	else if(Quaternary::ARRAY_ADDRESSING == addressingmethod)
 	{
-		StoreArray(index, array_offset, para_num, level);
+		StoreArray(index, array_offset, level);
 	}
 	else if(Quaternary::TEMPORARY_ADDRESSING == addressingmethod)
 	{
@@ -832,7 +670,7 @@ void AssemblyMaker::StoreVar(int tokentable_index, int para_num, int level) thro
 // 地址计算公式：
 // array#n.addr = EBP - 4 * (n + 1 + array_offset)
 // display#n.addr = EBP + 4 * (1 + level - n)
-void AssemblyMaker::StoreArray(int tokentable_index, int array_offset, int para_num, int level) throw()
+void AssemblyMaker::StoreArray(int tokentable_index, int array_offset, int level) throw()
 {
 	// 确定变量的层次
 	int var_level = tokentable_.at(tokentable_index).level_;
@@ -866,34 +704,28 @@ void AssemblyMaker::StoreTemp(int index, int var_space) throw()
 	assemble_buffer << "\n    mov     SS:[ebp - " << offset << "], eax";
 }
 
-// 将立即数/普通变量/数组变量/临时变量装载到寄存器reg
-// 根据取址方式的不同，调用不同的装载函数
-// 第二个参数可能是符号表index，可能是临时变量的index，也可能是立即数值，故命名为index_or_value
-// 每次调用时，第一个参数，即取址方式，和最后一个参数，寄存器的值，都是必须有效的。且所有调用的意义都相同。
-// 除此之外，立即数依赖的参数为：index_or_value
-// 普通变量依赖的参数为：index_or_value, para_num, level
-// 数组变量依赖的参数为：index_or_value, array_offset, var_space, level
-// 临时变量依赖的参数为：index_or_value, var_space
-// 严格地说，只要在调用时，将可能依赖的参数赋予有效的值即可
-// 但在一般调用时，往往不确定变量类型的情况，所以就将参数全部填入有效值
-// 当不可能是数组元素时，一般地，array_offset赋0即可（实际上无影响）
-void AssemblyMaker::PushGeneral(Quaternary::AddressingMethod addressingmethod, int index_or_value, int array_offset, int para_num, int var_space, int level) throw()
+// 单操作数的运算
+void AssemblyMaker::SingleOperation2General(enum SINGLEOPERATOR op, Quaternary::AddressingMethod addressingmethod, int index_or_value, int array_offset, int para_num, int var_space, int level) throw()
 {
 	if(Quaternary::IMMEDIATE_ADDRESSING == addressingmethod)
 	{
-		PushImmediate(index_or_value);
+		SingleOperation2Immediate(op, index_or_value);
 	}
 	else if(Quaternary::VARIABLE_ADDRESSING == addressingmethod)
 	{
-		PushVar(index_or_value, para_num, level);
+		SingleOperation2Var(op, index_or_value, para_num, level);
 	}
 	else if(Quaternary::ARRAY_ADDRESSING == addressingmethod)
 	{
-		PushArray(index_or_value, array_offset, para_num, level);
+		SingleOperation2Array(op, index_or_value, array_offset, level);
 	}
 	else if(Quaternary::TEMPORARY_ADDRESSING == addressingmethod)
 	{
-		PushTemp(index_or_value, var_space);
+		SingleOperation2Temp(op, index_or_value, var_space);
+	}
+	else if(Quaternary::STRING_ADDRESSING == addressingmethod)
+	{
+		assemble_buffer << "\n    " << SingleOperatorName[op] << "    offset  _String" << index_or_value;
 	}
 	else
 	{
@@ -901,18 +733,18 @@ void AssemblyMaker::PushGeneral(Quaternary::AddressingMethod addressingmethod, i
 	}
 }
 
-// 将常数value装载到寄存器reg
-void AssemblyMaker::PushImmediate(int value) throw()
+// 对常数的操作
+void AssemblyMaker::SingleOperation2Immediate(enum SINGLEOPERATOR op, int value) throw()
 {
-	assemble_buffer << "\n    push    " << value;
+	assemble_buffer << "\n    " << SingleOperatorName[op] << "    " << value;
 }
 
-// 将变量压栈
+// 对普通变量的操作
 // 地址计算公式：
 // para#n.addr = EBP + 4 * (1 + level + para_num - n)
 // var#n.addr = EBP - 4 * (n + 1)
 // display#n.addr = EBP + 4 * (1 + level - n)
-void AssemblyMaker::PushVar(int tokentable_index, int para_num, int level) throw()
+void AssemblyMaker::SingleOperation2Var(enum SINGLEOPERATOR op, int tokentable_index, int para_num, int level) throw()
 {
 	// 确定变量的层次
 	int var_level = tokentable_.at(tokentable_index).level_;
@@ -925,12 +757,12 @@ void AssemblyMaker::PushVar(int tokentable_index, int para_num, int level) throw
 		if(n < para_num)	// 说明是参数
 		{
 			offset = 4 * (1 + level + para_num - n);
-			assemble_buffer << "\n    push    SS:[ebp + " << offset << "]";
+			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebp + " << offset << "]";
 		}
 		else				// 说明是局部变量
 		{
 			offset = 4 * (n + 1);
-			assemble_buffer << "\n    push    SS:[ebp - " << offset << "]";
+			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebp - " << offset << "]";
 		}
 	}
 	else	// 外层次的变量
@@ -939,27 +771,27 @@ void AssemblyMaker::PushVar(int tokentable_index, int para_num, int level) throw
 		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
 		// 二. 获得外层次的EBP的值，加载到EBX中
 		int offset = 4 * (1 + level - func_level);
-		assemble_buffer << "\n    push    SS:[ebp + " << offset << "]";
+		assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebp + " << offset << "]";
 		// 三. 加载外层的变量
 		if(n < extern_para_num)	// 说明是外层参数
 		{
 			int offset = 4 * (1 + func_level + extern_para_num - n);
-			assemble_buffer << "\n    push    SS:[ebx + " << offset << "]";
+			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebx + " << offset << "]";
 		}
 		else				    // 说明是外层局部变量
 		{
 			int offset = 4 * (n + 1);
-			assemble_buffer << "\n    push    SS:[ebx - " << offset << "]";
+			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebx - " << offset << "]";
 		}
 	}
 }
 
-// 将数组元素压栈
+// 对数组元素的操作
 // 注意：数组不可能是函数的参数，故比LoadArray要少一个判断
 // 地址计算公式：
 // array#n.addr = EBP - 4 * (n + 1 + array_offset)
 // display#n.addr = EBP + 4 * (1 + level - n)	这里的n即为外层函数的层次
-void AssemblyMaker::PushArray(int tokentable_index, int array_offset, int para_num, int level) throw()
+void AssemblyMaker::SingleOperation2Array(enum SINGLEOPERATOR op, int tokentable_index, int array_offset, int level) throw()
 {
 	// 确定变量的层次
 	int var_level = tokentable_.at(tokentable_index).level_;
@@ -969,7 +801,90 @@ void AssemblyMaker::PushArray(int tokentable_index, int array_offset, int para_n
 	if(level == func_level)	// 判断是否为局部变量
 	{
 		int offset = 4 * (n + 1 + array_offset);
-		assemble_buffer << "\n   push    SS:[ebp - " << offset << "]";
+		assemble_buffer << "\n   " << SingleOperatorName[op] << "    dword ptr SS:[ebp - " << offset << "]";
+	}
+	else	// 外层次的变量
+	{
+		// 一. 获得外层次的EBP的值，加载到EBX中
+		int offset = 4 * (1 + level - func_level);
+		assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebp + " << offset << "]";
+		// 二. 加载外层的变量
+		offset = 4 * (n + 1 + array_offset);
+		assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebx - " << offset << "]";
+	}
+}
+
+// 对临时变量的操作
+// 地址计算公式：
+// temp#n.addr = EBP - 4 * (var_space + n + 1)
+void AssemblyMaker::SingleOperation2Temp(enum SINGLEOPERATOR op, int index, int var_space) throw()
+{
+	// 这里的index就是上式中的n
+	int offset = 4 * (var_space + index + 1);
+	assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebp - " << offset << "]";
+}
+
+// 双操作数的运算
+void AssemblyMaker::DoubleOperation2General(enum DOUBLEOPERATOR op, enum REGISTER reg, Quaternary::AddressingMethod addressingmethod, int index_or_value, int array_offset, int para_num, int var_space, int level) throw()
+{
+	if(Quaternary::IMMEDIATE_ADDRESSING == addressingmethod)
+	{
+		DoubleOperation2Immediate(op, reg, index_or_value);
+	}
+	else if(Quaternary::VARIABLE_ADDRESSING == addressingmethod)
+	{
+		DoubleOperation2Var(op, reg, index_or_value, para_num, level);
+	}
+	else if(Quaternary::ARRAY_ADDRESSING == addressingmethod)
+	{
+		DoubleOperation2Array(op, reg, index_or_value, array_offset, level);
+	}
+	else if(Quaternary::TEMPORARY_ADDRESSING == addressingmethod)
+	{
+		DoubleOperation2Temp(op, reg, index_or_value, var_space);
+	}
+	else if(Quaternary::STRING_ADDRESSING == addressingmethod)
+	{
+		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    offset  _String" << index_or_value;
+	}
+	else
+	{
+		assert(false);
+	}
+}
+
+// 对常数的操作
+void AssemblyMaker::DoubleOperation2Immediate(enum DOUBLEOPERATOR op, enum REGISTER reg, int value) throw()
+{
+	//TODO 通过输出格式控制来优化效率
+	assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", "<< value;
+}
+
+// 对普通变量的操作
+// 地址计算公式：
+// para#n.addr = EBP + 4 * (1 + level + para_num - n)
+// var#n.addr = EBP - 4 * (n + 1)
+// display#n.addr = EBP + 4 * (1 + level - n)
+void AssemblyMaker::DoubleOperation2Var(enum DOUBLEOPERATOR op, enum REGISTER reg, int tokentable_index, int para_num, int level) throw()
+{
+	// 确定变量的层次
+	int var_level = tokentable_.at(tokentable_index).level_;
+	// 确定函数的层次（比变量层次少1）
+	int func_level = var_level - 1;
+	int n = tokentable_.at(tokentable_index).addr_;	// 计算该变量的相对地址
+	if(level == func_level)	// 判断是否为局部变量
+	{
+		int offset = 0;
+		if(n < para_num)	// 说明是参数
+		{
+			offset = 4 * (1 + level + para_num - n);
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebp + " << offset << "]";
+		}
+		else				// 说明是局部变量
+		{
+			offset = 4 * (n + 1);
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebp - " << offset << "]";
+		}
 	}
 	else	// 外层次的变量
 	{
@@ -977,20 +892,57 @@ void AssemblyMaker::PushArray(int tokentable_index, int array_offset, int para_n
 		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
 		// 二. 获得外层次的EBP的值，加载到EBX中
 		int offset = 4 * (1 + level - func_level);
-		assemble_buffer << "\n    push    SS:[ebp + " << offset << "]";
+		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebp + " << offset << "]";
 		// 三. 加载外层的变量
-		offset = 4 * (n + 1 + array_offset);
-		assemble_buffer << "\n    push    SS:[ebx - " << offset << "]";
+		if(n < extern_para_num)	// 说明是外层参数
+		{
+			int offset = 4 * (1 + func_level + extern_para_num - n);
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebx + " << offset << "]";
+		}
+		else				    // 说明是外层局部变量
+		{
+			int offset = 4 * (n + 1);
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebx - " << offset << "]";
+		}
 	}
 }
-// 将临时变量压栈
+
+// 对数组元素的操作
+// 注意：数组不可能是函数的参数，故比LoadArray要少一个判断
+// 地址计算公式：
+// array#n.addr = EBP - 4 * (n + 1 + array_offset)
+// display#n.addr = EBP + 4 * (1 + level - n)	这里的n即为外层函数的层次
+void AssemblyMaker::DoubleOperation2Array(enum DOUBLEOPERATOR op, enum REGISTER reg, int tokentable_index, int array_offset, int level) throw()
+{
+	// 确定变量的层次
+	int var_level = tokentable_.at(tokentable_index).level_;
+	// 确定函数的层次（比变量层次少1）
+	int func_level = var_level - 1;
+	int n = tokentable_.at(tokentable_index).addr_;	// 计算该变量的相对地址
+	if(level == func_level)	// 判断是否为局部变量
+	{
+		int offset = 4 * (n + 1 + array_offset);
+		assemble_buffer << "\n   " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebp - " << offset << "]";
+	}
+	else	// 外层次的变量
+	{
+		// 一. 获得外层次的EBP的值，加载到EBX中
+		int offset = 4 * (1 + level - func_level);
+		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebp + " << offset << "]";
+		// 二. 加载外层的变量
+		offset = 4 * (n + 1 + array_offset);
+		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebx - " << offset << "]";
+	}
+}
+
+// 对临时变量的操作
 // 地址计算公式：
 // temp#n.addr = EBP - 4 * (var_space + n + 1)
-void AssemblyMaker::PushTemp(int index, int var_space) throw()
+void AssemblyMaker::DoubleOperation2Temp(enum DOUBLEOPERATOR op, enum REGISTER reg, int index, int var_space) throw()
 {
 	// 这里的index就是上式中的n
 	int offset = 4 * (var_space + index + 1);
-	assemble_buffer << "\n    push    SS:[ebp - " << offset << "]";
+	assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebp - " << offset << "]";
 }
 
 
@@ -1015,7 +967,7 @@ string AssemblyMaker::FindExitLabel(vector<Quaternary>::const_iterator c_iter) t
 }
 
 // 通过label标号生成label字符串
-string AssemblyMaker::LabelStringFormat(int label_index)	
+string AssemblyMaker::GenerateLabelString(int label_index)	
 {
 	std::ostringstream buffer;
 	buffer << "_label" << label_index;
@@ -1023,5 +975,6 @@ string AssemblyMaker::LabelStringFormat(int label_index)
 }
 
 // 寄存器名
- const char * const AssemblyMaker::RegisterName[3] = 
- {"eax", "ebx", "edx"};
+const char * const AssemblyMaker::RegisterName[3] = {"eax", "ebx", "edx"};
+const char * const AssemblyMaker::SingleOperatorName[3] = {"push", "imul", "idiv"};
+const char * const AssemblyMaker::DoubleOperatorName[4] = {"mov ", "add ", "sub ", "lea "};

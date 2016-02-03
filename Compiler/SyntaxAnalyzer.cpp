@@ -32,7 +32,7 @@ SyntaxAnalyzer::SyntaxAnalyzer(LexicalAnalyzer &lexical_analyzer,
 
 bool SyntaxAnalyzer::Parse() throw()
 {
-	int depth = 0;
+	size_t depth = 0;
 	syntax_assist_buffer_.clear();
 	syntax_assist_buffer_.clear();
 	PrintFunctionFrame("Parse()", depth);
@@ -64,7 +64,7 @@ void SyntaxAnalyzer::Print(std::ostream &output) const throw()
 }
 
 static string syntax_assist_buffer_;	// 注：不是线程安全的
-void SyntaxAnalyzer::PrintFunctionFrame(const char *func_name, int depth) throw()
+void SyntaxAnalyzer::PrintFunctionFrame(const char *func_name, size_t depth) throw()
 {
 	
 	if(depth * 4 == syntax_assist_buffer_.size())
@@ -84,7 +84,7 @@ void SyntaxAnalyzer::PrintFunctionFrame(const char *func_name, int depth) throw(
 	}
 }
 // <程序> ::= <分程序>.
-void SyntaxAnalyzer::Routine(int depth) throw()
+void SyntaxAnalyzer::Routine(size_t depth) throw()
 {
 	PrintFunctionFrame("Routine()", depth);
 	// 插入主函数的BEGIN
@@ -116,7 +116,7 @@ void SyntaxAnalyzer::Routine(int depth) throw()
 }
 
 // <分程序> ::= [<常量说明部分>][<变量说明部分>]{[<过程说明部分>]| [<函数说明部分>]}<复合语句>
-void SyntaxAnalyzer::SubRoutine(int depth) throw()
+void SyntaxAnalyzer::SubRoutine(size_t depth) throw()
 {
 	PrintFunctionFrame("SubRoutine()", depth);
 
@@ -151,7 +151,7 @@ void SyntaxAnalyzer::SubRoutine(int depth) throw()
 }
 
 // <常量说明部分> ::= const<常量定义>{,<常量定义>};
-void SyntaxAnalyzer::ConstantPart(int depth) throw()
+void SyntaxAnalyzer::ConstantPart(size_t depth) throw()
 {
 	PrintFunctionFrame("ConstantPart()", depth);
 
@@ -187,7 +187,7 @@ void SyntaxAnalyzer::ConstantPart(int depth) throw()
 }
 
 // <常量定义> ::= <标识符>＝<常量>
-void SyntaxAnalyzer::constantDefination(int depth) throw()
+void SyntaxAnalyzer::constantDefination(size_t depth) throw()
 {
 	PrintFunctionFrame("constantDefination()", depth);
 
@@ -250,7 +250,7 @@ void SyntaxAnalyzer::constantDefination(int depth) throw()
 }
 
 // <变量说明部分> ::= var <变量定义>;{<变量定义>;}
-void SyntaxAnalyzer::VariablePart(int depth) throw()
+void SyntaxAnalyzer::VariablePart(size_t depth) throw()
 {
 	PrintFunctionFrame("VariablePart()", depth);
 
@@ -287,7 +287,7 @@ void SyntaxAnalyzer::VariablePart(int depth) throw()
 }
 
 // <变量定义> ::= <标识符>{,<标识符>}:<类型>
-void SyntaxAnalyzer::VariableDefinition(int depth) throw()
+void SyntaxAnalyzer::VariableDefinition(size_t depth) throw()
 {
 	PrintFunctionFrame("VariableDefinition()", depth);
 
@@ -352,7 +352,7 @@ void SyntaxAnalyzer::VariableDefinition(int depth) throw()
 	TypeSpecification(depth + 1);
 }
 // <类型> ::= [array'['<无符号整数>']'of]<基本类型>
-void SyntaxAnalyzer::TypeSpecification(int depth) throw()
+void SyntaxAnalyzer::TypeSpecification(size_t depth) throw()
 {
 	PrintFunctionFrame("TypeSpecification()", depth);
 
@@ -459,7 +459,7 @@ void SyntaxAnalyzer::TypeSpecification(int depth) throw()
 }
 
 // <过程说明部分> ::= <过程首部><分程序>;{<过程首部><分程序>;}
-void SyntaxAnalyzer::ProcedurePart(int depth) throw()
+void SyntaxAnalyzer::ProcedurePart(size_t depth) throw()
 {
 	PrintFunctionFrame("ProcedurePart()", depth);
 
@@ -484,7 +484,7 @@ void SyntaxAnalyzer::ProcedurePart(int depth) throw()
 }
 
 // <过程首部> ::= procedure<过程标识符>'('[<形式参数表>]')';
-int SyntaxAnalyzer::ProcedureHead(int depth) throw()
+int SyntaxAnalyzer::ProcedureHead(size_t depth) throw()
 {
 	PrintFunctionFrame("ProcedureHead()", depth);
 
@@ -566,7 +566,7 @@ int SyntaxAnalyzer::ProcedureHead(int depth) throw()
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::SEMICOLON)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ';' at the end of procedure head\n";
+		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ';' at the end of procedure declaration\n";
 		is_successful_ = false;
 		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、PROCEDURE FUNCTION BEGIN
 		{ 
@@ -583,7 +583,7 @@ int SyntaxAnalyzer::ProcedureHead(int depth) throw()
 }
 
 // <函数说明部分> ::= <函数首部><分程序>;{<函数首部><分程序>;}
-void SyntaxAnalyzer::FunctionPart(int depth) throw()
+void SyntaxAnalyzer::FunctionPart(size_t depth) throw()
 {
 	PrintFunctionFrame("FunctionPart()", depth);
 
@@ -600,7 +600,7 @@ void SyntaxAnalyzer::FunctionPart(int depth) throw()
 		--level_;
 		if(Token::SEMICOLON != token_.type_)	// 分程序结束后应读入分号
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ';' at the end of procedure\n";
+			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ';' at the end of function\n";
 			is_successful_ = false;
 		}
 		lexical_analyzer_.GetNextToken(token_);	// 读入结尾的分号
@@ -608,7 +608,7 @@ void SyntaxAnalyzer::FunctionPart(int depth) throw()
 }
 
 // <函数首部> ::= function <函数标识符>'('[<形式参数表>]')':<基本类型>;
-int SyntaxAnalyzer::FunctionHead(int depth) throw()
+int SyntaxAnalyzer::FunctionHead(size_t depth) throw()
 {
 	PrintFunctionFrame("FunctionHead()", depth);
 
@@ -726,7 +726,7 @@ int SyntaxAnalyzer::FunctionHead(int depth) throw()
 
 // <形式参数表> ::= <形式参数段>{;<形式参数段>}
 // 返回形参数量
-int SyntaxAnalyzer::ParameterList(int depth) throw()		// 形参表
+int SyntaxAnalyzer::ParameterList(size_t depth) throw()		// 形参表
 {
 	PrintFunctionFrame("ParameterList()", depth);
 
@@ -741,7 +741,7 @@ int SyntaxAnalyzer::ParameterList(int depth) throw()		// 形参表
 
 // <形式参数段> ::= [var]<标识符>{,<标识符>}:<基本类型>
 // 返回该形参段的形参数量
-int SyntaxAnalyzer::ParameterTerm(int depth) throw()		
+int SyntaxAnalyzer::ParameterTerm(size_t depth) throw()		
 {
 	PrintFunctionFrame("ParameterTerm()", depth);
 
@@ -835,7 +835,7 @@ int SyntaxAnalyzer::ParameterTerm(int depth) throw()
 }
 
 // <实在参数表> ::= <表达式>{,<表达式>}
-vector<TokenTableItem::DecorateType> SyntaxAnalyzer::ArgumentList(int depth) throw()			// 实参表
+vector<TokenTableItem::DecorateType> SyntaxAnalyzer::ArgumentList(size_t depth) throw()			// 实参表
 {
 	PrintFunctionFrame("ArgumentList()", depth);
 
@@ -877,7 +877,7 @@ vector<TokenTableItem::DecorateType> SyntaxAnalyzer::ArgumentList(int depth) thr
 }
 
 // <复合语句> ::= begin <语句>{;<语句>} end
-void SyntaxAnalyzer::StatementBlockPart(int depth) throw()	// 复合语句
+void SyntaxAnalyzer::StatementBlockPart(size_t depth) throw()	// 复合语句
 {
 	PrintFunctionFrame("StatementBlockPart()", depth);
 
@@ -906,13 +906,12 @@ void SyntaxAnalyzer::StatementBlockPart(int depth) throw()	// 复合语句
 
 // <语句> ::= <标识符>(<赋值语句>|<过程调用语句>)|<条件语句>|<情况语句>|<复合语句>
 // |<读语句>|<写语句>|<while循环语句>|<for循环语句>|<循环继续语句>|<循环退出语句>|<空>
-void SyntaxAnalyzer::Statement(int depth) throw()
+void SyntaxAnalyzer::Statement(size_t depth) throw()
 {
 	PrintFunctionFrame("Statement()", depth);
 
 	Token idToken = token_;	// 该token_可能是过程名，先记下，待用
 	TokenTable::iterator iter;
-	TokenTableItem::DecorateType l_value_type = TokenTableItem::VOID;
 	switch(token_.type_)
 	{
 	case Token::IDENTIFIER:
@@ -1026,7 +1025,7 @@ void SyntaxAnalyzer::Statement(int depth) throw()
 
 // <赋值语句> ::= ['['<表达式>']']:=<表达式>
 // idToken是赋值语句之前标识符的token，iter是其在符号表中的迭代器
-void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterator &iter, int depth)			// 赋值语句
+void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterator &iter, size_t depth)			// 赋值语句
 {
 	PrintFunctionFrame("AssigningStatement()", depth);
 
@@ -1200,7 +1199,7 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 }
 
 // <表达式> ::= [+|-]<项>{<加法运算符><项>}
-ExpressionAttribute SyntaxAnalyzer::Expression(int depth) throw()				// 表达式
+ExpressionAttribute SyntaxAnalyzer::Expression(size_t depth) throw()				// 表达式
 {
 	PrintFunctionFrame("Expression()", depth);
 
@@ -1354,7 +1353,7 @@ ExpressionAttribute SyntaxAnalyzer::Expression(int depth) throw()				// 表达式
 }
 
 // <项> ::= <因子>{<乘法运算符><因子>}
-ExpressionAttribute SyntaxAnalyzer::Term(int depth) throw()						// 项
+ExpressionAttribute SyntaxAnalyzer::Term(size_t depth) throw()						// 项
 {
 	PrintFunctionFrame("Term()", depth);
 
@@ -1464,7 +1463,7 @@ ExpressionAttribute SyntaxAnalyzer::Term(int depth) throw()						// 项
 //          | '('<表达式>')' 
 //          | <无符号整数> 
 //          | <字符>
-ExpressionAttribute SyntaxAnalyzer::Factor(int depth) throw()					// 因子
+ExpressionAttribute SyntaxAnalyzer::Factor(size_t depth) throw()					// 因子
 {
 	PrintFunctionFrame("Factor()", depth);
 	ExpressionAttribute factor_attribute;	// 记录该factor因子的信息
@@ -1661,7 +1660,7 @@ ExpressionAttribute SyntaxAnalyzer::Factor(int depth) throw()					// 因子
 }
 
 // <条件语句> ::= if<条件>then<语句>[else<语句>]
-void SyntaxAnalyzer::IfStatement(int depth) throw()				// 条件语句
+void SyntaxAnalyzer::IfStatement(size_t depth) throw()				// 条件语句
 {
 	PrintFunctionFrame("IfStatement()", depth);
 
@@ -1727,7 +1726,7 @@ void SyntaxAnalyzer::IfStatement(int depth) throw()				// 条件语句
 // <条件> ::= <表达式><关系运算符><表达式>
 // 由if或for语句中传递下来label参数，标识if语句块或for循环体的结束
 // 用于在处理condition时设置跳转语句
-void SyntaxAnalyzer::Condition(int endlabel, int depth) throw()				// 条件
+void SyntaxAnalyzer::Condition(int endlabel, size_t depth) throw()				// 条件
 {
 	PrintFunctionFrame("Condition()", depth);
 
@@ -1805,7 +1804,7 @@ void SyntaxAnalyzer::Condition(int endlabel, int depth) throw()				// 条件
 }
 
 // <情况语句> ::= case <表达式> of <情况表元素>{; <情况表元素>}end
-void SyntaxAnalyzer::CaseStatement(int depth) throw()			// 情况语句
+void SyntaxAnalyzer::CaseStatement(size_t depth) throw()			// 情况语句
 {
 	PrintFunctionFrame("CaseStatement()", depth);
 
@@ -1839,7 +1838,7 @@ void SyntaxAnalyzer::CaseStatement(int depth) throw()			// 情况语句
 		lexical_analyzer_.GetNextToken(token_);
 		// 为当前情况表元素申请一个label
 		int caselabel = label_index_++;
-		vector<int> constant_list = CaseElement(exp_attribute, caselabel, endlabel, depth + 1);
+		vector<int> constant_list = CaseElement(caselabel, endlabel, depth + 1);
 		// 插入JE跳转语句
 		q_jmp.dst_ = caselabel;
 		for(vector<int>::const_iterator c_iter = constant_list.begin();
@@ -1890,7 +1889,7 @@ void SyntaxAnalyzer::CaseStatement(int depth) throw()			// 情况语句
 
 // <情况表元素> ::= <情况常量表>:<语句>
 // <情况常量表> ::=  <常量 | 常变量>{, <常量 | 常变量>}
-vector<int> SyntaxAnalyzer::CaseElement(const ExpressionAttribute &exp_attribute, int caselabel, int endlabel, int depth) throw()					// 情况表元素
+vector<int> SyntaxAnalyzer::CaseElement(int caselabel, int endlabel, size_t depth) throw()					// 情况表元素
 {
 	PrintFunctionFrame("CaseElement()", depth);
 
@@ -1995,7 +1994,7 @@ vector<int> SyntaxAnalyzer::CaseElement(const ExpressionAttribute &exp_attribute
 
 // <读语句> ::= read'('<标识符>{,<标识符>}')'
 // TODO 扩展出对数组的支持
-void SyntaxAnalyzer::ReadStatement(int depth) throw()			// 读语句
+void SyntaxAnalyzer::ReadStatement(size_t depth) throw()			// 读语句
 {
 	PrintFunctionFrame("ReadStatement()", depth);
 
@@ -2079,7 +2078,7 @@ void SyntaxAnalyzer::ReadStatement(int depth) throw()			// 读语句
 }
 
 // <写语句> ::= write'(' (<字符串>[,<表达式>] | <表达式>) ')'
-void SyntaxAnalyzer::WriteStatement(int depth) throw()			// 写语句
+void SyntaxAnalyzer::WriteStatement(size_t depth) throw()			// 写语句
 {
 	PrintFunctionFrame("WriteStatement()", depth);
 
@@ -2127,11 +2126,13 @@ void SyntaxAnalyzer::WriteStatement(int depth) throw()			// 写语句
 				Quaternary::NIL_ADDRESSING, 0,
 				exp_attribute.offset_addressingmethod_, exp_attribute.offset_,
 				exp_attribute.addressingmethod_, exp_attribute.value_);
-			// Imp！如果整个表达式就只是一个立即数，那么在最后给它存储一个decoratetype的属性，用作输出时的类型推导
-			if(Quaternary::IMMEDIATE_ADDRESSING == exp_attribute.addressingmethod_)
+			//// Imp！如果整个表达式就只是一个立即数，那么在最后给它存储一个decoratetype的属性，用作输出时的类型推导
+			/*if(Quaternary::IMMEDIATE_ADDRESSING == exp_attribute.addressingmethod_)
 			{
 				q_write.dst_decoratetype_ = exp_attribute.decoratetype_;
-			}
+			}*/
+			// 更正：在write的四元式末尾一定要有decoratetype的属性，用作输出时的类型推导
+			q_write.dst_decoratetype_ = exp_attribute.decoratetype_;
 			quaternarytable_.push_back(q_write);
 			// 回收临时变量
 			if(Quaternary::TEMPORARY_ADDRESSING == exp_attribute.addressingmethod_
@@ -2149,11 +2150,13 @@ void SyntaxAnalyzer::WriteStatement(int depth) throw()			// 写语句
 			Quaternary::NIL_ADDRESSING, 0,
 			exp_attribute.offset_addressingmethod_, exp_attribute.offset_,
 			exp_attribute.addressingmethod_, exp_attribute.value_);
-		// Imp！如果整个表达式就只是一个立即数，那么在最后给它存储一个decoratetype的属性，用作输出时的类型推导
-		if(Quaternary::IMMEDIATE_ADDRESSING == exp_attribute.addressingmethod_)
+		//// Imp！如果整个表达式就只是一个立即数，那么在最后给它存储一个decoratetype的属性，用作输出时的类型推导
+		/*if(Quaternary::IMMEDIATE_ADDRESSING == exp_attribute.addressingmethod_)
 		{
 			q_write.dst_decoratetype_ = exp_attribute.decoratetype_;
-		}
+		}*/
+		// 更正：在write的四元式末尾一定要有decoratetype的属性，用作输出时的类型推导
+		q_write.dst_decoratetype_ = exp_attribute.decoratetype_;
 		quaternarytable_.push_back(q_write);
 		// 回收临时变量
 		if(Quaternary::TEMPORARY_ADDRESSING == exp_attribute.addressingmethod_
@@ -2178,7 +2181,7 @@ void SyntaxAnalyzer::WriteStatement(int depth) throw()			// 写语句
 
 // <while循环语句> ::= while <条件> do <语句>
 // <while循环语句> ::= while @Label<check> <条件> @JZLabel<end> do <语句> @JMPLabel<check> @Label<end>
-void SyntaxAnalyzer::WhileLoopStatement(int depth) throw()			// while循环语句
+void SyntaxAnalyzer::WhileLoopStatement(size_t depth) throw()			// while循环语句
 {
 	PrintFunctionFrame("WhileLoopStatement()", depth);
 	assert(Token::WHILE == token_.type_);
@@ -2235,7 +2238,7 @@ void SyntaxAnalyzer::WhileLoopStatement(int depth) throw()			// while循环语句
 // <for循环语句> ::= for <标识符> := <表达式> （downto | to）
 // @ASG<init> @JMPLABEL<check> @Label<vary> @ASG<vary> @Label<check> <表达式> @JZLABEL<end> 
 // do <语句>@JMPLABEL<vary>@Label<end>
-void SyntaxAnalyzer::ForLoopStatement(int depth) throw()			// for循环语句
+void SyntaxAnalyzer::ForLoopStatement(size_t depth) throw()			// for循环语句
 {
 	PrintFunctionFrame("ForLoopStatement()", depth);
 
@@ -2402,8 +2405,9 @@ void SyntaxAnalyzer::ForLoopStatement(int depth) throw()			// for循环语句
 	quaternarytable_.push_back(q_endlabel);
 }
 
-void SyntaxAnalyzer::ContinueStatement(int depth) throw()	// continue
+void SyntaxAnalyzer::ContinueStatement(size_t depth) throw()	// continue
 {
+	PrintFunctionFrame("ContinueStatement()", depth);
 	assert(Token::CONTINUE == token_.type_);
 	if(continue_label_.size() != 0)
 	{
@@ -2427,8 +2431,9 @@ void SyntaxAnalyzer::ContinueStatement(int depth) throw()	// continue
 	// 读入下一个单词并返回
 	lexical_analyzer_.GetNextToken(token_);
 }
-void SyntaxAnalyzer::BreakStatement(int depth) throw()		// break
+void SyntaxAnalyzer::BreakStatement(size_t depth) throw()		// break
 {
+	PrintFunctionFrame("BreakStatement()", depth);
 	assert(Token::BREAK == token_.type_);
 	if(break_label_.size() != 0)
 	{
@@ -2455,7 +2460,7 @@ void SyntaxAnalyzer::BreakStatement(int depth) throw()		// break
 
 
 // <过程调用语句> ::= '('[<实在参数表>]')'
-void SyntaxAnalyzer::ProcedureCallStatement(const Token proc_token, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, int depth)	// 过程调用语句
+void SyntaxAnalyzer::ProcedureCallStatement(const Token proc_token, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth)	// 过程调用语句
 {
 	PrintFunctionFrame("ProcedureCallStatement()", depth);
 	// 语法检查
@@ -2541,7 +2546,7 @@ void SyntaxAnalyzer::ProcedureCallStatement(const Token proc_token, const vector
 }
 
 // <函数调用语句> ::= '('[<实在参数表>]')'
-void SyntaxAnalyzer::FunctionCallStatement(const Token func_token, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, int depth)	// 函数调用语句
+void SyntaxAnalyzer::FunctionCallStatement(const Token func_token, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth)	// 函数调用语句
 {
 	PrintFunctionFrame("FunctionCallStatement()", depth);
 

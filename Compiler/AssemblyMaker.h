@@ -19,6 +19,8 @@ public:
 private:
 	AssemblyMaker(const AssemblyMaker &) throw();
 	enum REGISTER{EAX, EBX, EDX};
+	enum SINGLEOPERATOR{PUSH, IMUL, IDIV};
+	enum DOUBLEOPERATOR{MOV, ADD, SUB, LEA};
 
 	void Head() throw();
 	void StackSegment() throw();
@@ -29,55 +31,57 @@ private:
 	void EndStatement() throw();
 	vector<Quaternary>::const_iterator GetProcFuncIterInQuaternaryTable(TokenTable::const_iterator c_iter) const throw();
 	
-	void TranslateQuaternary(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateQuaternary	(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	// 算术运算
-	void TranslateNeg(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateAdd(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateSub(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateMul(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateDiv(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateAssign(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateArrayAssign(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateNeg			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateAdd			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateSub			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateMul			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateDiv			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateAssign		(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateArrayAssign	(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	// 逻辑运算
-	void TranslateJmp(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateJe(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateJne(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateJg(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateJng(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateJl(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateJnl(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateLabel(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateJmp			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateJe			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateJne			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateJg			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateJng			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateJl			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateJnl			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateLabel			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	// 函数调用
-	void TranslateSetP(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateCall(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateRet(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateStore(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateRead(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	void TranslateWrite(vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	// 装载操作
-	void LoadGeneral(Quaternary::AddressingMethod addressingmethod, int index_or_value, int array_offset, int para_num, int var_space, int level, enum REGISTER reg, bool load_addr = false) throw();
-	void LoadImmediate(int value, enum REGISTER reg) throw();
-	void LoadVar(int tokentable_index, int para_num, int level, enum REGISTER reg, bool load_addr = false) throw();
-	void LoadArray(int tokentable_index, int array_offset, int para_num, int level, enum REGISTER reg, bool load_addr = false) throw();
-	void LoadTemp(int index, int var_space, enum REGISTER reg) throw();
+	void TranslateSetP			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateCall			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateRet			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateStore			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateRead			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
+	void TranslateWrite			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	// 存储操作
-	void StoreGeneral(Quaternary::AddressingMethod addressingmethod, int tokentable_index, int array_offset, int para_num, int var_space, int level) throw();
-	void StoreVar(int tokentable_index, int para_num, int level) throw();
-	void StoreArray(int tokentable_index, int array_offset, int para_num, int level) throw();
-	void StoreTemp(int index, int var_space) throw();
-	// 压栈操作
-	void PushGeneral(Quaternary::AddressingMethod addressingmethod, int index_or_value, int array_offset, int para_num, int var_space, int level) throw();
-	void PushImmediate(int value) throw();
-	void PushVar(int tokentable_index, int para_num, int level) throw();
-	void PushArray(int tokentable_index, int array_offset, int para_num, int level) throw();
-	void PushTemp(int index, int var_space) throw();
+	void StoreGeneral	(Quaternary::AddressingMethod addressingmethod, int tokentable_index, int array_offset, int para_num, int var_space, int level) throw();
+	void StoreVar		(int tokentable_index,                                                                  int para_num,                int level) throw();
+	void StoreArray		(int tokentable_index,                                                int array_offset,                              int level) throw();
+	void StoreTemp		(int index,                                                                                           int var_space)            throw();
+	// 单操作数操作
+	void SingleOperation2General	(enum SINGLEOPERATOR op, Quaternary::AddressingMethod addressingmethod, int index_or_value,   int array_offset, int para_num, int var_space, int level) throw();
+	void SingleOperation2Immediate	(enum SINGLEOPERATOR op,                                                int value) throw();
+	void SingleOperation2Var		(enum SINGLEOPERATOR op,                                                int tokentable_index, int para_num,                                  int level) throw();
+	void SingleOperation2Array		(enum SINGLEOPERATOR op,                                                int tokentable_index, int array_offset,                              int level) throw();
+	void SingleOperation2Temp		(enum SINGLEOPERATOR op,                                                int index,                                            int var_space)            throw();
+	// 双操作数操作
+	void DoubleOperation2General	(enum DOUBLEOPERATOR op, enum REGISTER reg, Quaternary::AddressingMethod addressingmethod, int index_or_value,   int array_offset, int para_num, int var_space, int level) throw();
+	void DoubleOperation2Immediate	(enum DOUBLEOPERATOR op, enum REGISTER reg,                                                int value) throw();
+	void DoubleOperation2Var		(enum DOUBLEOPERATOR op, enum REGISTER reg,                                                int tokentable_index, int para_num,                                  int level) throw();
+	void DoubleOperation2Array		(enum DOUBLEOPERATOR op, enum REGISTER reg,                                                int tokentable_index, int array_offset,                              int level) throw();
+	void DoubleOperation2Temp		(enum DOUBLEOPERATOR op, enum REGISTER reg,                                                int index,                                            int var_space)            throw();
 	
 
 	string FindExitLabel(vector<Quaternary>::const_iterator c_iter) throw();
 
-	static string LabelStringFormat(int label_index);	// 通过label标号生成label字符串
+	static string GenerateLabelString(int label_index);	// 通过label标号生成label字符串
 
 	static const char * const RegisterName[3];	// 寄存器名
+	static const char * const SingleOperatorName[3];
+	static const char * const DoubleOperatorName[4];
 
 	const vector<Quaternary> &quaternarytable_;
 	const TokenTable &tokentable_;

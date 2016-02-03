@@ -54,6 +54,8 @@ private:
 	vector<Token> token_vector_;				// 存放Token的数组
 	vector<Token>::const_iterator token_iter_;	// 遍历token_vector_的迭代器
 	set<string> string_set;						// 常量字符串表
+
+	static const char escape_sequence[];
 };
 
 #endif

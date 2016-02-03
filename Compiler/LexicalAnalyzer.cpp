@@ -1,5 +1,6 @@
 #include "LexicalAnalyzer.h"
 #include "LexException.h"
+#include "EscapeSequence.h"
 #include <sstream>
 #include <fstream>
 
@@ -42,7 +43,8 @@ bool LexicalAnalyzer::Parse() throw()							// 进行词法分析
 		}
 		try
 		{
-			ParseCurrentToken(token, ch);			
+			ParseCurrentToken(token, ch);
+			//printf("%d ", token.lineNumber_);
 		}
 		catch(const LexException &ex)
 		{
@@ -378,11 +380,12 @@ void LexicalAnalyzer::StringHandle(Token &token, char &ch) throw(LexException)		
 	token.lineNumber_ = currentline_;
 	ch = getNextChar();
 	token.value_.identifier.clear();
-	while(isprint(ch) && ch != '"')
+	while(ch < 0 || (isprint(ch) && ch != '"'))	// ch < 0是为了处理汉字专门设立的
 	{
+		// 编译程序要不要处理转义字符？需要！
 		if('\\' == ch)
 		{
-			ch = getNextChar();
+			ch = GetEscapeValue(getNextChar());
 		}
 		token.value_.identifier.push_back(ch);
 		ch = getNextChar();
@@ -403,12 +406,16 @@ void LexicalAnalyzer::CharHandle(Token &token, char &ch) throw(LexException)				
 {
 	token.lineNumber_ = currentline_;
 	ch = getNextChar();	// 读取单引号后面的那个字符
-	if(!isalpha(ch) && !isdigit(ch))	// 判断是不是字母或者数字
+	if(!isprint(ch))	// 判断是不是字母或者数字
 	{
 		throw LexException("wrong character constant definition: require letter after \"'\"", ch, currentline_);
 	}
 	else	// 读取结束的单引号
 	{
+		if('\\' == ch)	// 转义字符
+		{
+			ch = GetEscapeValue(getNextChar());
+		}
 		token.value_.character = ch;
 		ch = getNextChar();
 		if('\'' == ch)	// 成功读取到单引号

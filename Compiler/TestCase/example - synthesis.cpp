@@ -28,15 +28,20 @@ function sumF(x, y : integer) : integer;
 begin
 
 	i := 10 * 10;
+	write("i = ", i);
 	if i <> 0
 		then i:= 0;
+	write("i = ", i);
 	i:= i + 1;
+	write("i = ", i);
 	sum := 0 * i;
+	write("sum = ", sum);
 	
 	if 0 = sum
 		then sum := 1
 		else sum := 0
 	; // 表示if语句的结束
+	write("sum = ", sum);
 	
 	// 空语句块测试
 	begin
@@ -45,11 +50,14 @@ begin
 	
 	i:= 1;
 	i := (1*2) + (3*4) / (5*6+7*8);
+	write("i = ", i);
 	sequence[0] := 0;
 	for j := i to 10 * 10 - 1
 	do
 	begin
 		sequence[j] := j + sequence[j - 1];
+		write("sequence[", j);
+		write("] = ", j);
 		if 0 = sequence[j]
 		then break;
 		if 1 = sequence[j]
@@ -57,7 +65,7 @@ begin
 		else continue
 	end;
 	sequence[1] := -sequence[1];
-	
+	write("sequence[1] = ", sequence[1]);
 	while i < 10
 	do
 	begin

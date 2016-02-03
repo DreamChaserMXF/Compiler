@@ -81,6 +81,9 @@
     <ClInclude Include="SyntaxException.h">
       <Filter>Header Files\Syntax</Filter>
     </ClInclude>
+    <ClInclude Include="EscapeSequence.h">
+      <Filter>Header Files\Lexical</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -109,6 +112,9 @@
     </ClCompile>
     <ClCompile Include="SyntaxAnalyzer.cpp">
       <Filter>Source Files\Syntax</Filter>
+    </ClCompile>
+    <ClCompile Include="EscapeSequence.cpp">
+      <Filter>Source Files\Lexical</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

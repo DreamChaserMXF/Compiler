@@ -22,47 +22,47 @@ public:
 private:
 	SyntaxAnalyzer(const SyntaxAnalyzer&) throw();
 	
-	void PrintFunctionFrame(const char *func_name, int depth) throw();// 输出函数帧信息，depth是语法分析时的函数调用深度
+	void PrintFunctionFrame(const char *func_name, size_t depth) throw();// 输出函数帧信息，depth是语法分析时的函数调用深度
 
-	void Routine(int depth) throw();				// 程序
-	void SubRoutine(int depth) throw();				// 分程序
+	void Routine(size_t depth) throw();				// 程序
+	void SubRoutine(size_t depth) throw();				// 分程序
 
-	void ConstantPart(int depth) throw();			// 常量说明部分
-	void constantDefination(int depth) throw();		// 常量定义
+	void ConstantPart(size_t depth) throw();			// 常量说明部分
+	void constantDefination(size_t depth) throw();		// 常量定义
 
-	void VariablePart(int depth) throw();			// 变量说明部分
-	void VariableDefinition(int depth) throw();		// 变量定义
-	void TypeSpecification(int depth) throw();		// 类型
+	void VariablePart(size_t depth) throw();			// 变量说明部分
+	void VariableDefinition(size_t depth) throw();		// 变量定义
+	void TypeSpecification(size_t depth) throw();		// 类型
 
-	void ProcedurePart(int depth) throw();			// 过程说明部分
-	int  ProcedureHead(int depth) throw();			// 过程首部
-	void FunctionPart(int depth) throw();			// 函数说明部分
-	int FunctionHead(int depth) throw();			// 函数首部
-	int ParameterList(int depth) throw();			// 形参表 返回形参个数
-	int ParameterTerm(int depth) throw();			// 形参段 返回形参个数
-	vector<TokenTableItem::DecorateType> ArgumentList(int depth) throw();// 实参表
+	void ProcedurePart(size_t depth) throw();			// 过程说明部分
+	int  ProcedureHead(size_t depth) throw();			// 过程首部
+	void FunctionPart(size_t depth) throw();			// 函数说明部分
+	int FunctionHead(size_t depth) throw();			// 函数首部
+	int ParameterList(size_t depth) throw();			// 形参表 返回形参个数
+	int ParameterTerm(size_t depth) throw();			// 形参段 返回形参个数
+	vector<TokenTableItem::DecorateType> ArgumentList(size_t depth) throw();// 实参表
 
-	void StatementBlockPart(int depth) throw();		// 复合语句部分
-	void Statement(int depth) throw();				// 语句
+	void StatementBlockPart(size_t depth) throw();		// 复合语句部分
+	void Statement(size_t depth) throw();				// 语句
 
-	void AssigningStatement(const Token &idToken, TokenTable::iterator &iter, int depth) throw();	// 赋值语句
+	void AssigningStatement(const Token &idToken, TokenTable::iterator &iter, size_t depth) throw();	// 赋值语句
 
-	ExpressionAttribute Expression(int depth) throw();				// 表达式，返回表达式的类型
-	ExpressionAttribute Term(int depth) throw();					// 项
-	ExpressionAttribute Factor(int depth) throw();					// 因子
+	ExpressionAttribute Expression(size_t depth) throw();	// 表达式，返回表达式的类型
+	ExpressionAttribute Term(size_t depth) throw();		// 项
+	ExpressionAttribute Factor(size_t depth) throw();		// 因子
 
-	void IfStatement(int depth) throw();			// 条件语句
-	void Condition(int endlabel, int depth) throw();// 条件
-	void CaseStatement(int depth) throw();			// 情况语句
-	vector<int> CaseElement(const ExpressionAttribute &exp_attribute, int caselabel, int endlabel, int depth) throw();				// 情况表元素
-	void ReadStatement(int depth) throw();			// 读语句
-	void WriteStatement(int depth) throw();			// 写语句
-	void WhileLoopStatement(int depth) throw();		// while循环语句
-	void ForLoopStatement(int depth) throw();		// for循环语句
-	void ContinueStatement(int depth) throw();	// continue
-	void BreakStatement(int depth) throw();		// break
-	void ProcedureCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, int depth) throw();	// 过程调用语句
-	void FunctionCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, int depth) throw();	// 函数调用语句
+	void IfStatement(size_t depth) throw();			// 条件语句
+	void Condition(int endlabel, size_t depth) throw();// 条件
+	void CaseStatement(size_t depth) throw();			// 情况语句
+	vector<int> CaseElement(int caselabel, int endlabel, size_t depth) throw();	// 情况表元素
+	void ReadStatement(size_t depth) throw();			// 读语句
+	void WriteStatement(size_t depth) throw();			// 写语句
+	void WhileLoopStatement(size_t depth) throw();		// while循环语句
+	void ForLoopStatement(size_t depth) throw();		// for循环语句
+	void ContinueStatement(size_t depth) throw();	// continue
+	void BreakStatement(size_t depth) throw();		// break
+	void ProcedureCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth) throw();	// 过程调用语句
+	void FunctionCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth) throw();	// 函数调用语句
 
 	void SimplifyArrayOperand(ExpressionAttribute &attribute) throw();
 //	void SetTempVarCount(int proc_func_index, int max_tempvar_count) throw();

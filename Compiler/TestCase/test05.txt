@@ -6,15 +6,19 @@ function fib(k: integer): integer;
 		else
 			begin
 			if k=1 then
+begin
+				write(1);
 				fib:=1
-			else
-			fib:= fib(k-1)+fib(k-2);
-			
-			end
+	end		else
+	begin		n:= fib(k-1)+fib(k-2);
+			write(n);
+			fib:=n;
+		end	end
 	end
 	;
 begin
-	while n>= 0 do
+	n := -1;
+	while n< 0 do
 		begin
 		write("Please enter a number n which is larger than 0: ");
 		read(n)

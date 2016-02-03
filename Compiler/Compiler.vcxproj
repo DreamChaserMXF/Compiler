@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssemblyMaker.h" />
+    <ClInclude Include="EscapeSequence.h" />
     <ClInclude Include="ExpressionAttribute.h" />
     <ClInclude Include="LexException.h" />
     <ClInclude Include="LexicalAnalyzer.h" />
@@ -26,6 +27,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyMaker.cpp" />
+    <ClCompile Include="EscapeSequence.cpp" />
     <ClCompile Include="LexicalAnalyzer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Print.cpp" />
