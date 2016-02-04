@@ -1,2 +1,2 @@
-0	Fib(n) is: 
-1	Please enter a number n which is larger than 0: 
+0	
+

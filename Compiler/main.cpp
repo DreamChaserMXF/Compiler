@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 	bool assemble_legitimate = false;
 
 	// 输入输出文件名
-	const string kCodeFileName = "TestCase/test05.txt";
+	const string kCodeFileName = "TestCase/05_array.cpp";
 	const string kTokenFileName = "TestCase/example_token.txt";
 	const string kTokenTableFileName = "TestCase/example_tokentable.txt";
 	const string kStringTableFileName = "TestCase/example_stringtable.txt";
