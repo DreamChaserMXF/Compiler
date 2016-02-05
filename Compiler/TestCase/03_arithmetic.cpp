@@ -47,13 +47,14 @@ begin
 	write(i+sequence[1]);
 	write(-(sequence[1]+j+sequence[2]));
 	write("\n");
-	// SUB测试  预期结果：-1 1 -4 -4 2 0 -1 5
+	// SUB测试  预期结果：-1 1 -4 -4 2 0 -1, -1, 5
 	write(i-j);
 	write(j-i);
 	write(i-j-k);
 	write((i-j)-k);
 	write(i-(j-k));
 	write(k-(j+i));
+	write((k-i)-(j+i));
 	write(i-sequence[1]);
 	write(k-(sequence[1]-j-(sequence[2]-i)));
 	write("\n");

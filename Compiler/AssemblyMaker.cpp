@@ -60,10 +60,10 @@ void AssemblyMaker::Head() throw()
 	assemble_buffer << "\n.model flat, stdcall";
 	assemble_buffer << "\noption casemap: none\n";
 	// 包含的库
-	assemble_buffer << "\nincludelib .\\masm32\\lib\\msvcrt.lib";
-	assemble_buffer << "\nincludelib .\\masm32\\lib\\kernel32.lib";
-	assemble_buffer << "\ninclude .\\masm32\\include\\msvcrt.inc";
-	assemble_buffer << "\ninclude .\\masm32\\include\\kernel32.inc";
+	assemble_buffer << "\nincludelib .\\masm32\\lib\\msvcrt.lib      ; for printf & scanf linking";
+	assemble_buffer << "\nincludelib .\\masm32\\lib\\kernel32.lib    ; for ExitProcess linking";
+	assemble_buffer << "\ninclude .\\masm32\\include\\msvcrt.inc     ; 似乎没啥用，应该是printf和scanf的声明文件";
+	assemble_buffer << "\ninclude .\\masm32\\include\\kernel32.inc   ; for ExitProcess";
 	// 输入输出函数调用
 	assemble_buffer << "\nprintf PROTO C: ptr sbyte, :vararg";
 	assemble_buffer << "\nscanf  PROTO C: ptr sbyte, :vararg";
