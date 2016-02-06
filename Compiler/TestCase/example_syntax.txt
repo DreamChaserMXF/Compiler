@@ -1,161 +1,122 @@
 Parse()
 |   Routine()
 |   |   SubRoutine()
-|   |   |   ConstantPart()
-|   |   |   |   constantDefination()
-|   |   |   |     IDENTIFIER  ARRLEN
-|   |   |   |     CONST_INTEGER  100
-|   |   |   |   constantDefination()
-|   |   |   |     IDENTIFIER  NEGATIVE
-|   |   |   |     CONST_INTEGER  -1
-|   |   |   |   constantDefination()
-|   |   |   |     IDENTIFIER  TRUE
-|   |   |   |     CONST_INTEGER  1
-|   |   |   |   constantDefination()
-|   |   |   |     IDENTIFIER  FALSE
-|   |   |   |     CONST_INTEGER  0
-|   |   |   |   constantDefination()
-|   |   |   |     IDENTIFIER  ENDCHAR
-|   |   |   |     CONST_CHAR  a
 |   |   |   VariablePart()
 |   |   |   |   VariableDefinition()
 |   |   |   |     IDENTIFIER  i
 |   |   |   |     IDENTIFIER  j
 |   |   |   |     IDENTIFIER  k
+|   |   |   |     IDENTIFIER  n
+|   |   |   |     IDENTIFIER  result
 |   |   |   |   |   TypeSpecification()
 |   |   |   |   |     RW_INTEGER
-|   |   |   |   VariableDefinition()
-|   |   |   |     IDENTIFIER  lastChar
-|   |   |   |     IDENTIFIER  space
-|   |   |   |   |   TypeSpecification()
-|   |   |   |   |     RW_CHAR
-|   |   |   |   VariableDefinition()
-|   |   |   |     IDENTIFIER  seq_int
-|   |   |   |   |   TypeSpecification()
-|   |   |   |   |     ARRAY
-|   |   |   |   |     CONST_INTEGER  10
-|   |   |   |   |     RW_INTEGER
-|   |   |   |   VariableDefinition()
-|   |   |   |     IDENTIFIER  seq_char
-|   |   |   |   |   TypeSpecification()
-|   |   |   |   |     ARRAY
-|   |   |   |   |     CONST_INTEGER  10
-|   |   |   |   |     RW_CHAR
+|   |   |   FunctionPart()
+|   |   |   |   FunctionHead()
+|   |   |   |     IDENTIFIER  factorial
+|   |   |   |   |   ParameterList()
+|   |   |   |   |   |   ParameterTerm()
+|   |   |   |   |   |     IDENTIFIER  n
+|   |   |   |   |   |     RW_INTEGER
+|   |   |   |   |   |     RW_INTEGER
+|   |   |   |   SubRoutine()
+|   |   |   |   |   StatementBlockPart()
+|   |   |   |   |   |   Statement()
+|   |   |   |   |   |   |   IfStatement()
+|   |   |   |   |   |   |   |   Condition()
+|   |   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |     IDENTIFIER  n
+|   |   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  1
+|   |   |   |   |   |   |   |   Statement()
+|   |   |   |   |   |   |   |     IDENTIFIER  factorial
+|   |   |   |   |   |   |   |   |   AssigningStatement()
+|   |   |   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  1
+|   |   |   |   |   |   |   |   Statement()
+|   |   |   |   |   |   |   |   |   StatementBlockPart()
+|   |   |   |   |   |   |   |   |   |   Statement()
+|   |   |   |   |   |   |   |   |   |     IDENTIFIER  result
+|   |   |   |   |   |   |   |   |   |   |   AssigningStatement()
+|   |   |   |   |   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |     IDENTIFIER  n
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |     IDENTIFIER  factorial
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   ProcFuncCallStatement()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   ArgumentList()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |     IDENTIFIER  n
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  1
+|   |   |   |   |   |   |   |   |   |   Statement()
+|   |   |   |   |   |   |   |   |   |     IDENTIFIER  factorial
+|   |   |   |   |   |   |   |   |   |   |   AssigningStatement()
+|   |   |   |   |   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |     IDENTIFIER  result
+|   |   |   |   |   |   |   |   |   |   Statement()
 |   |   |   StatementBlockPart()
+|   |   |   |   Statement()
+|   |   |   |   |   WriteStatement()
+|   |   |   |   |     WRITE
+|   |   |   |   |     CONST_STRING  input a value n, output the factorial of n
+
 |   |   |   |   Statement()
 |   |   |   |   |   ReadStatement()
 |   |   |   |   |     READ
-|   |   |   |   |     IDENTIFIER  i
-|   |   |   |   |     IDENTIFIER  j
-|   |   |   |   |     IDENTIFIER  k
+|   |   |   |   |     IDENTIFIER  n
 |   |   |   |   Statement()
-|   |   |   |   |   WriteStatement()
-|   |   |   |   |     WRITE
+|   |   |   |     IDENTIFIER  factorial
+|   |   |   |   |   ProcFuncCallStatement()
+|   |   |   |   |   |   ArgumentList()
+|   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |     IDENTIFIER  n
+|   |   |   |   Statement()
+|   |   |   |     IDENTIFIER  n
+|   |   |   |   |   AssigningStatement()
 |   |   |   |   |   |   Expression()
 |   |   |   |   |   |   |   Term()
 |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     IDENTIFIER  i
+|   |   |   |   |   |   |   |     IDENTIFIER  result
 |   |   |   |   Statement()
-|   |   |   |   |   WriteStatement()
-|   |   |   |   |     WRITE
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     IDENTIFIER  j
-|   |   |   |   Statement()
-|   |   |   |   |   WriteStatement()
-|   |   |   |   |     WRITE
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     IDENTIFIER  k
+|   |   |   |   |   IfStatement()
+|   |   |   |   |   |   Condition()
+|   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |     IDENTIFIER  n
+|   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |     CONST_INTEGER  0
+|   |   |   |   |   |   Statement()
+|   |   |   |   |   |   |   WriteStatement()
+|   |   |   |   |   |   |     WRITE
+|   |   |   |   |   |   |     CONST_STRING  n! = 
+|   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |     IDENTIFIER  n
+|   |   |   |   |   |   Statement()
+|   |   |   |   |   |   |   WriteStatement()
+|   |   |   |   |   |   |     WRITE
+|   |   |   |   |   |   |     CONST_STRING  value too large
 |   |   |   |   Statement()
 |   |   |   |   |   WriteStatement()
 |   |   |   |   |     WRITE
 |   |   |   |   |     CONST_STRING  
 
-|   |   |   |   Statement()
-|   |   |   |   |   ReadStatement()
-|   |   |   |   |     READ
-|   |   |   |   |     IDENTIFIER  space
-|   |   |   |   Statement()
-|   |   |   |   |   ReadStatement()
-|   |   |   |   |     READ
-|   |   |   |   |     IDENTIFIER  lastChar
-|   |   |   |   Statement()
-|   |   |   |   |   WriteStatement()
-|   |   |   |   |     WRITE
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     IDENTIFIER  lastChar
-|   |   |   |   Statement()
-|   |   |   |   |   ReadStatement()
-|   |   |   |   |     READ
-|   |   |   |   |     IDENTIFIER  seq_int
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     CONST_INTEGER  0
-|   |   |   |   |   |   |   |     IDENTIFIER  seq_int
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     CONST_INTEGER  1
-|   |   |   |   |   |   |   |     IDENTIFIER  space
-|   |   |   |   |   |   |   |     IDENTIFIER  seq_char
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     CONST_INTEGER  0
-|   |   |   |   |   |   |   |     IDENTIFIER  seq_char
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     CONST_INTEGER  1
-|   |   |   |   Statement()
-|   |   |   |   |   WriteStatement()
-|   |   |   |   |     WRITE
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     IDENTIFIER  seq_char
-|   |   |   |   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  1
-|   |   |   |   Statement()
-|   |   |   |   |   WriteStatement()
-|   |   |   |   |     WRITE
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     IDENTIFIER  seq_char
-|   |   |   |   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  0
-|   |   |   |   Statement()
-|   |   |   |   |   WriteStatement()
-|   |   |   |   |     WRITE
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     IDENTIFIER  seq_int
-|   |   |   |   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  1
-|   |   |   |   Statement()
-|   |   |   |   |   WriteStatement()
-|   |   |   |   |     WRITE
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     IDENTIFIER  seq_int
-|   |   |   |   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  0
-|   |   |   |   Statement()
 

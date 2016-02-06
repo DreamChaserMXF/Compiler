@@ -1,2 +1,6 @@
 0	
 
+1	input a value n, output the factorial of n
+
+2	n! = 
+3	value too large

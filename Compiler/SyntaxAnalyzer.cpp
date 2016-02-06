@@ -931,9 +931,10 @@ void SyntaxAnalyzer::Statement(size_t depth) throw()
 		}
 		iter->AddUsedLine(token_.lineNumber_);		// 在符号表中插入引用行记录
 		lexical_analyzer_.GetNextToken(token_);
-		if(Token::LEFT_PAREN == token_.type_)	// 过程调用
+		if(Token::LEFT_PAREN == token_.type_)	// 过程或函数调用
 		{
-			if(iter->itemtype_ != TokenTableItem::PROCEDURE)	// 检查其属性是否为过程
+			if(iter->itemtype_ != TokenTableItem::PROCEDURE
+				&& iter->itemtype_ != TokenTableItem::FUNCTION)	// 检查其属性是否为过程或函数
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  not declared as a procedure\n";
 				is_successful_ = false;
@@ -946,9 +947,11 @@ void SyntaxAnalyzer::Statement(size_t depth) throw()
 			vector<TokenTableItem::DecorateType> decorate_types = tokentable_.GetProcFuncParameter(iter);
 			
 			// 在ProcedureCallStatement中设置参数
-			ProcedureCallStatement(idToken, decorate_types, depth + 1);
-			// 生成过程调用四元式
-			Quaternary q_procedurecall(Quaternary::PROC_CALL, 
+			//ProcedureCallStatement(idToken, decorate_types, depth + 1);
+			// 在ProcFuncCallStatement中设置参数
+			ProcFuncCallStatement(idToken, decorate_types, depth + 1);
+			// 生成调用四元式
+			Quaternary q_procedurecall((iter->itemtype_ == TokenTableItem::PROCEDURE) ? Quaternary::PROC_CALL : Quaternary::FUNC_CALL, 
 				Quaternary::NIL_ADDRESSING, 0, 
 				Quaternary::NIL_ADDRESSING, 0, 
 				Quaternary::IMMEDIATE_ADDRESSING, distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter)));
@@ -1549,7 +1552,9 @@ ExpressionAttribute SyntaxAnalyzer::Factor(size_t depth) throw()					// 因子
 			// 从符号表中取出函数的参数类型，待FunctionCallStatement去匹配参数
 			vector<TokenTableItem::DecorateType> decorate_types = tokentable_.GetProcFuncParameter(iter);
 			// 四元式：先进入FunctionCallStatement，设置好参数，然后再生成函数调用语句
-			FunctionCallStatement(idToken, decorate_types, depth + 1);
+			//FunctionCallStatement(idToken, decorate_types, depth + 1);
+			// 四元式：先进入ProcFuncCallStatement，设置好参数，然后再生成函数调用语句
+			ProcFuncCallStatement(idToken, decorate_types, depth + 1);			
 			// 生成函数调用的四元式
 			Quaternary q_functioncall(Quaternary::FUNC_CALL, 
 				Quaternary::NIL_ADDRESSING, 0, 
@@ -2500,10 +2505,170 @@ void SyntaxAnalyzer::BreakStatement(size_t depth) throw()		// break
 }
 
 
-// <过程调用语句> ::= '('[<实在参数表>]')'
-void SyntaxAnalyzer::ProcedureCallStatement(const Token proc_token, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth)	// 过程调用语句
+//// <过程调用语句> ::= '('[<实在参数表>]')'
+//void SyntaxAnalyzer::ProcedureCallStatement(const Token proc_token, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth)	// 过程调用语句
+//{
+//	PrintFunctionFrame("ProcedureCallStatement()", depth);
+//	// 语法检查
+//	if(Token::LEFT_PAREN != token_.type_)
+//	{
+//		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be '(' to specify the argument\n";
+//		is_successful_ = false;
+//		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
+//		{ 
+//			lexical_analyzer_.GetNextToken(token_);
+//		}
+//		return;
+//	}
+//	// 语法：读入右括号或参数表的第一个单词
+//	lexical_analyzer_.GetNextToken(token_);
+//	if(parameter_decorate_types.size() == 0)	// 如果函数本身就没有参数的话，就不用读参数了
+//	{
+//		// 语法检查
+//		if(Token::RIGHT_PAREN != token_.type_)
+//		{
+//			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
+//			is_successful_ = false;
+//			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
+//			{ 
+//				lexical_analyzer_.GetNextToken(token_);
+//			}
+//			return;
+//		}
+//		lexical_analyzer_.GetNextToken(token_);	// 读函数调用完毕后的下一个单词
+//		return;
+//	}
+//	// 语法：读参数，并生成设置参数的四元式
+//	vector<TokenTableItem::DecorateType> arg_decoratetypes = ArgumentList(depth + 1);
+//	// 语法检查
+//	if(Token::RIGHT_PAREN != token_.type_)
+//	{
+//		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
+//		is_successful_ = false;
+//		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
+//		{ 
+//			lexical_analyzer_.GetNextToken(token_);
+//		}
+//		return;
+//	}
+//	lexical_analyzer_.GetNextToken(token_);
+//
+//	// 语义检查：过程参数与过程声明是否匹配
+//	if(parameter_decorate_types.size() != arg_decoratetypes.size())	// 检查参数数量
+//	{
+//		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  procedure does not take " << arg_decoratetypes.size() << " argument";
+//		if(arg_decoratetypes.size() > 1)
+//		{
+//			std::cout << "s\n";
+//		}
+//		else
+//		{
+//			std::cout << "\n";
+//		}
+//		is_successful_ = false;
+//		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
+//		{ 
+//			lexical_analyzer_.GetNextToken(token_);
+//		}
+//		return;
+//	}
+//	for(int i = 0; i < static_cast<int>(parameter_decorate_types.size()); ++i)
+//	{
+//		// 左小于右小于表示不能从右操作数类型转到左操作数类型
+//		if(parameter_decorate_types[i] < arg_decoratetypes[i])
+//		{
+//			std::cout << "warning: line " << token_.lineNumber_ << ":  " << token_.toString() 
+//				<< "  cannot convert parameter " << i + 1 << " from " << TokenTableItem::DecorateTypeString[arg_decoratetypes[i]]
+//				<< " to " <<  TokenTableItem::DecorateTypeString[parameter_decorate_types[i]] <<"\n";
+//			// 这里仅仅是检查了参数类型不匹配，语法分析还可继续，故不返回
+//		}
+//		//if(parameter_decorate_types[i] == TokenTableItem::CHAR && arg_decoratetypes[i] == TokenTableItem::INTEGER)
+//		//{
+//		//	std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot convert parameter " << i + 1 << " from integer to char\n";
+//		//	is_successful_ = false;
+//		//	// 这里仅仅是检查了参数类型不匹配，实际语法成分分析还可继续，
+//		//}
+//	}
+//}
+//
+//// <函数调用语句> ::= '('[<实在参数表>]')'
+//void SyntaxAnalyzer::FunctionCallStatement(const Token func_token, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth)	// 函数调用语句
+//{
+//	PrintFunctionFrame("FunctionCallStatement()", depth);
+//
+//	assert(Token::LEFT_PAREN == token_.type_);
+//
+//	// 语法：读入右括号或参数表的第一个单词
+//	lexical_analyzer_.GetNextToken(token_);
+//	if(parameter_decorate_types.size() == 0)	// 如果函数本身就没有参数的话，就不用读参数了
+//	{
+//		// 语法检查
+//		if(Token::RIGHT_PAREN != token_.type_)
+//		{
+//			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
+//			is_successful_ = false;
+//			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
+//			{ 
+//				lexical_analyzer_.GetNextToken(token_);
+//			}
+//			return;
+//		}
+//		lexical_analyzer_.GetNextToken(token_);	// 读函数调用完毕后的下一个单词
+//		return;
+//	}
+//	// 语法：读参数
+//	vector<TokenTableItem::DecorateType> arg_decoratetypes = ArgumentList(depth + 1);
+//	// 语法检查
+//	if(Token::RIGHT_PAREN != token_.type_)
+//	{
+//		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
+//		is_successful_ = false;
+//		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
+//		{ 
+//			lexical_analyzer_.GetNextToken(token_);
+//		}
+//		return;
+//	}
+//	lexical_analyzer_.GetNextToken(token_);
+//
+//	// 语义检查：函数参数与函数声明是否匹配
+//	if(parameter_decorate_types.size() != arg_decoratetypes.size())	// 检查参数数量
+//	{
+//		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  function does not take " << arg_decoratetypes.size() << " argument";
+//		if(arg_decoratetypes.size() > 1)
+//		{
+//			std::cout << "s\n";
+//		}
+//		else
+//		{
+//			std::cout << "\n";
+//		}
+//		is_successful_ = false;
+//		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
+//		{ 
+//			lexical_analyzer_.GetNextToken(token_);
+//		}
+//		return;
+//	}
+//	// 类型是否匹配
+//	for(int i = 0; i < static_cast<int>(parameter_decorate_types.size()); ++i)
+//	{
+//		// 左小于右小于表示不能从右操作数类型转到左操作数类型
+//		if(parameter_decorate_types[i] < arg_decoratetypes[i])
+//		{
+//			std::cout << "warning: line " << token_.lineNumber_ << ":  " << token_.toString() 
+//				<< " convert parameter " << i + 1 << " from " << TokenTableItem::DecorateTypeString[parameter_decorate_types[i]]
+//				<< " to " <<  TokenTableItem::DecorateTypeString[arg_decoratetypes[i]] <<"\n";
+//			// 这里仅仅是检查了参数类型不匹配，语法分析还可继续，故不返回
+//		}
+//	}
+//	
+//}
+
+// <过程/函数调用语句> ::= '('[<实在参数表>]')'
+void SyntaxAnalyzer::ProcFuncCallStatement(const Token proc_token, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth)	// 过程调用语句
 {
-	PrintFunctionFrame("ProcedureCallStatement()", depth);
+	PrintFunctionFrame("ProcFuncCallStatement()", depth);
 	// 语法检查
 	if(Token::LEFT_PAREN != token_.type_)
 	{
@@ -2551,7 +2716,7 @@ void SyntaxAnalyzer::ProcedureCallStatement(const Token proc_token, const vector
 	// 语义检查：过程参数与过程声明是否匹配
 	if(parameter_decorate_types.size() != arg_decoratetypes.size())	// 检查参数数量
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  procedure does not take " << arg_decoratetypes.size() << " argument";
+		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  procedure/function does not take " << arg_decoratetypes.size() << " argument";
 		if(arg_decoratetypes.size() > 1)
 		{
 			std::cout << "s\n";
@@ -2577,87 +2742,7 @@ void SyntaxAnalyzer::ProcedureCallStatement(const Token proc_token, const vector
 				<< " to " <<  TokenTableItem::DecorateTypeString[parameter_decorate_types[i]] <<"\n";
 			// 这里仅仅是检查了参数类型不匹配，语法分析还可继续，故不返回
 		}
-		//if(parameter_decorate_types[i] == TokenTableItem::CHAR && arg_decoratetypes[i] == TokenTableItem::INTEGER)
-		//{
-		//	std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot convert parameter " << i + 1 << " from integer to char\n";
-		//	is_successful_ = false;
-		//	// 这里仅仅是检查了参数类型不匹配，实际语法成分分析还可继续，
-		//}
 	}
-}
-
-// <函数调用语句> ::= '('[<实在参数表>]')'
-void SyntaxAnalyzer::FunctionCallStatement(const Token func_token, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth)	// 函数调用语句
-{
-	PrintFunctionFrame("FunctionCallStatement()", depth);
-
-	assert(Token::LEFT_PAREN == token_.type_);
-
-	// 语法：读入右括号或参数表的第一个单词
-	lexical_analyzer_.GetNextToken(token_);
-	if(parameter_decorate_types.size() == 0)	// 如果函数本身就没有参数的话，就不用读参数了
-	{
-		// 语法检查
-		if(Token::RIGHT_PAREN != token_.type_)
-		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
-			return;
-		}
-		lexical_analyzer_.GetNextToken(token_);	// 读函数调用完毕后的下一个单词
-		return;
-	}
-	// 语法：读参数
-	vector<TokenTableItem::DecorateType> arg_decoratetypes = ArgumentList(depth + 1);
-	// 语法检查
-	if(Token::RIGHT_PAREN != token_.type_)
-	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return;
-	}
-	lexical_analyzer_.GetNextToken(token_);
-
-	// 语义检查：函数参数与函数声明是否匹配
-	if(parameter_decorate_types.size() != arg_decoratetypes.size())	// 检查参数数量
-	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  function does not take " << arg_decoratetypes.size() << " argument";
-		if(arg_decoratetypes.size() > 1)
-		{
-			std::cout << "s\n";
-		}
-		else
-		{
-			std::cout << "\n";
-		}
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return;
-	}
-	// 类型是否匹配
-	for(int i = 0; i < static_cast<int>(parameter_decorate_types.size()); ++i)
-	{
-		// 左小于右小于表示不能从右操作数类型转到左操作数类型
-		if(parameter_decorate_types[i] < arg_decoratetypes[i])
-		{
-			std::cout << "warning: line " << token_.lineNumber_ << ":  " << token_.toString() 
-				<< " convert parameter " << i + 1 << " from " << TokenTableItem::DecorateTypeString[parameter_decorate_types[i]]
-				<< " to " <<  TokenTableItem::DecorateTypeString[arg_decoratetypes[i]] <<"\n";
-			// 这里仅仅是检查了参数类型不匹配，语法分析还可继续，故不返回
-		}
-	}
-	
 }
 
 // 给定的元素的操作数如果是数组变量，就将其化简为临时变量

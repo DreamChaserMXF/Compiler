@@ -62,14 +62,14 @@ private:
 
 	void WhileLoopStatement(size_t depth) throw();		// while循环语句
 	void ForLoopStatement(size_t depth) throw();		// for循环语句
-	void ContinueStatement(size_t depth) throw();	// continue
-	void BreakStatement(size_t depth) throw();		// break
+	void ContinueStatement(size_t depth) throw();		// continue
+	void BreakStatement(size_t depth) throw();			// break
 
-	void ProcedureCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth) throw();	// 过程调用语句
-	void FunctionCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth) throw();	// 函数调用语句
+	//void ProcedureCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth) throw();	// 过程调用语句
+	//void FunctionCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth) throw();	// 函数调用语句
+	void ProcFuncCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth) throw();	// 函数调用语句
 
 	void SimplifyArrayOperand(ExpressionAttribute &attribute) throw();
-//	void SetTempVarCount(int proc_func_index, int max_tempvar_count) throw();
 
 	// 数据成员
 	LexicalAnalyzer &lexical_analyzer_;		// 绑定的词法分析器
