@@ -744,9 +744,10 @@ int SyntaxAnalyzer::ParameterList(size_t depth) throw()		// ĞÎ²Î±í
 int SyntaxAnalyzer::ParameterTerm(size_t depth) throw()		
 {
 	PrintFunctionFrame("ParameterTerm()", depth);
-
+	bool isref = false;	// ÊÇ·ñÎªÒıÓÃ´«²Î
 	if(Token::VAR == token_.type_)
 	{
+		isref = true;
 		lexical_analyzer_.GetNextToken(token_);
 	}
 	if(token_.type_ != Token::IDENTIFIER)
@@ -819,7 +820,7 @@ int SyntaxAnalyzer::ParameterTerm(size_t depth) throw()
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 	// ²ÎÊı´æ·ûºÅ±í
-	TokenTableItem::DecorateType decoratetype_ = (token_.type_ == Token::RW_INTEGER) ? TokenTableItem::INTEGER : TokenTableItem::CHAR;
+	TokenTableItem::DecorateType decoratetype = (token_.type_ == Token::RW_INTEGER) ? TokenTableItem::INTEGER : TokenTableItem::CHAR;
 	for(vector<Token>::const_iterator iter = tokenbuffer_.begin(); iter != tokenbuffer_.end(); ++iter)
 	{
 		if(tokentable_.SearchDefinitionInCurrentLevel(iter->value_.identifier))
@@ -827,7 +828,7 @@ int SyntaxAnalyzer::ParameterTerm(size_t depth) throw()
 			std::cout << "line " << iter->lineNumber_ << ":  " << iter->toString() << "  redifinition\n";
 			is_successful_ = false;
 		}
-		tokentable_.AddParameterItem(*iter, decoratetype_, level_);
+		tokentable_.AddParameterItem(*iter, decoratetype, isref, level_);
 	} // end ´æ·ûºÅ±í
 
 	lexical_analyzer_.GetNextToken(token_);
@@ -835,18 +836,36 @@ int SyntaxAnalyzer::ParameterTerm(size_t depth) throw()
 }
 
 // <ÊµÔÚ²ÎÊı±í> ::= <±í´ïÊ½>{,<±í´ïÊ½>}
-vector<TokenTableItem::DecorateType> SyntaxAnalyzer::ArgumentList(size_t depth) throw()			// Êµ²Î±í
+vector<ExpressionAttribute> SyntaxAnalyzer::ArgumentList(const vector<ExpressionAttribute> &parameter_attributes, size_t depth) throw()			// Êµ²Î±í
 {
 	PrintFunctionFrame("ArgumentList()", depth);
 
-	vector<TokenTableItem::DecorateType> attribute_buffer;
+	vector<ExpressionAttribute> attribute_buffer;
 	ExpressionAttribute argument_attribute = Expression(depth + 1);
-	attribute_buffer.push_back(argument_attribute.decoratetype_);
+	attribute_buffer.push_back(argument_attribute);
 	// Éú³ÉÉèÖÃ²ÎÊıµÄËÄÔªÊ½
-	Quaternary q_addpara(Quaternary::SETP, 
+	Quaternary q_addpara(Quaternary::SETP,
 		Quaternary::NIL_ADDRESSING, 0, 
 		argument_attribute.offset_addressingmethod_, argument_attribute.offset_, 
 		argument_attribute.addressingmethod_, argument_attribute.value_);
+	// ²ÎÊıµÄ´«µİ·½Ê½
+	if(Quaternary::REFERENCE_ADDRESSING == parameter_attributes[0].addressingmethod_
+		&& Quaternary::REFERENCE_ADDRESSING != argument_attribute.addressingmethod_)
+	{
+		q_addpara.op_ = Quaternary::SETREFP;
+		// ÒıÓÃ´«²ÎÒªÇó²ÎÊıÊÇ×óÖµ
+		if(Quaternary::VARIABLE_ADDRESSING != argument_attribute.addressingmethod_
+			&& Quaternary::ARRAY_ADDRESSING != argument_attribute.addressingmethod_)
+		{
+			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be left value to fit the reference parameter\n";
+			is_successful_ = false;
+			while(token_.type_ != Token::NIL && token_.type_ != Token::RIGHT_PAREN && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+			{ 
+				lexical_analyzer_.GetNextToken(token_);
+			}
+			return attribute_buffer;
+		}
+	}
 	quaternarytable_.push_back(q_addpara);
 	// »ØÊÕÁÙÊ±±äÁ¿
 	if(Quaternary::TEMPORARY_ADDRESSING == argument_attribute.addressingmethod_
@@ -854,13 +873,31 @@ vector<TokenTableItem::DecorateType> SyntaxAnalyzer::ArgumentList(size_t depth) 
 	{
 		--tempvar_index_;
 	}
-
+	size_t para_index = 0;
 	while(Token::COMMA == token_.type_)
 	{
+		++para_index;
 		lexical_analyzer_.GetNextToken(token_);
 		argument_attribute = Expression(depth + 1);
-		attribute_buffer.push_back(argument_attribute.decoratetype_);
+		attribute_buffer.push_back(argument_attribute);
+		// Ô½½ç¼ì²é
+		if(parameter_attributes.size() <= para_index)
+		{
+			// Êµ¼Ê²ÎÊı¹ı¶à
+			continue;
+		}
 		// Éú³ÉÉèÖÃ²ÎÊıµÄËÄÔªÊ½
+		// ²ÎÊıÒªÇóÊÇÒıÓÃ£¬ÇÒ±í´ïÊ½Îª·ÇÒıÓÃ£¬²ÅÓÃSETREFP
+		// ÖØµãÔÚÓÚ£¬Èô±í´ïÊ½Ò²ÎªÒıÓÃ£¬ÔòÖ»ÓÃSETP£¬¼´¿É´«ÈëµØÖ·
+		if(Quaternary::REFERENCE_ADDRESSING == parameter_attributes[para_index].addressingmethod_
+		&& Quaternary::REFERENCE_ADDRESSING != argument_attribute.addressingmethod_)
+		{
+			q_addpara.op_ = Quaternary::SETREFP;
+		}
+		else
+		{
+			q_addpara.op_ = Quaternary::SETP;
+		}
 		q_addpara.method2_ = argument_attribute.offset_addressingmethod_;
 		q_addpara.offset2_ = argument_attribute.offset_;
 		q_addpara.method3_ = argument_attribute.addressingmethod_;
@@ -944,12 +981,12 @@ void SyntaxAnalyzer::Statement(size_t depth) throw()
 				}
 				return;
 			}
-			vector<TokenTableItem::DecorateType> decorate_types = tokentable_.GetProcFuncParameter(iter);
+			vector<ExpressionAttribute> proc_func_attributes = tokentable_.GetProcFuncParameterAttributes(iter);
 			
 			// ÔÚProcedureCallStatementÖĞÉèÖÃ²ÎÊı
 			//ProcedureCallStatement(idToken, decorate_types, depth + 1);
 			// ÔÚProcFuncCallStatementÖĞÉèÖÃ²ÎÊı
-			ProcFuncCallStatement(idToken, decorate_types, depth + 1);
+			ProcFuncCallStatement(idToken, proc_func_attributes, depth + 1);
 			// Éú³Éµ÷ÓÃËÄÔªÊ½
 			Quaternary q_procedurecall((iter->itemtype_ == TokenTableItem::PROCEDURE) ? Quaternary::PROC_CALL : Quaternary::FUNC_CALL, 
 				Quaternary::NIL_ADDRESSING, 0, 
@@ -1145,7 +1182,7 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 		// Ïê¼û¡¶Appendix1 Éè¼Æ±¸×¢¡· - chapter 4
 		if(Quaternary::TEMPORARY_ADDRESSING == right_attribute.addressingmethod_)
 		{
-			quaternarytable_.back().method3_ = Quaternary::VARIABLE_ADDRESSING;
+			quaternarytable_.back().method3_ = iter->isref_ ? Quaternary::REFERENCE_ADDRESSING : Quaternary::VARIABLE_ADDRESSING;
 			quaternarytable_.back().dst_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
 			// »ØÊÕÓÒ²Ù×÷ÊıµÄÁÙÊ±±äÁ¿
 			--tempvar_index_;
@@ -1158,18 +1195,13 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 			q_asg.src1_ = right_attribute.value_;
 			q_asg.method2_ = right_attribute.offset_addressingmethod_;
 			q_asg.offset2_ = right_attribute.offset_;
-			q_asg.method3_ = Quaternary::VARIABLE_ADDRESSING;
+			q_asg.method3_ = iter->isref_ ? Quaternary::REFERENCE_ADDRESSING : Quaternary::VARIABLE_ADDRESSING;
 			q_asg.dst_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
 			quaternarytable_.push_back(q_asg);
-			//// Èç¹ûÓÒ²Ù×÷ÊıÊÇÁÙÊ±±äÁ¿£¬¿É»ØÊÕ
-			//if(Quaternary::TEMPORARY_ADDRESSING == right_attribute.addressingmethod_)
-			//{
-			//	--tempvar_index_;
-			//}
-			// Èç¹ûÓÒ²Ù×÷ÊıÊÇÊı×é£¬ÇÒÆäÊı×éÏÂ±êÊÇÁÙÊ±±äÁ¿£¬¿É»ØÊÕ
+			// Èç¹û¸³ÖµºÅÓÒ±ßµÄ±í´ïÊ½ÊÇÊı×é£¬ÇÒÆäÊı×éÏÂ±êÊÇÁÙÊ±±äÁ¿£¬¿É»ØÊÕ
 			if(Quaternary::TEMPORARY_ADDRESSING == offset_attribute.offset_addressingmethod_)
 			{
-				// ÕâÀïÓĞÒ»¸ö³ÌĞòÂ³°ôĞÔµÄ¼Ù¶¨£¬¼´Èç¹ûaddressingmethod_²»ÊÇARRAYµÄ»°£¬ÄÇÃ´addressingmethod_Ò»¶¨ÊÇNIL_ADDRESSING
+				// ÕâÀïÓĞÒ»¸ö³ÌĞòÂ³°ôĞÔµÄ¼Ù¶¨£¬¼´ÔÚÕâ¸öifÓï¾ä¿éÄÚ£¬Èç¹ûaddressingmethod_²»ÊÇARRAYµÄ»°£¬ÄÇÃ´addressingmethod_Ò»¶¨ÊÇNIL_ADDRESSING
 				// ËùÒÔÓÃÏÂÃæµÄassert¼ì²âÒ»ÏÂ³ÌĞòÂß¼­ÓĞÎŞÎÊÌâ
 				assert(Quaternary::ARRAY_ADDRESSING == offset_attribute.addressingmethod_);
 				--tempvar_index_;
@@ -1185,12 +1217,12 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 		q_ret.method3_ = right_attribute.addressingmethod_;
 		q_ret.dst_ = right_attribute.value_;
 		quaternarytable_.push_back(q_ret);
-		// Èç¹ûÓÒ²Ù×÷ÊıÊÇÁÙÊ±±äÁ¿£¬¿É»ØÊÕ
+		// Èç¹û¸³ÖµºÅÓÒ±ßµÄ±í´ïÊ½ÊÇÁÙÊ±±äÁ¿£¬¿É»ØÊÕ
 		if(Quaternary::TEMPORARY_ADDRESSING == right_attribute.addressingmethod_)
 		{
 			--tempvar_index_;
 		}
-		// Èç¹ûÓÒ²Ù×÷ÊıÊÇÊı×é£¬ÇÒÆäÊı×éÏÂ±êÊÇÁÙÊ±±äÁ¿£¬¿É»ØÊÕ
+		// Èç¹û¸³ÖµºÅÓÒ±ßµÄ±í´ïÊ½ÊÇÊı×é£¬ÇÒÆäÊı×éÏÂ±êÊÇÁÙÊ±±äÁ¿£¬¿É»ØÊÕ
 		else if(Quaternary::TEMPORARY_ADDRESSING == offset_attribute.offset_addressingmethod_)
 		{
 			// ÕâÀïÓĞÒ»¸ö³ÌĞòÂ³°ôĞÔµÄ¼Ù¶¨£¬¼´Èç¹ûaddressingmethod_²»ÊÇARRAYµÄ»°£¬ÄÇÃ´addressingmethod_Ò»¶¨ÊÇNIL_ADDRESSING
@@ -1205,7 +1237,7 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 ExpressionAttribute SyntaxAnalyzer::Expression(size_t depth) throw()				// ±í´ïÊ½
 {
 	PrintFunctionFrame("Expression()", depth);
-
+	
 	Quaternary q_neg;	// ¿ÉÄÜÉú³ÉµÄNEGËÄÔªÊ½
 	if(	Token::PLUS == token_.type_
 		|| Token::MINUS == token_.type_)
@@ -1218,8 +1250,11 @@ ExpressionAttribute SyntaxAnalyzer::Expression(size_t depth) throw()				// ±í´ïÊ
 	}
 
 	ExpressionAttribute first_term = Term(depth + 1);
+	//bool isref = first_term.isref_;
 	if(Quaternary::NEG == q_neg.op_)	// Èç¹ûÖ®Ç°¶Áµ½ÁËÒ»¸ö¼õºÅ
 	{
+		//// Ö»ÒªÓĞ¹ı²Ù×÷£¬¼´±äÎª·ÇÒıÓÃ
+		//isref = false;
 		// ³£ÊıÈ¡·´µÄÓÅ»¯
 		if(Quaternary::IMMEDIATE_ADDRESSING == first_term.addressingmethod_)
 		{
@@ -1255,6 +1290,9 @@ ExpressionAttribute SyntaxAnalyzer::Expression(size_t depth) throw()				// ±í´ïÊ
 	while(	Token::PLUS == token_.type_
 		||	Token::MINUS == token_.type_)
 	{
+		//// Ö»ÒªÓĞ¹ı²Ù×÷£¬¼´±äÎª·ÇÒıÓÃ
+		//isref = false;
+
 		// µÚÒ»´ÎÊ±£¬Èç¹ûnew_termÊÇÊı×éÔªËØ£¬ÔòÒª½«Æä¸³Öµ¸øÁÙÊ±±äÁ¿
 		if(is_first_operator)
 		{
@@ -1328,11 +1366,6 @@ ExpressionAttribute SyntaxAnalyzer::Expression(size_t depth) throw()				// ±í´ïÊ
 		{
 			q_term.method3_ = Quaternary::TEMPORARY_ADDRESSING;
 			q_term.dst_ = tempvar_index_++;
-			//// ¸üĞÂ×î´óÁÙÊ±±äÁ¿¸öÊı
-			//if(tempvar_index_ > max_local_temp_count_)
-			//{
-			//	max_local_temp_count_ = tempvar_index_;
-			//}
 		}
 		// ±£´æËÄÔªÊ½
 		quaternarytable_.push_back(q_term);
@@ -1352,6 +1385,8 @@ ExpressionAttribute SyntaxAnalyzer::Expression(size_t depth) throw()				// ±í´ïÊ
 		new_term.offset_addressingmethod_ = Quaternary::NIL_ADDRESSING;
 		new_term.offset_ = 0;
 	}
+	//// ÒıÓÃµÄÊôĞÔ
+	//new_term.isref_ = isref;
 	return new_term;
 }
 
@@ -1361,6 +1396,7 @@ ExpressionAttribute SyntaxAnalyzer::Term(size_t depth) throw()						// Ïî
 	PrintFunctionFrame("Term()", depth);
 
 	ExpressionAttribute first_factor = Factor(depth + 1);
+	//bool isref = first_factor.isref_;
 
 	ExpressionAttribute new_factor;
 	Quaternary q_factor;
@@ -1368,6 +1404,9 @@ ExpressionAttribute SyntaxAnalyzer::Term(size_t depth) throw()						// Ïî
 	while(	token_.type_ == Token::MUL
 		||	token_.type_ == Token::DIV)
 	{
+		//// Ö»ÒªÓĞ¹ı²Ù×÷£¬¼´±äÎª·ÇÒıÓÃ
+		//isref = false;
+
 		// µÚÒ»´ÎÊ±£¬Èç¹ûfirst_factorÊÇÊı×éÔªËØ£¬ÔòÒª½«Æä¸³Öµ¸øÁÙÊ±±äÁ¿
 		if(is_first_operator)
 		{
@@ -1459,6 +1498,8 @@ ExpressionAttribute SyntaxAnalyzer::Term(size_t depth) throw()						// Ïî
 		new_factor.offset_addressingmethod_ = Quaternary::NIL_ADDRESSING;
 		new_factor.offset_ = 0;
 	}
+	// ÒıÓÃµÄÊôĞÔ
+	//new_factor.isref_ = isref;
 	return new_factor;
 }
 
@@ -1489,8 +1530,8 @@ ExpressionAttribute SyntaxAnalyzer::Factor(size_t depth) throw()					// Òò×Ó
 			}
 			return factor_attribute;
 		}
-		// ÓïÒå£º¼ÇÂ¼ĞŞÊÎÀàĞÍ£¬²¢¸üĞÂ·ûºÅ±í
-		factor_attribute.decoratetype_ = iter->decoratetype_;	
+		// ÓïÒå£º¼ÇÂ¼ĞŞÊÎÀàĞÍÓëÒıÓÃÀàĞÍ£¬²¢¸üĞÂ·ûºÅ±í
+		factor_attribute.decoratetype_ = iter->decoratetype_;		
 		iter->AddUsedLine(token_.lineNumber_);		// ÔÚ·ûºÅ±íÖĞ²åÈëÒıÓÃĞĞ¼ÇÂ¼
 		Token idToken = token_;	// ¼ÇÏÂ£¬´ıÓÃ
 		lexical_analyzer_.GetNextToken(token_);
@@ -1550,11 +1591,11 @@ ExpressionAttribute SyntaxAnalyzer::Factor(size_t depth) throw()					// Òò×Ó
 			}
 			// ÓïÒå£ºÀàĞÍÆ¥Åä
 			// ´Ó·ûºÅ±íÖĞÈ¡³öº¯ÊıµÄ²ÎÊıÀàĞÍ£¬´ıFunctionCallStatementÈ¥Æ¥Åä²ÎÊı
-			vector<TokenTableItem::DecorateType> decorate_types = tokentable_.GetProcFuncParameter(iter);
+			vector<ExpressionAttribute> parameter_attributes = tokentable_.GetProcFuncParameterAttributes(iter);
 			// ËÄÔªÊ½£ºÏÈ½øÈëFunctionCallStatement£¬ÉèÖÃºÃ²ÎÊı£¬È»ºóÔÙÉú³Éº¯Êıµ÷ÓÃÓï¾ä
 			//FunctionCallStatement(idToken, decorate_types, depth + 1);
 			// ËÄÔªÊ½£ºÏÈ½øÈëProcFuncCallStatement£¬ÉèÖÃºÃ²ÎÊı£¬È»ºóÔÙÉú³Éº¯Êıµ÷ÓÃÓï¾ä
-			ProcFuncCallStatement(idToken, decorate_types, depth + 1);			
+			ProcFuncCallStatement(idToken, parameter_attributes, depth + 1);			
 			// Éú³Éº¯Êıµ÷ÓÃµÄËÄÔªÊ½
 			Quaternary q_functioncall(Quaternary::FUNC_CALL, 
 				Quaternary::NIL_ADDRESSING, 0, 
@@ -1604,6 +1645,10 @@ ExpressionAttribute SyntaxAnalyzer::Factor(size_t depth) throw()					// Òò×Ó
 				factor_attribute.offset_addressingmethod_ = Quaternary::NIL_ADDRESSING;
 				factor_attribute.offset_ = 0;
 			}
+		}
+		if(iter->isref_)
+		{
+			factor_attribute.addressingmethod_ = Quaternary::REFERENCE_ADDRESSING;
 		}
 	}
 	else if(Token::LEFT_PAREN == token_.type_)	// À¨ºÅÀ¨ÆğÀ´µÄ±í´ïÊ½
@@ -2666,7 +2711,7 @@ void SyntaxAnalyzer::BreakStatement(size_t depth) throw()		// break
 //}
 
 // <¹ı³Ì/º¯Êıµ÷ÓÃÓï¾ä> ::= '('[<ÊµÔÚ²ÎÊı±í>]')'
-void SyntaxAnalyzer::ProcFuncCallStatement(const Token proc_token, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth)	// ¹ı³Ìµ÷ÓÃÓï¾ä
+void SyntaxAnalyzer::ProcFuncCallStatement(const Token proc_token, const vector<ExpressionAttribute> &parameter_attributes, size_t depth)	// ¹ı³Ìµ÷ÓÃÓï¾ä
 {
 	PrintFunctionFrame("ProcFuncCallStatement()", depth);
 	// Óï·¨¼ì²é
@@ -2682,7 +2727,7 @@ void SyntaxAnalyzer::ProcFuncCallStatement(const Token proc_token, const vector<
 	}
 	// Óï·¨£º¶ÁÈëÓÒÀ¨ºÅ»ò²ÎÊı±íµÄµÚÒ»¸öµ¥´Ê
 	lexical_analyzer_.GetNextToken(token_);
-	if(parameter_decorate_types.size() == 0)	// Èç¹ûº¯Êı±¾Éí¾ÍÃ»ÓĞ²ÎÊıµÄ»°£¬¾Í²»ÓÃ¶Á²ÎÊıÁË
+	if(parameter_attributes.size() == 0)	// Èç¹ûº¯Êı±¾Éí¾ÍÃ»ÓĞ²ÎÊıµÄ»°£¬¾Í²»ÓÃ¶Á²ÎÊıÁË
 	{
 		// Óï·¨¼ì²é
 		if(Token::RIGHT_PAREN != token_.type_)
@@ -2699,7 +2744,7 @@ void SyntaxAnalyzer::ProcFuncCallStatement(const Token proc_token, const vector<
 		return;
 	}
 	// Óï·¨£º¶Á²ÎÊı£¬²¢Éú³ÉÉèÖÃ²ÎÊıµÄËÄÔªÊ½
-	vector<TokenTableItem::DecorateType> arg_decoratetypes = ArgumentList(depth + 1);
+	vector<ExpressionAttribute> exp_attributes = ArgumentList(parameter_attributes, depth + 1);
 	// Óï·¨¼ì²é
 	if(Token::RIGHT_PAREN != token_.type_)
 	{
@@ -2714,10 +2759,10 @@ void SyntaxAnalyzer::ProcFuncCallStatement(const Token proc_token, const vector<
 	lexical_analyzer_.GetNextToken(token_);
 
 	// ÓïÒå¼ì²é£º¹ı³Ì²ÎÊıÓë¹ı³ÌÉùÃ÷ÊÇ·ñÆ¥Åä
-	if(parameter_decorate_types.size() != arg_decoratetypes.size())	// ¼ì²é²ÎÊıÊıÁ¿
+	if(parameter_attributes.size() != exp_attributes.size())	// ¼ì²é²ÎÊıÊıÁ¿
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  procedure/function does not take " << arg_decoratetypes.size() << " argument";
-		if(arg_decoratetypes.size() > 1)
+		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  procedure/function does not take " << exp_attributes.size() << " argument";
+		if(exp_attributes.size() > 1)
 		{
 			std::cout << "s\n";
 		}
@@ -2732,14 +2777,14 @@ void SyntaxAnalyzer::ProcFuncCallStatement(const Token proc_token, const vector<
 		}
 		return;
 	}
-	for(int i = 0; i < static_cast<int>(parameter_decorate_types.size()); ++i)
+	for(int i = 0; i < static_cast<int>(exp_attributes.size()); ++i)
 	{
 		// ×óĞ¡ÓÚÓÒĞ¡ÓÚ±íÊ¾²»ÄÜ´ÓÓÒ²Ù×÷ÊıÀàĞÍ×ªµ½×ó²Ù×÷ÊıÀàĞÍ
-		if(parameter_decorate_types[i] < arg_decoratetypes[i])
+		if(parameter_attributes[i].decoratetype_ < exp_attributes[i].decoratetype_)
 		{
 			std::cout << "warning: line " << token_.lineNumber_ << ":  " << token_.toString() 
-				<< "  cannot convert parameter " << i + 1 << " from " << TokenTableItem::DecorateTypeString[arg_decoratetypes[i]]
-				<< " to " <<  TokenTableItem::DecorateTypeString[parameter_decorate_types[i]] <<"\n";
+				<< "  cannot convert parameter " << i + 1 << " from " << TokenTableItem::DecorateTypeString[exp_attributes[i].decoratetype_]
+			<< " to " <<  TokenTableItem::DecorateTypeString[parameter_attributes[i].decoratetype_] <<"\n";
 			// ÕâÀï½ö½öÊÇ¼ì²éÁË²ÎÊıÀàĞÍ²»Æ¥Åä£¬Óï·¨·ÖÎö»¹¿É¼ÌĞø£¬¹Ê²»·µ»Ø
 		}
 	}

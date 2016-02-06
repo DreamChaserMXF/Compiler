@@ -11,13 +11,17 @@
 class ExpressionAttribute
 {
 public:
-	ExpressionAttribute() throw() : addressingmethod_(Quaternary::NIL_ADDRESSING), value_(0), offset_addressingmethod_(Quaternary::NIL_ADDRESSING), offset_(0), decoratetype_(TokenTableItem::VOID)
+	ExpressionAttribute() throw() : 
+	  addressingmethod_(Quaternary::NIL_ADDRESSING), value_(0), 
+		  offset_addressingmethod_(Quaternary::NIL_ADDRESSING), offset_(0), 
+		  decoratetype_(TokenTableItem::VOID)
 	{}
 	Quaternary::AddressingMethod addressingmethod_;
 	int value_;
 	Quaternary::AddressingMethod offset_addressingmethod_;
 	int offset_;
 	TokenTableItem::DecorateType decoratetype_;
+	//bool isref_;
 };
 
 #endif

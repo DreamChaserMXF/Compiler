@@ -2,8 +2,8 @@ var i, j, k, n, flag : integer;
 
 sequence : array[3030] of integer;
 
-procedure hanoi(var n : integer);
-	procedure move(var src, dst, medium : char; num : integer);
+procedure hanoi(n : integer);
+	procedure move(src, dst, medium : char; num : integer);
 	begin
 		if 1 = num then
 		begin

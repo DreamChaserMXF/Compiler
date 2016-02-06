@@ -1,7 +1,7 @@
 var i, j, k, n, flag : integer;
 
 // ¼ÆËã½×³Ë
-function factorial(var n : integer) : integer;
+function factorial(n : integer) : integer;
 begin
 	if n <= 1
 	then factorial := 1

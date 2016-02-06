@@ -1,5 +1,6 @@
 #include "TokenTable.h"
 #include "TokenTableException.h"
+#include "ExpressionAttribute.h"
 #include <assert.h>
 #include <sstream>
 #include <fstream>
@@ -203,25 +204,36 @@ size_t TokenTable::size() const throw()
 	return rows_.size();
 }
 
-// 通过过程/函数的迭代器，返回过程/函数的参数的修饰类型
+// 通过过程/函数的迭代器，返回过程/函数的参数的属性
+// 其中属性的有效项只有decoratetype_和isref_
 // iter指向符号表中的过程/函数项
-vector<TokenTableItem::DecorateType> TokenTable::GetProcFuncParameter(const_iterator iter) throw()
+vector<ExpressionAttribute> TokenTable::GetProcFuncParameterAttributes(const_iterator iter) throw()
 {
 	assert(iter != rows_.end());
-	vector<TokenTableItem::DecorateType> decorate_types;
+	vector<ExpressionAttribute> attributes;
+	ExpressionAttribute cur_attr;
 	++iter;
 	while(iter != rows_.end() && TokenTableItem::PARAMETER == iter->itemtype_)
 	{
-		decorate_types.push_back(iter->decoratetype_);
+		cur_attr.decoratetype_ = iter->decoratetype_;
+		if(iter->isref_)
+		{
+			cur_attr.addressingmethod_ = Quaternary::REFERENCE_ADDRESSING;
+		}
+		else
+		{
+			cur_attr.addressingmethod_ = Quaternary::NIL_ADDRESSING;
+		}
+		attributes.push_back(cur_attr);
 		++iter;
 	}
-	return decorate_types;
+	return attributes;
 }
 
 string TokenTable::toString() const throw()
 {
 	std::ostringstream buf;
-	buf << "NO.\tValid Name        ItemType DecorateType Value Addr Level DefLine UsedLine\n";
+	buf << "NO.\tValid Name        ItemType DecorateType Isref Value Addr Level DefLine UsedLine\n";
 	for(const_iterator iter = rows_.begin(); iter != rows_.end(); ++iter)
 	{
 		buf << distance(rows_.begin(), iter) << '\t' << iter->toString() << '\n';
@@ -246,17 +258,17 @@ void TokenTable::Print(std::ostream &output) const throw()
 
 void TokenTable::AddConstItem(Token constIdentifier, TokenTableItem::DecorateType decoratetype_, int value, int level) throw()
 {
-	TokenTableItem item(constIdentifier.value_.identifier, TokenTableItem::CONST, decoratetype_, value, level, constIdentifier.lineNumber_, 0);
+	TokenTableItem item(constIdentifier.value_.identifier, TokenTableItem::CONST, decoratetype_, false, value, level, constIdentifier.lineNumber_, 0);
 	rows_.push_back(item);
 }
 void TokenTable::AddVariableItem(Token variableIdentifier, TokenTableItem::DecorateType decoratetype_, int level) throw()
 {
-	TokenTableItem item(variableIdentifier.value_.identifier, TokenTableItem::VARIABLE, decoratetype_, 0, level, variableIdentifier.lineNumber_, addr_++);
+	TokenTableItem item(variableIdentifier.value_.identifier, TokenTableItem::VARIABLE, decoratetype_, false, 0, level, variableIdentifier.lineNumber_, addr_++);
 	rows_.push_back(item);
 }
 void TokenTable::AddArrayItem(Token arrayIdentifier, TokenTableItem::DecorateType decoratetype_, int arrayLength, int level) throw()
 {
-	TokenTableItem item(arrayIdentifier.value_.identifier, TokenTableItem::ARRAY, decoratetype_, arrayLength, level, arrayIdentifier.lineNumber_, addr_);
+	TokenTableItem item(arrayIdentifier.value_.identifier, TokenTableItem::ARRAY, decoratetype_, false, arrayLength, level, arrayIdentifier.lineNumber_, addr_);
 	rows_.push_back(item);
 	// 符号表中增加一个数组，addr_要加上数组的长度以示数组的存在
 	addr_ += arrayLength;
@@ -264,13 +276,13 @@ void TokenTable::AddArrayItem(Token arrayIdentifier, TokenTableItem::DecorateTyp
 int TokenTable::AddProcedureItem(Token procedureIdentifier, int level) throw()
 {
 	// 由于过程在运行栈中不占空间，故addr_保持不变
-	TokenTableItem item(procedureIdentifier.value_.identifier, TokenTableItem::PROCEDURE, TokenTableItem::VOID, 0, level, procedureIdentifier.lineNumber_, addr_);
+	TokenTableItem item(procedureIdentifier.value_.identifier, TokenTableItem::PROCEDURE, TokenTableItem::VOID, false, 0, level, procedureIdentifier.lineNumber_, addr_);
 	rows_.push_back(item);
 	return rows_.size() - 1;
 }
 int TokenTable::AddFunctionItem(Token functionIdentifier, int level) throw()
 {
-	TokenTableItem item(functionIdentifier.value_.identifier, TokenTableItem::FUNCTION, TokenTableItem::VOID, 0, level, functionIdentifier.lineNumber_, addr_++);
+	TokenTableItem item(functionIdentifier.value_.identifier, TokenTableItem::FUNCTION, TokenTableItem::VOID, false, 0, level, functionIdentifier.lineNumber_, addr_++);
 	rows_.push_back(item);
 	return rows_.size() - 1;
 }
@@ -296,9 +308,9 @@ void TokenTable::SetFunctionReturnType(const string &func_name, TokenTableItem::
 	iter->decoratetype_ = decoratetype_;
 }
 
-void TokenTable::AddParameterItem(Token parameterIdentifier, TokenTableItem::DecorateType decoratetype_, int level) throw()
+void TokenTable::AddParameterItem(Token parameterIdentifier, TokenTableItem::DecorateType decoratetype_, bool isref, int level) throw()
 {
-	TokenTableItem item(parameterIdentifier.value_.identifier, TokenTableItem::PARAMETER, decoratetype_, 0, level, parameterIdentifier.lineNumber_, addr_++);
+	TokenTableItem item(parameterIdentifier.value_.identifier, TokenTableItem::PARAMETER, decoratetype_, isref, 0, level, parameterIdentifier.lineNumber_, addr_++);
 	rows_.push_back(item);
 }
 
@@ -346,7 +358,7 @@ int TokenTable::GetParameterNum(int var_index) const throw()
 		--var_index;
 	}while(var_index >= 0
 		&& TokenTableItem::PROCEDURE != rows_[var_index].itemtype_
-		&& TokenTableItem::PROCEDURE != rows_[var_index].itemtype_);
+		&& TokenTableItem::FUNCTION != rows_[var_index].itemtype_);
 	// 在符号表中是找不到主函数的名称的，此时直接返回0
 	if(-1 == var_index)
 	{

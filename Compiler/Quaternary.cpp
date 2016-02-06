@@ -5,7 +5,7 @@ const char* Quaternary::OPCodeString[] = {
 			"NIL_OP",
 			"NEG", "ADD", "SUB", "MUL", "DIV", "ASG", "AASG", "STORE",
 			"JMP", "JE", "JNE", "JG", "JNG", "JL", "JNL",
-			"FUNC_CALL", "PROC_CALL", "READ", "WRITE", "SETP", "RET",
+			"FUNC_CALL", "PROC_CALL", "READ", "WRITE", "SETP", "SETREFP", "RET",
 			"BEGIN", "END", "LABEL"
 };
 

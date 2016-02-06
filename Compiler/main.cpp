@@ -21,13 +21,33 @@ int main(int argc, char *argv[])
 	bool assemble_legitimate = false;
 
 	// 输入输出文件名
-	const string kCodeFileName = "TestCase/08_functioncall.cpp";
-	const string kTokenFileName = "TestCase/example_token.txt";
-	const string kTokenTableFileName = "TestCase/example_tokentable.txt";
-	const string kStringTableFileName = "TestCase/example_stringtable.txt";
-	const string kSyntaxFileName = "TestCase/example_syntax.txt";
-	const string kQuaternaryCodeFileName = "TestCase/example_quaternary.txt";
-	const string kAssemblyCodeFileName = "TestCase/example_assembly.asm";
+	//const string kCodeFileName = "TestCase\\example.cpp";
+	//const string kCodeFileName = "TestCase\\00_test.cpp";
+	//const string kCodeFileName = "TestCase\\01_write.cpp";
+	//const string kCodeFileName = "TestCase\\02_read.cpp";
+	//const string kCodeFileName = "TestCase\\03_arithmetic.cpp";
+	//const string kCodeFileName = "TestCase\\04_condition.cpp";
+	//const string kCodeFileName = "TestCase\\05_array.cpp";
+	//const string kCodeFileName = "TestCase\\06_loop.cpp";
+	//const string kCodeFileName = "TestCase\\07_procedurecall.cpp";
+	//const string kCodeFileName = "TestCase\\08_functioncall_factorial.cpp";
+	//const string kCodeFileName = "TestCase\\09_functioncall_statement_extension.cpp";
+	//const string kCodeFileName = "TestCase\\10_procedure_reference_parameter.cpp";
+	const string kCodeFileName = "TestCase\\11_function_reference_parameter.cpp";
+	const string kTokenFileName = "TestCase\\result1_tokenlist.txt";
+	const string kTokenTableFileName = "TestCase\\result2_tokentable.txt";
+	const string kStringTableFileName = "TestCase\\result3_stringtable.txt";
+	const string kSyntaxFileName = "TestCase\\result4_syntaxprocess.txt";
+	const string kQuaternaryCodeFileName = "TestCase\\result5_midcode.txt";
+	const string kAssemblyCodeFileName = "TestCase\\result6_assembly.asm";
+	// 删除原有的文件
+	string delete_command = "del ";
+	system((delete_command + kTokenFileName).c_str());
+	system((delete_command + kTokenTableFileName).c_str());
+	system((delete_command + kStringTableFileName).c_str());
+	system((delete_command + kSyntaxFileName).c_str());
+	system((delete_command + kQuaternaryCodeFileName).c_str());
+	system((delete_command + kAssemblyCodeFileName).c_str());
 
 	// 词法分析
 	LexicalAnalyzer lex_analyzer(kCodeFileName);
@@ -77,64 +97,21 @@ int main(int argc, char *argv[])
 	}
 
 	// 汇编过程
-	system("masm32\\bin\\ml.exe /c /coff ./TestCase/example_assembly.asm");	// 这里的执行应用程序的目录一定要用右斜杠
-	system("masm32\\bin\\link.exe /SUBSYSTEM:CONSOLE /OPT:NOREF example_assembly.obj");
-	system("example_assembly.exe");
+	// 先确定不带后缀的汇编文件名
+	string object_file = kAssemblyCodeFileName.substr(0, kAssemblyCodeFileName.find_last_of('.'));
+	// 删除原有文件
+	system((delete_command + object_file + ".obj").c_str());
+	system((delete_command + object_file + ".exe").c_str());
+	// 汇编
+	string ml_command = "masm32\\bin\\ml.exe /c /coff ";
+	string link_command = "masm32\\bin\\link.exe /SUBSYSTEM:CONSOLE /OPT:NOREF ";
+	system((ml_command + object_file + ".asm").c_str());
+	object_file = object_file.substr(object_file.find('\\') + 1, object_file.length() - object_file.find('\\') - 1);
+	system((link_command + object_file + ".obj").c_str());
+	// 运行
+	system((object_file + ".exe").c_str());
+	//system("masm32\\bin\\ml.exe /c /coff TestCase/result6_assembly.asm TestCase/result60_assembly.obj");	// 这里的执行应用程序的目录一定要用右斜杠
+	//system("masm32\\bin\\link.exe /SUBSYSTEM:CONSOLE /OPT:NOREF result6_assembly.obj");
+	//system("result6_assembly.exe");
 	return 0;
 }
-/*
-
-int main(int argc, char *argv[])
-{
-	bool lex_legitimate = false;
-	bool syntax_legitimate = false;
-	const string kCodeFileName = "example.cpp";
-	const string kTokenFileName = "example_token.txt";
-	const string kTokenTableFileName = "example_tokentable.txt";
-	const string kSyntaxFileName = "example_syntax.txt";
-
-	//Quaternary q(Quaternary::ADD, Quaternary::IMMEDIATE_ADDRESSING, 3, Quaternary::CONSTANT_ADDRESSING, 5, Quaternary::VARIABLE_ADDRESSING, 7);
-
-	// 词法分析
-	LexicalAnalyzer lex_analyzer(kCodeFileName);
-	if(!lex_analyzer.IsBound())
-	{
-		cout << "Cannot open source file " << kCodeFileName << endl;
-		return EXIT_FAILURE;
-	}
-	lex_legitimate = lex_analyzer.Parse();	// 进行词法分析并返回状态
-	lex_analyzer.Print(kTokenFileName);		// 输出到文件
-	lex_analyzer.Print(cout);				// cout输出token
-	if(!lex_legitimate)						// 出错处理
-	{
-		cout << "词法分析出错！" << endl;
-		return -1;
-	}
-
-	vector<string> stringtable = lex_analyzer.getStringTable();		// 字符串表
-	// 输出字符串表
-	cout << "const string list:\n";
-	for(vector<string>::const_iterator iter = stringtable.begin();	// 输出字符串表
-		iter != stringtable.end(); ++iter)
-	{
-		cout << *iter << endl;
-	}
-
-	// 语法分析
-	TokenTable tokentable;			// 符号表
-
-	// 用词法分析器、符号表、字符串表和四元式表对语法分析器进行初始化
-	SyntaxAnalyzer syntax_analyzer(lex_analyzer, tokentable, stringtable);
-	syntax_legitimate = syntax_analyzer.Parse();// 进行语法分析并返回状态
-	syntax_analyzer.Print(kSyntaxFileName);		// 输出语法分析过程
-	tokentable.Print(kTokenTableFileName);		// 输出符号表
-	tokentable.Print(cout);						// cout输出符号表
-	if(!syntax_legitimate)			// 出错处理
-	{
-		cout << "语法分析出错！" << endl;
-		return -1;
-	}
-
-	return 0;
-}
-*/

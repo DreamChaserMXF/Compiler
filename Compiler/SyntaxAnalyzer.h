@@ -40,7 +40,7 @@ private:
 	int FunctionHead(size_t depth) throw();			// 函数首部
 	int ParameterList(size_t depth) throw();			// 形参表 返回形参个数
 	int ParameterTerm(size_t depth) throw();			// 形参段 返回形参个数
-	vector<TokenTableItem::DecorateType> ArgumentList(size_t depth) throw();// 实参表
+	vector<ExpressionAttribute> ArgumentList(const vector<ExpressionAttribute> &parameter_attributes, size_t depth) throw();// 实参表
 
 	void StatementBlockPart(size_t depth) throw();		// 复合语句部分
 	void Statement(size_t depth) throw();				// 语句
@@ -67,7 +67,7 @@ private:
 
 	//void ProcedureCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth) throw();	// 过程调用语句
 	//void FunctionCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth) throw();	// 函数调用语句
-	void ProcFuncCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth) throw();	// 函数调用语句
+	void ProcFuncCallStatement(const Token token_, const vector<ExpressionAttribute> &parameter_attributes, size_t depth) throw();	// 函数调用语句
 
 	void SimplifyArrayOperand(ExpressionAttribute &attribute) throw();
 

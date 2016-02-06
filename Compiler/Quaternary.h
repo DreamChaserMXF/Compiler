@@ -8,11 +8,11 @@
 // op src1 src2 dst
 // 其中src1 src2 dst均有别称
 // type1 type2 type3分别为src1, src2, dst的修饰类型
-// type取值					操作数取值的意义
-// IMMEDIATE_ADDRESSING		立即数的值
-// CONSTANT_ADDRESSING			常数在符号表中的下标（以0起始）
-// VARIABLE_ADDRESSING			变量在符号表中的下标（以0起始）
-// TEMPORARY_ADDRESSING		变量在临时变量表中的序号（以0起始）
+// type取值										操作数取值的意义
+// IMMEDIATE_ADDRESSING							立即数的值
+// CONSTANT_ADDRESSING							常数在符号表中的下标（以0起始）
+// VARIABLE_ADDRESSING, REFERENCE_ADDRESSING	变量在符号表中的下标（以0起始）
+// TEMPORARY_ADDRESSING							变量在临时变量表中的序号（以0起始）
 // 
 class Quaternary
 {
@@ -20,11 +20,11 @@ public:
 	
 	enum OPCode{NIL_OP = 0, NEG, ADD, SUB, MUL, DIV, ASG, AASG, STORE,
 				JMP, JE, JNE, JG, JNG, JL, JNL,
-				FUNC_CALL, PROC_CALL, READ, WRITE, SETP, RET,
+				FUNC_CALL, PROC_CALL, READ, WRITE, SETP, SETREFP, RET,
 				BEGIN, END, LABEL,};
 	// 去掉了常变量操作数CONSTANT_ADDRESSING by mxf at 15:24 1/30/2016
 	enum AddressingMethod{NIL_ADDRESSING = 0, IMMEDIATE_ADDRESSING, STRING_ADDRESSING, VARIABLE_ADDRESSING, ARRAY_ADDRESSING, 
-		TEMPORARY_ADDRESSING,};
+		TEMPORARY_ADDRESSING, REFERENCE_ADDRESSING,};
 	
 	Quaternary() throw();
 	Quaternary(OPCode op, AddressingMethod method1, int src1, AddressingMethod method2, int src2, AddressingMethod method3, int dst) throw();

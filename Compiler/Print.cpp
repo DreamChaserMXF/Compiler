@@ -26,9 +26,9 @@ void PrintOperand(Quaternary::AddressingMethod type, int value, const TokenTable
 	//case Quaternary::LABEL_ADDRESSING:
 	//	buffer << "_label#" << value;
 	//	break;
-	//case Quaternary::PROC_FUNC_INDEX:
-	//	buffer << tokentable.at(value).name_ << "#" << value;
-	//	break;
+	case Quaternary::REFERENCE_ADDRESSING:
+		buffer << tokentable.at(value).name_ << "#ref" << value;
+		break;
 	//case Quaternary::PARANUM_ADDRESSING:
 	//	buffer << "PARA#" << value;
 	//	break;

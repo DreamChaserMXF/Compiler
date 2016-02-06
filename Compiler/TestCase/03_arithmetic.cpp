@@ -5,15 +5,9 @@ lastChar : char;
 sum : integer;
 sequence : array[100] of integer;
 
-function func(var i : integer) : integer;
-	function func1(var j : integer) : char;
-	begin
-		func1 := func(j) + 10;
-	end;
+function func(i : integer) : integer;
 begin
-	if i = 101
-	then func := 102
-	else func := func1(i + 1);
+	func := i + 1;
 end;
 
 begin
@@ -24,11 +18,14 @@ begin
 	sequence[4] := 5;
 	sequence[5] := 6;
 
-	// 输入 1 2 3  输出 1 2 3
+	// 输入 1 2 3  输出 1 2 3 2 3 4
 	read(i, j, k);
 	write(i);
 	write(j);
 	write(k);
+	write(func(i));
+	write(func(j));
+	write(func(k));
 	write("\n");
 	// NEG测试	预期结果：-1 -1 -4 -2 -5
 	write(-i);

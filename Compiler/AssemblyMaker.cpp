@@ -212,7 +212,7 @@ void AssemblyMaker::OtherFunction(TokenTable::const_iterator c_iter) throw()
 	assemble_buffer << '\n' << c_iter->name_ << distance(tokentable_.begin(), c_iter) << "_Exit:";
 	// 函数返回语句
 	//assemble_buffer << "\n    add     esp,   " << 4 * (var_space + temp_space)	// 还原栈顶指针(这样也可以，但如果中间栈会变动，就不好了。比如将函数返回值压栈存储时，可能会压入多个值，导致add的数量不确定。)
-	assemble_buffer << "\n    mov     esp, ebp"										// 还原栈顶指针
+	assemble_buffer << "\n    mov     esp,    ebp"									// 还原栈顶指针
 					<< "\n    pop     ebp"
 					<< "\n    ret";
 	//assemble_buffer ;
@@ -295,6 +295,9 @@ void AssemblyMaker::TranslateQuaternary(const vector<Quaternary>::const_iterator
 		break;
 	case Quaternary::SETP:
 		TranslateSetP(c_iter, para_num, var_space, level);
+		break;
+	case Quaternary::SETREFP:
+		TranslateSetRefP(c_iter, para_num, var_space, level);
 		break;
 	case Quaternary::PROC_CALL:
 	case Quaternary::FUNC_CALL:
@@ -488,7 +491,7 @@ void AssemblyMaker::TranslateArrayAssign(const vector<Quaternary>::const_iterato
 	// 源操作数是立即数时，可直接存储至内存
 	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
 	{
-		OpArrayImmediate(MOV, c_iter->dst_, c_iter->method2_, c_iter->offset2_, level, c_iter->src1_);
+		OpArrayImmediate(MOV, c_iter->dst_, c_iter->method2_, c_iter->offset2_, para_num, level, c_iter->src1_);
 	}
 	else
 	{
@@ -496,7 +499,7 @@ void AssemblyMaker::TranslateArrayAssign(const vector<Quaternary>::const_iterato
 		// 这里的操作数不可能是数组，故数组下标可为任意数（这里给零）
 		OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 		// 将EAX的数据存储在数组里
-		OpArrayRegister(MOV, c_iter->dst_, c_iter->method2_, c_iter->offset2_, level);
+		OpArrayRegister(MOV, c_iter->dst_, c_iter->method2_, c_iter->offset2_, para_num, level);
 	}
 }
 
@@ -566,6 +569,16 @@ void AssemblyMaker::TranslateSetP(const vector<Quaternary>::const_iterator &c_it
 	OpGeneral(PUSH, c_iter->method3_, c_iter->dst_, c_iter->method2_, c_iter->offset2_, para_num, var_space, level);
 }
 
+// 将参数的地址压栈
+// 参数可能是立即数、普通变量、数组、临时变量
+void AssemblyMaker::TranslateSetRefP(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
+{
+	// 先将参数地址加载到EAX
+	OpRegisterGeneral(LEA, EAX, c_iter->method3_, c_iter->dst_, c_iter->method2_, c_iter->offset2_, para_num, var_space, level);
+	// 再将EAX压栈
+	assemble_buffer << "\n    push    eax";
+}
+
 // 这里的难度主要在于display区的控制
 // 新函数的subfunc_level的取值为[1, level + 1]
 // 当subfunc_level <= level时，复制当前函数的display区的前subfunc_level个表项
@@ -581,7 +594,7 @@ void AssemblyMaker::TranslateCall(const vector<Quaternary>::const_iterator &c_it
 		for(int i = 0; i < subfunc_level; ++i)
 		{
 			offset = 4 * (1 + level - i);
-			assemble_buffer << "\n    mov     eax, SS:[ebp + " << offset << "]"
+			assemble_buffer << "\n    mov     eax,    SS:[ebp + " << offset << "]"
 							<< "\n    mov     SS:[esp - " << 4 * (i + 1) <<"], eax";
 		}
 	}
@@ -590,7 +603,7 @@ void AssemblyMaker::TranslateCall(const vector<Quaternary>::const_iterator &c_it
 		for(int i = 0; i < level; ++i)
 		{
 			offset = 4 * (1 + level - i);
-			assemble_buffer << "\n    mov     eax, SS:[ebp + " << offset << "]"
+			assemble_buffer << "\n    mov     eax,    SS:[ebp + " << offset << "]"
 							<< "\n    mov     SS:[esp - " << 4 * (i + 1) <<"], eax";
 		}
 		assemble_buffer << "\n    mov     SS:[esp - " << 4 * subfunc_level <<"], ebp";
@@ -681,9 +694,13 @@ void AssemblyMaker::OpGeneral(enum SINGLEOPERATOR op, Quaternary::AddressingMeth
 	{
 		OpVar(op, index_or_value, para_num, level);
 	}
+	else if(Quaternary::REFERENCE_ADDRESSING == addressingmethod)
+	{
+		OpReference(op, index_or_value, para_num, level);
+	}
 	else if(Quaternary::ARRAY_ADDRESSING == addressingmethod)
 	{
-		OpArray(op, index_or_value, array_addr_method, array_offset, level);
+		OpArray(op, index_or_value, array_addr_method, array_offset, para_num, level);
 	}
 	else if(Quaternary::TEMPORARY_ADDRESSING == addressingmethod)
 	{
@@ -708,7 +725,7 @@ void AssemblyMaker::OpImmediate(enum SINGLEOPERATOR op, int value) throw()
 // 对普通变量的操作
 // 地址计算公式：
 // para#n.addr = EBP + 4 * (1 + level + para_num - n)
-// var#n.addr = EBP - 4 * (n + 1)
+// var#n.addr = EBP - 4 * (n -para_num + 1)
 // display#n.addr = EBP + 4 * (1 + level - n)
 void AssemblyMaker::OpVar(enum SINGLEOPERATOR op, int tokentable_index, int para_num, int level) throw()
 {
@@ -727,7 +744,7 @@ void AssemblyMaker::OpVar(enum SINGLEOPERATOR op, int tokentable_index, int para
 		}
 		else				// 说明是局部变量
 		{
-			offset = 4 * (n + 1);
+			offset = 4 * (n - para_num + 1);
 			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebp - " << offset << "]";
 		}
 	}
@@ -737,7 +754,7 @@ void AssemblyMaker::OpVar(enum SINGLEOPERATOR op, int tokentable_index, int para
 		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
 		// 二. 获得外层次的EBP的值，加载到EBX中
 		int offset = 4 * (1 + level - func_level);
-		assemble_buffer << "\n    mov     ebx, dword ptr SS:[ebp + " << offset << "]";
+		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
 		// 三. 加载外层的变量
 		if(n < extern_para_num)	// 说明是外层参数
 		{
@@ -746,18 +763,52 @@ void AssemblyMaker::OpVar(enum SINGLEOPERATOR op, int tokentable_index, int para
 		}
 		else				    // 说明是外层局部变量
 		{
-			offset = 4 * (n + 1);
+			offset = 4 * (n - extern_para_num + 1);
 			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebx - " << offset << "]";
 		}
 	}
 }
 
+// 对引用变量的操作
+// 地址计算公式：
+// para#n.addr = EBP + 4 * (1 + level + para_num - n)
+// display#n.addr = EBP + 4 * (1 + level - n)
+void AssemblyMaker::OpReference(enum SINGLEOPERATOR op, int tokentable_index, int para_num, int level) throw()
+{
+	// 确定变量的层次
+	int var_level = tokentable_.at(tokentable_index).level_;
+	// 确定函数的层次（比变量层次少1）
+	int func_level = var_level - 1;
+	int n = tokentable_.at(tokentable_index).addr_;	// 计算该变量的局部作用域中的相对地址
+	int offset = 0;
+	if(level == func_level)	// 判断是否为局部参数
+	{
+		// 一. 加载参数的值（即引用变量的地址）到EBX中
+		offset = 4 * (1 + level + para_num - n);
+		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
+		// 二. 对参数所引用的变量进行操作
+		assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebx]";
+	}
+	else	// 外层次的参数
+	{
+		// 一. 获得外层次的EBP的值，加载到EBX中
+		int offset = 4 * (1 + level - func_level);
+		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
+		// 二. 获得外层次的参数个数
+		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
+		// 三. 加载外层的参数的值（即引用变量的地址）到EBX中
+		offset = 4 * (1 + func_level + extern_para_num - n);
+		assemble_buffer << "\n    mov     ebx,    SS:[ebx + " << offset << "]";
+		// 四. 对外层的参数所引用的变量进行操作
+		assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebx]";
+	}
+}
 // 对数组元素的操作
 // 注意：数组不可能是函数的参数，故比LoadArray要少一个判断
 // 地址计算公式：
-// array#n.addr = EBP - 4 * (n + 1 + array_offset)
+// array#n.addr = EBP - 4 * (n - para_num + 1 + array_offset)
 // display#n.addr = EBP + 4 * (1 + level - n)	这里的n即为外层函数的层次
-void AssemblyMaker::OpArray(enum SINGLEOPERATOR op, int tokentable_index, Quaternary::AddressingMethod array_addr_method, int array_offset, int level) throw()
+void AssemblyMaker::OpArray(enum SINGLEOPERATOR op, int tokentable_index, Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num, int level) throw()
 {
 	// 确定变量的层次
 	int var_level = tokentable_.at(tokentable_index).level_;
@@ -771,7 +822,7 @@ void AssemblyMaker::OpArray(enum SINGLEOPERATOR op, int tokentable_index, Quater
 		// 如果数组下标是立即数类型，则偏移量就是array_offset
 		if(Quaternary::IMMEDIATE_ADDRESSING == array_addr_method)
 		{
-			offset = 4 * (n + 1 + array_offset);
+			offset = 4 * (n - para_num + 1 + array_offset);
 			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebp - " << offset << "]";
 		}
 		else	// 否则，就要取得数组下标（某个变量）的值，在汇编程序中计算其偏移量
@@ -779,10 +830,10 @@ void AssemblyMaker::OpArray(enum SINGLEOPERATOR op, int tokentable_index, Quater
 			// 1. 先把数组下标的变量的值放入ECX
 			OpRegisterGeneral(MOV, ECX, array_addr_method, array_offset, Quaternary::NIL_ADDRESSING, 0, 0, 0, level);
 			// 2. 计算出实际的数组元素的相对偏移（相对于ebp），放在ECX中。此时数组元素的绝对偏移为ebp-ecx
-			assemble_buffer << "\n    add     ecx, " << (n + 1)
-							<< "\n    shl     ecx, 2"; // 乘4
+			assemble_buffer << "\n    add     ecx, " << (n - para_num + 1)
+							<< "\n    shl     ecx,    2"; // 乘4
 			// 3. 计算出绝对偏移，放在EAX中（-(eax-ebp)）
-			assemble_buffer << "\n    sub     ecx, ebp"
+			assemble_buffer << "\n    sub     ecx,    ebp"
 							<< "\n    neg     ecx";
 			// 3. 执行该执行的操作
 			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ecx]";
@@ -792,12 +843,12 @@ void AssemblyMaker::OpArray(enum SINGLEOPERATOR op, int tokentable_index, Quater
 	{
 		// 一. 获得外层次的EBP的值，加载到EBX中
 		offset = 4 * (1 + level - func_level);
-		assemble_buffer << "\n    mov     ebx, dword ptr SS:[ebp + " << offset << "]";
+		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
 		// 二. 数组元素的偏移量的计算
 		// 如果数组下标是立即数类型，则偏移量就是array_offset
 		if(Quaternary::IMMEDIATE_ADDRESSING == array_addr_method)
 		{
-			offset = 4 * (n + 1 + array_offset);
+			offset = 4 * (n - para_num + 1 + array_offset);
 			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebx - " << offset << "]";
 		}
 		else	// 否则，就要取得数组下标（某个变量）的值，在汇编程序中计算其偏移量
@@ -805,8 +856,8 @@ void AssemblyMaker::OpArray(enum SINGLEOPERATOR op, int tokentable_index, Quater
 			// 1. 先把数组下标的变量的值放入ECX
 			OpRegisterGeneral(MOV, ECX, array_addr_method, array_offset, Quaternary::NIL_ADDRESSING, 0, 0, 0, level);
 			// 2. 计算出实际的数组元素的相对偏移（相对于ebx），放在ECX中。此时数组元素的绝对偏移为ebx-ecx
-			assemble_buffer << "\n    add     ecx, " << (n + 1)
-							<< "\n    shl     ecx, 2"; // 乘4
+			assemble_buffer << "\n    add     ecx, " << (n - para_num + 1)
+							<< "\n    shl     ecx,    2"; // 乘4
 			// 3. 计算出绝对偏移，放在EAX中（-(eax-ebx)）
 			assemble_buffer << "\n    sub     ecx, ebx"
 							<< "\n    neg     ecx";
@@ -827,6 +878,7 @@ void AssemblyMaker::OpTemp(enum SINGLEOPERATOR op, int index, int var_space) thr
 }
 
 
+
 // 将寄存器EAX的数据存储到内存中
 // 可能的内存类型为：普通变量、数组变量、临时变量
 // 根据取址方式的不同，调用不同的存储函数
@@ -836,6 +888,10 @@ void AssemblyMaker::OpGeneralRegister(enum DOUBLEOPERATOR op, Quaternary::Addres
 	if(Quaternary::VARIABLE_ADDRESSING == addressingmethod)
 	{
 		OpVarRegister(op, index, para_num, level, reg);
+	}
+	else if(Quaternary::REFERENCE_ADDRESSING == addressingmethod)
+	{
+		OpReferenceRegister(op, index, para_num, level, reg);
 	}
 	else if(Quaternary::ARRAY_ADDRESSING == addressingmethod)
 	{
@@ -861,9 +917,13 @@ void AssemblyMaker::OpGeneralImmediate(enum DOUBLEOPERATOR op, Quaternary::Addre
 	{
 		OpVarImmediate(op, index, para_num, level, immediate_value);
 	}
+	else if(Quaternary::REFERENCE_ADDRESSING == addressingmethod)
+	{
+		OpReferenceImmediate(op, index, para_num, level, immediate_value);
+	}
 	else if(Quaternary::ARRAY_ADDRESSING == addressingmethod)
 	{
-		OpArrayImmediate(op, index, array_addr_method, array_offset, level, immediate_value);
+		OpArrayImmediate(op, index, array_addr_method, array_offset, para_num, level, immediate_value);
 	}
 	else if(Quaternary::TEMPORARY_ADDRESSING == addressingmethod)
 	{
@@ -878,7 +938,7 @@ void AssemblyMaker::OpGeneralImmediate(enum DOUBLEOPERATOR op, Quaternary::Addre
 // 将数据从寄存器EAX存储到变量中
 // 地址计算公式：
 // para#n.addr = EBP + 4 * (1 + level + para_num - n)
-// var#n.addr = EBP - 4 * (n + 1)
+// var#n.addr = EBP - 4 * (n -para_num + 1)
 // display#n.addr = EBP + 4 * (1 + level - n)
 void AssemblyMaker::OpVarRegister(enum DOUBLEOPERATOR op, int tokentable_index, int para_num, int level, enum REGISTER reg) throw()
 {
@@ -893,12 +953,12 @@ void AssemblyMaker::OpVarRegister(enum DOUBLEOPERATOR op, int tokentable_index, 
 		if(n < para_num)	// 说明是参数
 		{
 			offset = 4 * (1 + level + para_num - n);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "     SS:[ebp + " << offset << "], " << RegisterName[reg];
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebp + " << offset << "], " << RegisterName[reg];
 		}
 		else				// 说明是局部变量
 		{
-			offset = 4 * (n + 1);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "     SS:[ebp - " << offset << "], " << RegisterName[reg];
+			offset = 4 * (n - para_num + 1);
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebp - " << offset << "], " << RegisterName[reg];
 		}
 	}
 	else	// 外层次的变量
@@ -907,17 +967,17 @@ void AssemblyMaker::OpVarRegister(enum DOUBLEOPERATOR op, int tokentable_index, 
 		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
 		// 二. 获得外层次的EBP的值，加载到EBX中
 		int offset = 4 * (1 + level - func_level);
-		assemble_buffer << "\n    mov     ebx, SS:[ebp + " << offset << "]";
+		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
 		// 三. 加载外层的变量
 		if(n < extern_para_num)	// 说明是外层参数
 		{
 			int offset = 4 * (1 + func_level + extern_para_num - n);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "     SS:[ebx + " << offset << "], " << RegisterName[reg];
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebx + " << offset << "], " << RegisterName[reg];
 		}
 		else				    // 说明是外层局部变量
 		{
-			int offset = 4 * (n + 1);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "     SS:[ebx - " << offset << "], " << RegisterName[reg];
+			int offset = 4 * (n - extern_para_num + 1);
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebx - " << offset << "], " << RegisterName[reg];
 		}
 	}
 }
@@ -925,7 +985,7 @@ void AssemblyMaker::OpVarRegister(enum DOUBLEOPERATOR op, int tokentable_index, 
 // 将立即数存储到变量中
 // 地址计算公式：
 // para#n.addr = EBP + 4 * (1 + level + para_num - n)
-// var#n.addr = EBP - 4 * (n + 1)
+// var#n.addr = EBP - 4 * (n -para_num + 1)
 // display#n.addr = EBP + 4 * (1 + level - n)
 void AssemblyMaker::OpVarImmediate(enum DOUBLEOPERATOR op, int tokentable_index, int para_num, int level, int immediate_value) throw()
 {
@@ -940,12 +1000,12 @@ void AssemblyMaker::OpVarImmediate(enum DOUBLEOPERATOR op, int tokentable_index,
 		if(n < para_num)	// 说明是参数
 		{
 			offset = 4 * (1 + level + para_num - n);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "     dword ptr SS:[ebp + " << offset << "], " << immediate_value;
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ebp + " << offset << "], " << immediate_value;
 		}
 		else				// 说明是局部变量
 		{
-			offset = 4 * (n + 1);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "     dword ptr SS:[ebp - " << offset << "], " << immediate_value;
+			offset = 4 * (n - para_num + 1);
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ebp - " << offset << "], " << immediate_value;
 		}
 	}
 	else	// 外层次的变量
@@ -954,26 +1014,98 @@ void AssemblyMaker::OpVarImmediate(enum DOUBLEOPERATOR op, int tokentable_index,
 		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
 		// 二. 获得外层次的EBP的值，加载到EBX中
 		int offset = 4 * (1 + level - func_level);
-		assemble_buffer << "\n    mov     ebx, SS:[ebp + " << offset << "]";
+		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
 		// 三. 加载外层的变量
 		if(n < extern_para_num)	// 说明是外层参数
 		{
 			int offset = 4 * (1 + func_level + extern_para_num - n);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "     dword ptr SS:[ebx + " << offset << "], " << immediate_value;
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ebx + " << offset << "], " << immediate_value;
 		}
 		else				    // 说明是外层局部变量
 		{
-			int offset = 4 * (n + 1);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "     dword ptr SS:[ebx - " << offset << "], " << immediate_value;
+			int offset = 4 * (n - extern_para_num + 1);
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ebx - " << offset << "], " << immediate_value;
 		}
+	}
+}
+
+// 将数据从寄存器EAX存储到引用变量中
+// 地址计算公式：
+// para#n.addr = EBP + 4 * (1 + level + para_num - n)
+// var#n.addr = EBP - 4 * (n -para_num + 1)
+// display#n.addr = EBP + 4 * (1 + level - n)
+void AssemblyMaker::OpReferenceRegister(enum DOUBLEOPERATOR op, int tokentable_index, int para_num, int level, enum REGISTER reg) throw()
+{
+	// 确定变量的层次
+	int var_level = tokentable_.at(tokentable_index).level_;
+	// 确定函数的层次（比变量层次少1）
+	int func_level = var_level - 1;
+	int n = tokentable_.at(tokentable_index).addr_;	// 计算该变量的局部作用域中的相对地址
+	int offset = 0;
+	if(level == func_level)	// 判断是否为局部参数
+	{
+		// 一. 加载参数的值（即引用变量的地址）到EBX中
+		offset = 4 * (1 + level + para_num - n);
+		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
+		// 二. 对参数所引用的变量进行操作
+		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebx], " << RegisterName[reg];
+	}
+	else	// 外层次的参数
+	{
+		// 一. 获得外层次的EBP的值，加载到EBX中
+		int offset = 4 * (1 + level - func_level);
+		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
+		// 二. 获得外层次的参数个数
+		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
+		// 三. 加载外层的参数的值（即引用变量的地址）到EBX中
+		offset = 4 * (1 + func_level + extern_para_num - n);
+		assemble_buffer << "\n    mov     ebx,    SS:[ebx + " << offset << "]";
+		// 四. 对外层的参数所引用的变量进行操作
+		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebx], " << RegisterName[reg];
+	}
+}
+
+// 将立即数存储到引用变量中
+// 地址计算公式：
+// para#n.addr = EBP + 4 * (1 + level + para_num - n)
+// var#n.addr = EBP - 4 * (n -para_num + 1)
+// display#n.addr = EBP + 4 * (1 + level - n)
+void AssemblyMaker::OpReferenceImmediate(enum DOUBLEOPERATOR op, int tokentable_index, int para_num, int level, int immediate_value) throw()
+{
+	// 确定变量的层次
+	int var_level = tokentable_.at(tokentable_index).level_;
+	// 确定函数的层次（比变量层次少1）
+	int func_level = var_level - 1;
+	int n = tokentable_.at(tokentable_index).addr_;	// 计算该变量的局部作用域中的相对地址
+	int offset = 0;
+	if(level == func_level)	// 判断是否为局部参数
+	{
+		// 一. 加载参数的值（即引用变量的地址）到EBX中
+		offset = 4 * (1 + level + para_num - n);
+		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
+		// 二. 对参数所引用的变量进行操作
+		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ebx], " << immediate_value;
+	}
+	else	// 外层次的参数
+	{
+		// 一. 获得外层次的EBP的值，加载到EBX中
+		int offset = 4 * (1 + level - func_level);
+		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
+		// 二. 获得外层次的参数个数
+		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
+		// 三. 加载外层的参数的值（即引用变量的地址）到EBX中
+		offset = 4 * (1 + func_level + extern_para_num - n);
+		assemble_buffer << "\n    mov     ebx,    SS:[ebx + " << offset << "]";
+		// 四. 对外层的参数所引用的变量进行操作
+		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ebx], " << immediate_value;
 	}
 }
 
 // 注意：array不可能是参数
 // 地址计算公式：
-// array#n.addr = EBP - 4 * (n + 1 + array_offset)
+// array#n.addr = EBP - 4 * (n - para_num + 1 + array_offset)
 // display#n.addr = EBP + 4 * (1 + level - n)
-void AssemblyMaker::OpArrayRegister(enum DOUBLEOPERATOR op, int tokentable_index, Quaternary::AddressingMethod array_addr_method, int array_offset, int level, enum REGISTER reg) throw()
+void AssemblyMaker::OpArrayRegister(enum DOUBLEOPERATOR op, int tokentable_index, Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num, int level, enum REGISTER reg) throw()
 {
 	// 确定变量的层次
 	int var_level = tokentable_.at(tokentable_index).level_;
@@ -987,42 +1119,42 @@ void AssemblyMaker::OpArrayRegister(enum DOUBLEOPERATOR op, int tokentable_index
 		// 如果数组下标是立即数类型，则偏移量就是array_offset
 		if(Quaternary::IMMEDIATE_ADDRESSING == array_addr_method)
 		{
-			offset = 4 * (n + 1 + array_offset);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "     SS:[ebp - " << offset << "], " << RegisterName[reg];
+			offset = 4 * (n - para_num + 1 + array_offset);
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebp - " << offset << "], " << RegisterName[reg];
 		}
 		else	// 否则，就要取得数组下标（某个变量）的值，在汇编程序中计算其偏移量
 		{
 			// 1. 先把数组下标的变量的值放入ECX
 			OpRegisterGeneral(MOV, ECX, array_addr_method, array_offset, Quaternary::NIL_ADDRESSING, 0, 0, 0, level);
 			// 2. 计算出实际的数组元素的相对偏移（相对于ebp），放在ECX中。此时数组元素的绝对偏移为ebp-ecx
-			assemble_buffer << "\n    add     ecx, " << (n + 1)
-							<< "\n    shl     ecx, 2";	// 乘4
+			assemble_buffer << "\n    add     ecx, " << (n - para_num + 1)
+							<< "\n    shl     ecx,    2";	// 乘4
 			// 3. 计算出绝对偏移，放在EBX中（-(eax-ebp)）
-			assemble_buffer << "\n    sub     ecx, ebp"
+			assemble_buffer << "\n    sub     ecx,    ebp"
 							<< "\n    neg     ecx";
 			// 3. 执行该执行的操作
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ecx], " << RegisterName[reg];
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ecx], " << RegisterName[reg];
 		}
 	}
 	else	// 外层次的变量
 	{
 		// 一. 获得外层次的EBP的值，加载到EBX中
 		offset = 4 * (1 + level - func_level);
-		assemble_buffer << "\n    mov     ebx, SS:[ebp + " << offset << "]";
+		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
 		// 二. 数组元素的偏移量的计算
 		// 如果数组下标是立即数类型，则偏移量就是array_offset
 		if(Quaternary::IMMEDIATE_ADDRESSING == array_addr_method)
 		{
-			offset = 4 * (n + 1 + array_offset);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "     SS:[ebx - " << offset << "], " << RegisterName[reg];
+			offset = 4 * (n - para_num + 1 + array_offset);
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebx - " << offset << "], " << RegisterName[reg];
 		}
 		else	// 否则，就要取得数组下标（某个变量）的值，在汇编程序中计算其偏移量
 		{
 			// 1. 先把数组下标的变量的值放入ECX
 			OpRegisterGeneral(MOV, ECX, array_addr_method, array_offset, Quaternary::NIL_ADDRESSING, 0, 0, 0, level);
 			// 2. 计算出实际的数组元素的相对偏移（相对于ebx），放在EAX中。此时数组元素的绝对偏移为ebx-eax
-			assemble_buffer << "\n    add     ecx, " << (n + 1)
-							<< "\n    shl     ecx, 2";	// 乘4
+			assemble_buffer << "\n    add     ecx, " << (n - para_num + 1)
+							<< "\n    shl     ecx,    2";	// 乘4
 			// 3. 计算出绝对偏移，放在EAX中（-(eax-ebx)）
 			assemble_buffer << "\n    sub     ecx, ebx"
 							<< "\n    neg     ecx";
@@ -1034,9 +1166,9 @@ void AssemblyMaker::OpArrayRegister(enum DOUBLEOPERATOR op, int tokentable_index
 
 // 注意：array不可能是参数
 // 地址计算公式：
-// array#n.addr = EBP - 4 * (n + 1 + array_offset)
+// array#n.addr = EBP - 4 * (n - para_num + 1 + array_offset)
 // display#n.addr = EBP + 4 * (1 + level - n)
-void AssemblyMaker::OpArrayImmediate(enum DOUBLEOPERATOR op, int tokentable_index, Quaternary::AddressingMethod array_addr_method, int array_offset, int level, int immediate_value) throw()
+void AssemblyMaker::OpArrayImmediate(enum DOUBLEOPERATOR op, int tokentable_index, Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num, int level, int immediate_value) throw()
 {
 	// 确定变量的层次
 	int var_level = tokentable_.at(tokentable_index).level_;
@@ -1050,18 +1182,18 @@ void AssemblyMaker::OpArrayImmediate(enum DOUBLEOPERATOR op, int tokentable_inde
 		// 如果数组下标是立即数类型，则偏移量就是array_offset
 		if(Quaternary::IMMEDIATE_ADDRESSING == array_addr_method)
 		{
-			offset = 4 * (n + 1 + array_offset);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "     dword ptr SS:[ebp - " << offset << "], " << immediate_value;
+			offset = 4 * (n - para_num + 1 + array_offset);
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ebp - " << offset << "], " << immediate_value;
 		}
 		else	// 否则，就要取得数组下标（某个变量）的值，在汇编程序中计算其偏移量
 		{
 			// 1. 先把数组下标的变量的值放入ECX
 			OpRegisterGeneral(MOV, ECX, array_addr_method, array_offset, Quaternary::NIL_ADDRESSING, 0, 0, 0, level);
 			// 2. 计算出实际的数组元素的相对偏移（相对于ebp），放在ECX中。此时数组元素的绝对偏移为ebp-ecx
-			assemble_buffer << "\n    add     ecx, " << (n + 1)
-							<< "\n    shl     ecx, 2";	// 乘4
+			assemble_buffer << "\n    add     ecx, " << (n - para_num + 1)
+							<< "\n    shl     ecx,    2";	// 乘4
 			// 3. 计算出绝对偏移，放在EBX中（-(eax-ebp)）
-			assemble_buffer << "\n    sub     ecx, ebp"
+			assemble_buffer << "\n    sub     ecx,    ebp"
 							<< "\n    neg     ecx";
 			// 3. 执行该执行的操作
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr dword ptr SS:[ecx], " << immediate_value;
@@ -1071,21 +1203,21 @@ void AssemblyMaker::OpArrayImmediate(enum DOUBLEOPERATOR op, int tokentable_inde
 	{
 		// 一. 获得外层次的EBP的值，加载到EBX中
 		offset = 4 * (1 + level - func_level);
-		assemble_buffer << "\n    mov     ebx, SS:[ebp + " << offset << "]";
+		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
 		// 二. 数组元素的偏移量的计算
 		// 如果数组下标是立即数类型，则偏移量就是array_offset
 		if(Quaternary::IMMEDIATE_ADDRESSING == array_addr_method)
 		{
-			offset = 4 * (n + 1 + array_offset);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "     dword ptr SS:[ebx - " << offset << "], " << immediate_value;
+			offset = 4 * (n - para_num + 1 + array_offset);
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ebx - " << offset << "], " << immediate_value;
 		}
 		else	// 否则，就要取得数组下标（某个变量）的值，在汇编程序中计算其偏移量
 		{
 			// 1. 先把数组下标的变量的值放入ECX
 			OpRegisterGeneral(MOV, ECX, array_addr_method, array_offset, Quaternary::NIL_ADDRESSING, 0, 0, 0, level);
 			// 2. 计算出实际的数组元素的相对偏移（相对于ebx），放在EAX中。此时数组元素的绝对偏移为ebx-eax
-			assemble_buffer << "\n    add     ecx, " << (n + 1)
-							<< "\n    shl     ecx, 2";	// 乘4
+			assemble_buffer << "\n    add     ecx, " << (n - para_num + 1)
+							<< "\n    shl     ecx,    2";	// 乘4
 			// 3. 计算出绝对偏移，放在EAX中（-(eax-ebx)）
 			assemble_buffer << "\n    sub     ecx, ebx"
 							<< "\n    neg     ecx";
@@ -1101,7 +1233,7 @@ void AssemblyMaker::OpTempRegister(enum DOUBLEOPERATOR op, int index, int var_sp
 {
 	// 这里的index就是上式中的n
 	int offset = 4 * (var_space + index + 1);
-	assemble_buffer << "\n    " << DoubleOperatorName[op] << "     SS:[ebp - " << offset << "], " << RegisterName[reg];
+	assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebp - " << offset << "], " << RegisterName[reg];
 }
 
 // 地址计算公式：
@@ -1124,9 +1256,13 @@ void AssemblyMaker::OpRegisterGeneral(enum DOUBLEOPERATOR op, enum REGISTER reg,
 	{
 		OpRegisterVar(op, reg, index_or_value, para_num, level);
 	}
+	else if(Quaternary::REFERENCE_ADDRESSING == addressingmethod)
+	{
+		OpRegisterReference(op, reg, index_or_value, para_num, level);
+	}
 	else if(Quaternary::ARRAY_ADDRESSING == addressingmethod)
 	{
-		OpRegisterArray(op, reg, index_or_value, array_addr_method, array_offset, level);
+		OpRegisterArray(op, reg, index_or_value, array_addr_method, array_offset, para_num, level);
 	}
 	else if(Quaternary::TEMPORARY_ADDRESSING == addressingmethod)
 	{
@@ -1152,7 +1288,7 @@ void AssemblyMaker::OpRegisterImmediate(enum DOUBLEOPERATOR op, enum REGISTER re
 // 对普通变量的操作
 // 地址计算公式：
 // para#n.addr = EBP + 4 * (1 + level + para_num - n)
-// var#n.addr = EBP - 4 * (n + 1)
+// var#n.addr = EBP - 4 * (n -para_num + 1)
 // display#n.addr = EBP + 4 * (1 + level - n)
 void AssemblyMaker::OpRegisterVar(enum DOUBLEOPERATOR op, enum REGISTER reg, int tokentable_index, int para_num, int level) throw()
 {
@@ -1167,12 +1303,12 @@ void AssemblyMaker::OpRegisterVar(enum DOUBLEOPERATOR op, enum REGISTER reg, int
 		if(n < para_num)	// 说明是参数
 		{
 			offset = 4 * (1 + level + para_num - n);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebp + " << offset << "]";
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebp + " << offset << "]";
 		}
 		else				// 说明是局部变量
 		{
-			offset = 4 * (n + 1);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebp - " << offset << "]";
+			offset = 4 * (n - para_num + 1);
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebp - " << offset << "]";
 		}
 	}
 	else	// 外层次的变量
@@ -1181,27 +1317,62 @@ void AssemblyMaker::OpRegisterVar(enum DOUBLEOPERATOR op, enum REGISTER reg, int
 		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
 		// 二. 获得外层次的EBP的值，加载到EBX中
 		int offset = 4 * (1 + level - func_level);
-		assemble_buffer << "\n    mov     ebx, SS:[ebp + " << offset << "]";
+		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
 		// 三. 加载外层的变量
 		if(n < extern_para_num)	// 说明是外层参数
 		{
 			int offset = 4 * (1 + func_level + extern_para_num - n);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebx + " << offset << "]";
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebx + " << offset << "]";
 		}
 		else				    // 说明是外层局部变量
 		{
-			int offset = 4 * (n + 1);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebx - " << offset << "]";
+			int offset = 4 * (n - extern_para_num + 1);
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebx - " << offset << "]";
 		}
+	}
+}
+
+// 对引用变量的操作
+// 地址计算公式：
+// para#n.addr = EBP + 4 * (1 + level + para_num - n)
+// display#n.addr = EBP + 4 * (1 + level - n)
+void AssemblyMaker::OpRegisterReference(enum DOUBLEOPERATOR op, enum REGISTER reg, int tokentable_index, int para_num, int level) throw()
+{
+	// 确定变量的层次
+	int var_level = tokentable_.at(tokentable_index).level_;
+	// 确定函数的层次（比变量层次少1）
+	int func_level = var_level - 1;
+	int n = tokentable_.at(tokentable_index).addr_;	// 计算该变量的局部作用域中的相对地址
+	int offset = 0;
+	if(level == func_level)	// 判断是否为局部参数
+	{
+		// 一. 加载参数的值（即引用变量的地址）到EBX中
+		offset = 4 * (1 + level + para_num - n);
+		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
+		// 二. 对参数所引用的变量进行操作
+		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebx]";
+	}
+	else	// 外层次的参数
+	{
+		// 一. 获得外层次的EBP的值，加载到EBX中
+		int offset = 4 * (1 + level - func_level);
+		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
+		// 二. 获得外层次的参数个数
+		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
+		// 三. 加载外层的参数的值（即引用变量的地址）到EBX中
+		offset = 4 * (1 + func_level + extern_para_num - n);
+		assemble_buffer << "\n    mov     ebx,    SS:[ebx + " << offset << "]";
+		// 四. 对外层的参数所引用的变量进行操作
+		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebx]";
 	}
 }
 
 // 对数组元素的操作
 // 注意：数组不可能是函数的参数，故比LoadArray要少一个判断
 // 地址计算公式：
-// array#n.addr = EBP - 4 * (n + 1 + array_offset)
+// array#n.addr = EBP - 4 * (n - para_num + 1 + array_offset)
 // display#n.addr = EBP + 4 * (1 + level - n)	这里的n即为外层函数的层次
-void AssemblyMaker::OpRegisterArray(enum DOUBLEOPERATOR op, enum REGISTER reg, int tokentable_index, Quaternary::AddressingMethod array_addr_method, int array_offset, int level) throw()
+void AssemblyMaker::OpRegisterArray(enum DOUBLEOPERATOR op, enum REGISTER reg, int tokentable_index, Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num, int level) throw()
 {
 	// 确定变量的层次
 	int var_level = tokentable_.at(tokentable_index).level_;
@@ -1215,71 +1386,50 @@ void AssemblyMaker::OpRegisterArray(enum DOUBLEOPERATOR op, enum REGISTER reg, i
 		// 如果数组下标是立即数类型，则偏移量就是array_offset
 		if(Quaternary::IMMEDIATE_ADDRESSING == array_addr_method)
 		{
-			offset = 4 * (n + 1 + array_offset);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebp - " << offset << "]";
+			offset = 4 * (n - para_num + 1 + array_offset);
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebp - " << offset << "]";
 		}
 		else	// 否则，就要取得数组下标（某个变量）的值，在汇编程序中计算其偏移量
 		{
 			// 1. 先把数组下标的变量的值放入ECX
 			OpRegisterGeneral(MOV, ECX, array_addr_method, array_offset, Quaternary::NIL_ADDRESSING, 0, 0, 0, level);
 			// 2. 计算出实际的数组元素的相对偏移（相对于ebp），放在ECX中。此时数组元素的绝对偏移为ebp-ecx
-			assemble_buffer << "\n    add     ecx, " << (n + 1)
-							<< "\n    shl     ecx, 2";	// 乘4
+			assemble_buffer << "\n    add     ecx, " << (n - para_num + 1)
+							<< "\n    shl     ecx,    2";	// 乘4
 			// 3. 计算出绝对偏移，放在EBX中（-(eax-ebp)）
-			assemble_buffer << "\n    sub     ecx, ebp"
+			assemble_buffer << "\n    sub     ecx,    ebp"
 							<< "\n    neg     ecx";
 			// 3. 执行该执行的操作
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", dword ptr SS:[ecx]";
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    dword ptr SS:[ecx]";
 		}
 	}
 	else	// 外层次的变量
 	{
 		// 一. 获得外层次的EBP的值，加载到EBX中
 		offset = 4 * (1 + level - func_level);
-		assemble_buffer << "\n    mov     ebx, SS:[ebp + " << offset << "]";
+		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
 		// 二. 数组元素的偏移量的计算
 		// 如果数组下标是立即数类型，则偏移量就是array_offset
 		if(Quaternary::IMMEDIATE_ADDRESSING == array_addr_method)
 		{
-			offset = 4 * (n + 1 + array_offset);
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebx - " << offset << "]";
+			offset = 4 * (n - para_num + 1 + array_offset);
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebx - " << offset << "]";
 		}
 		else	// 否则，就要取得数组下标（某个变量）的值，在汇编程序中计算其偏移量
 		{
 			// 1. 先把数组下标的变量的值放入ECX
 			OpRegisterGeneral(MOV, ECX, array_addr_method, array_offset, Quaternary::NIL_ADDRESSING, 0, 0, 0, level);
 			// 2. 计算出实际的数组元素的相对偏移（相对于ebx），放在EAX中。此时数组元素的绝对偏移为ebx-eax
-			assemble_buffer << "\n    add     ecx, " << (n + 1)
-							<< "\n    shl     ecx, 2";	// 乘4
+			assemble_buffer << "\n    add     ecx, " << (n - para_num + 1)
+							<< "\n    shl     ecx,    2";	// 乘4
 			// 3. 计算出绝对偏移，放在EAX中（-(eax-ebx)）
 			assemble_buffer << "\n    sub     ecx, ebx"
 							<< "\n    neg     ecx";
 			// 3. 执行该执行的操作
-			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", dword ptr SS:[ecx]";
+			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    dword ptr SS:[ecx]";
 		}
 	}
 }
-//{
-//	// 确定变量的层次
-//	int var_level = tokentable_.at(tokentable_index).level_;
-//	// 确定函数的层次（比变量层次少1）
-//	int func_level = var_level - 1;
-//	int n = tokentable_.at(tokentable_index).addr_;	// 计算该变量的相对地址
-//	if(level == func_level)	// 判断是否为局部变量
-//	{
-//		int offset = 4 * (n + 1 + array_offset);
-//		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebp - " << offset << "]";
-//	}
-//	else	// 外层次的变量
-//	{
-//		// 一. 获得外层次的EBP的值，加载到EBX中
-//		int offset = 4 * (1 + level - func_level);
-//		assemble_buffer << "\n    mov     ebx, SS:[ebp + " << offset << "]";
-//		// 二. 加载外层的变量
-//		offset = 4 * (n + 1 + array_offset);
-//		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebx - " << offset << "]";
-//	}
-//}
 
 // 对临时变量的操作
 // 地址计算公式：
@@ -1288,7 +1438,7 @@ void AssemblyMaker::OpRegisterTemp(enum DOUBLEOPERATOR op, enum REGISTER reg, in
 {
 	// 这里的index就是上式中的n
 	int offset = 4 * (var_space + index + 1);
-	assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", SS:[ebp - " << offset << "]";
+	assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebp - " << offset << "]";
 }
 
 
@@ -1322,5 +1472,5 @@ string AssemblyMaker::GenerateLabelString(int label_index)
 
 // 寄存器名
 const char * const AssemblyMaker::RegisterName[4] = {"eax", "ebx", "ecx", "edx"};
-const char * const AssemblyMaker::SingleOperatorName[4] = {"neg", "push", "imul", "idiv"};
+const char * const AssemblyMaker::SingleOperatorName[4] = {"neg ", "push", "imul", "idiv"};
 const char * const AssemblyMaker::DoubleOperatorName[4] = {"mov ", "add ", "sub ", "lea "};

@@ -1,0 +1,6 @@
+NO.	Valid Name        ItemType DecorateType Isref Value Addr Level DefLine UsedLine
+0	1     sequence    ARRAY      INTEGER    false  10    0     1     1     {11, 12, 13, 14, 15, 16, 17}  
+1	1     func        FUNCTION   INTEGER    false   2    10    1     2     {15}  
+2	1     i           PARAMETER  INTEGER    true    0    0     2     2     {5 ,  6}  
+3	1     j           PARAMETER  INTEGER    true    0    1     2     2     {6 ,  7}  
+4	0     tmp         VARIABLE   INTEGER    false   0    2     2     3     {5 ,  7}  

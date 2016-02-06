@@ -5,7 +5,7 @@ lastChar : char;
 
 sequence : array[100] of integer;
 
-function func(var i : integer) : integer;
+function func(i : integer) : integer;
 	function func1(var j : integer) : char;
 	begin
 		func1 := func(j) + 10;

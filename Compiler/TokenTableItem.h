@@ -18,7 +18,7 @@ public:
 	// 这里的排布顺序是按照类型转换严格顺序递增的，程序的逻辑判断也依赖了这一点
 	enum DecorateType{VOID = 0, CHAR = 1, INTEGER = 2};	
 
-	TokenTableItem(string name, ItemType item_type, DecorateType decorate_type, int value, int level, int defineline, int addr, int quaternary_address = 0) throw();
+	TokenTableItem(string name, ItemType item_type, DecorateType decorate_type, bool isref, int value, int level, int defineline, int addr) throw();
 	void AddUsedLine(int line_number) throw();
 	string toString() const throw();
 
@@ -28,12 +28,13 @@ public:
 	string			name_;
 	ItemType		itemtype_;
 	DecorateType	decoratetype_;
+	bool			isref_;	// 是否为引用参数
 	int				value_;
 	int				level_;
 	int				defineline_;
 	set<int>		usedline_;
 	int				addr_;
-	int				quaternary_address_;
+
 
 	static const DecorateType TypeConversionMatrix[3][3];
 	static const char* DecorateTypeString[3];

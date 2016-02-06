@@ -9,7 +9,7 @@
 
 #include "Token.h"
 #include "TokenTableItem.h"
-
+#include "ExpressionAttribute.h"
 using std::vector;
 using std::stack;
 
@@ -38,7 +38,7 @@ public:
 	//const TokenTableItem& back() const throw();
 	size_t size() const throw();
 	
-	vector<TokenTableItem::DecorateType> GetProcFuncParameter(const_iterator iter) throw();
+	vector<ExpressionAttribute> GetProcFuncParameterAttributes(const_iterator iter) throw();
 	void AddConstItem(Token constIdentifier, TokenTableItem::DecorateType decoratetype_, int value, int level) throw();
 	void AddVariableItem(Token variableIdentifier, TokenTableItem::DecorateType decoratetype_, int level) throw();
 	void AddArrayItem(Token arrayIdentifier, TokenTableItem::DecorateType decoratetype_, int arrayLength, int level) throw();
@@ -46,7 +46,7 @@ public:
 	int AddFunctionItem(Token functionIdentifier, int level) throw();
 	void SetParameterCount(const string &proc_func_name, int parameterCount) throw();
 	void SetFunctionReturnType(const string &func_name, TokenTableItem::DecorateType decoratetype_) throw();
-	void AddParameterItem(Token parameterIdentifier, TokenTableItem::DecorateType decoratetype_, int level) throw();
+	void AddParameterItem(Token parameterIdentifier, TokenTableItem::DecorateType decoratetype_, bool isref, int level) throw();
 
 	// 汇编过程中需要
 	int GetVariableSpace(TokenTable::const_iterator c_iter) const throw();
