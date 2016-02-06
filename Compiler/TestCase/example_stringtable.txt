@@ -1,5 +1,2 @@
 0	
 
-1	 to 
-2	mvoe from 
-3	number of moving step is 

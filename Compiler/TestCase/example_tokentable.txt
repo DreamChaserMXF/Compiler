@@ -1,14 +1,13 @@
 NO.	Valid Name        ItemType DecorateType Value Addr Level DefLine UsedLine
-0	1     i           VARIABLE   INTEGER       0   0     1     1     {13, 30, 33}  
-1	1     j           VARIABLE   INTEGER       0   1     1     1     { }  
-2	1     k           VARIABLE   INTEGER       0   2     1     1     { }  
-3	1     n           VARIABLE   INTEGER       0   3     1     1     {31, 32}  
-4	1     flag        VARIABLE   INTEGER       0   4     1     1     { }  
-5	1     sequence    ARRAY      INTEGER    3030   5     1     3     { }  
-6	1     hanoi       PROCEDURE  VOID          1   3035  1     5     {32}  
-7	1     n           PARAMETER  INTEGER       0   0     2     5     {23}  
-8	0     move        PROCEDURE  VOID          4   1     2     6     {17, 18, 19, 23}  
-9	0     src         PARAMETER  CHAR          0   0     3     6     {10, 17, 18, 19}  
-10	0     dst         PARAMETER  CHAR          0   1     3     6     {11, 17, 18, 19}  
-11	0     medium      PARAMETER  CHAR          0   2     3     6     {17, 19}  
-12	0     num         PARAMETER  INTEGER       0   3     3     6     {8 , 17, 19}  
+0	1     ARRLEN      CONST      INTEGER     100   0     1     1     { }  
+1	1     NEGATIVE    CONST      INTEGER      -1   0     1     1     { }  
+2	1     TRUE        CONST      INTEGER       1   0     1     1     { }  
+3	1     FALSE       CONST      INTEGER       0   0     1     1     { }  
+4	1     ENDCHAR     CONST      CHAR         97   0     1     1     { }  
+5	1     i           VARIABLE   INTEGER       0   0     1     3     {8 ,  9}  
+6	1     j           VARIABLE   INTEGER       0   1     1     3     {8 , 10}  
+7	1     k           VARIABLE   INTEGER       0   2     1     3     {8 , 11}  
+8	1     lastChar    VARIABLE   CHAR          0   3     1     4     {14, 15}  
+9	1     space       VARIABLE   CHAR          0   4     1     4     {13, 16}  
+10	1     seq_int     ARRAY      INTEGER      10   5     1     5     {16, 17}  
+11	1     seq_char    ARRAY      CHAR         10   15    1     6     {16, 17}  

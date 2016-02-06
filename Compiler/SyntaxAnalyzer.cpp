@@ -2043,25 +2043,66 @@ void SyntaxAnalyzer::ReadStatement(size_t depth) throw()			// 读语句
 			return;
 		}
 		iter->AddUsedLine(token_.lineNumber_);		// 在符号表中插入引用行记录
-		if(iter->itemtype_ != TokenTableItem::VARIABLE
-		&& iter->itemtype_ != TokenTableItem::PARAMETER)	// 检查是否为变量或参数或函数名
+
+		// 读取下一个单词，判断是否为数组元素
+		lexical_analyzer_.GetNextToken(token_);
+		if(Token::LEFT_BRACKET != token_.type_)	// 不是数组元素
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot be assigned in read call\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-			{ 
+			if(iter->itemtype_ != TokenTableItem::VARIABLE
+			&& iter->itemtype_ != TokenTableItem::PARAMETER)	// 检查是否为变量或参数或函数名
+			{
+				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot be assigned in read call\n";
+				is_successful_ = false;
+				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
+				{ 
+					lexical_analyzer_.GetNextToken(token_);
+				}
+				return;
+			}
+			// 生成READ调用的四元式
+			Quaternary q_read(Quaternary::READ,
+				Quaternary::NIL_ADDRESSING, 0,
+				Quaternary::NIL_ADDRESSING, 0,
+				Quaternary::VARIABLE_ADDRESSING, distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter)));
+			quaternarytable_.push_back(q_read);
+		}
+		else	// 数组元素
+		{
+			// 类型检查
+			if(iter->itemtype_ != TokenTableItem::ARRAY)	// 检查是否为数组变量
+			{
+				std::cout << "line " << token_.lineNumber_ << ":  " << iter->name_ << "  is not an array\n";
+				is_successful_ = false;
+				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
+				{ 
+					lexical_analyzer_.GetNextToken(token_);
+				}
+				return;
+			}
+			// 读入数组下标的第一个单词
+			lexical_analyzer_.GetNextToken(token_);
+			// 读到整个下标的表达式
+			ExpressionAttribute exp_attribute = Expression(depth + 1);
+			// 非数组化
+			SimplifyArrayOperand(exp_attribute);
+			// 生成READ调用的四元式
+			Quaternary q_read(Quaternary::READ,
+				Quaternary::NIL_ADDRESSING, 0,
+				exp_attribute.addressingmethod_, exp_attribute.value_,
+				Quaternary::ARRAY_ADDRESSING, distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter)));
+			quaternarytable_.push_back(q_read);
+			// 判断右括号
+			if(Token::RIGHT_BRACKET != token_.type_)
+			{
+				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ']' to match '['\n";
+				is_successful_ = false;
+			}
+			else
+			{
+				// 读入下一个单词
 				lexical_analyzer_.GetNextToken(token_);
 			}
-			return;
 		}
-		// 生成READ调用的四元式
-		Quaternary q_read(Quaternary::READ,
-			Quaternary::NIL_ADDRESSING, 0,
-			Quaternary::NIL_ADDRESSING, 0,
-			Quaternary::VARIABLE_ADDRESSING, distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter)));
-		quaternarytable_.push_back(q_read);
-		// 读取下一个单词
-		lexical_analyzer_.GetNextToken(token_);
 	}while(Token::COMMA == token_.type_);
 	
 	if(Token::RIGHT_PAREN != token_.type_)

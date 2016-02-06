@@ -363,7 +363,7 @@ void LexicalAnalyzer::LetterHandle(Token &token, char &ch) throw()					// 处理字
 	{
 		token.value_.identifier.push_back(ch);
 		ch = getNextChar();
-	}while(isalpha(ch) || isdigit(ch));
+	}while(isalpha(ch) || isdigit(ch) || '_' == ch);
 	// 在保留字表中查找，是否为保留字
 	map<string, Token::TokenType>::const_iterator iter = Token::sReserveWordToTokenType.find(token.value_.identifier);
 	if(iter != Token::sReserveWordToTokenType.end())	// 找到了，说明是保留字

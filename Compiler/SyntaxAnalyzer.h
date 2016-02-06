@@ -53,14 +53,18 @@ private:
 
 	void IfStatement(size_t depth) throw();			// 条件语句
 	void Condition(int endlabel, size_t depth) throw();// 条件
+
 	void CaseStatement(size_t depth) throw();			// 情况语句
 	vector<int> CaseElement(int caselabel, int endlabel, size_t depth) throw();	// 情况表元素
+
 	void ReadStatement(size_t depth) throw();			// 读语句
 	void WriteStatement(size_t depth) throw();			// 写语句
+
 	void WhileLoopStatement(size_t depth) throw();		// while循环语句
 	void ForLoopStatement(size_t depth) throw();		// for循环语句
 	void ContinueStatement(size_t depth) throw();	// continue
 	void BreakStatement(size_t depth) throw();		// break
+
 	void ProcedureCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth) throw();	// 过程调用语句
 	void FunctionCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth) throw();	// 函数调用语句
 
