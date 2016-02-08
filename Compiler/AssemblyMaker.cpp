@@ -271,7 +271,6 @@ void AssemblyMaker::TranslateQuaternary(const vector<Quaternary>::const_iterator
 	case Quaternary::AASG:
 		TranslateArrayAssign(c_iter, para_num, var_space, level);
 		break;
-	
 	case Quaternary::JMP:
 		TranslateJmp(c_iter, para_num, var_space, level);
 		break;
@@ -414,8 +413,6 @@ void AssemblyMaker::TranslateSub(const vector<Quaternary>::const_iterator &c_ite
 // Mul的左右操作数只可能是：立即数、普通变量、临时变量，不会是数组
 // 且不可能两个同时是立即数（已在term的中间代码生成中优化）
 // 目的操作数只可能是普通变量或临时变量
-// 这里还可进一步优化。因为mul指令可以对内存进行操作，故实际上只需要加载一个操作数到EAX，用mul指令对另一个操作数的内存空间直接进行乘法
-// 但那样实现起来比较麻烦。所以这里就统一加载到EAX和EDX中，再去做乘法
 void AssemblyMaker::TranslateMul(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)	// 第一个操作数是立即数的情况
@@ -451,7 +448,7 @@ void AssemblyMaker::TranslateDiv(const vector<Quaternary>::const_iterator &c_ite
 	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)
 	{
 		OpRegisterGeneral(MOV, EBX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-		assemble_buffer << "\n    CDQ";				// EDX相对EAX的符号位扩展
+		assemble_buffer << "\n    CDQ";				// 使用EAX对EDX进行符号位扩展
 		assemble_buffer << "\n    idiv     ebx";	// 除寄存器
 	}
 	else	// 不是立即数，则可直接除
@@ -512,49 +509,43 @@ void AssemblyMaker::TranslateJmp(const vector<Quaternary>::const_iterator &c_ite
 void AssemblyMaker::TranslateJe(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-	OpRegisterGeneral(MOV, EDX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-	assemble_buffer << "\n    cmp     eax, edx"
-					<< "\n    je      " << GenerateLabelString(c_iter->dst_);
+	OpRegisterGeneral(CMP, EAX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
+	assemble_buffer << "\n    je     " << GenerateLabelString(c_iter->dst_);
 }
 // 左右操作数不等时跳转
 void AssemblyMaker::TranslateJne(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-	OpRegisterGeneral(MOV, EDX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-	assemble_buffer << "\n    cmp     eax, edx"
-					<< "\n    jne     " << GenerateLabelString(c_iter->dst_);
+	OpRegisterGeneral(CMP, EAX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
+	assemble_buffer << "\n    jne     " << GenerateLabelString(c_iter->dst_);
 }
 // 左>右则跳转
 void AssemblyMaker::TranslateJg(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-	OpRegisterGeneral(MOV, EDX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-	assemble_buffer << "\n    cmp     eax, edx"
-					<< "\n    jg      " << GenerateLabelString(c_iter->dst_);
+	OpRegisterGeneral(CMP, EAX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
+	assemble_buffer << "\n    jg     " << GenerateLabelString(c_iter->dst_);
 }
 // 左<=右则跳转
 void AssemblyMaker::TranslateJng(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-	OpRegisterGeneral(MOV, EDX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-	assemble_buffer << "\n    cmp     eax, edx"
-					<< "\n    jng     " << GenerateLabelString(c_iter->dst_);
+	OpRegisterGeneral(CMP, EAX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
+	assemble_buffer << "\n    jng    " << GenerateLabelString(c_iter->dst_);
 }
 // 左<右则跳转
 void AssemblyMaker::TranslateJl(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-	OpRegisterGeneral(MOV, EDX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-	assemble_buffer << "\n    cmp     eax, edx"
-					<< "\n    jl      " << GenerateLabelString(c_iter->dst_);
+	OpRegisterGeneral(CMP, EAX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
+	assemble_buffer << "\n    jl     " << GenerateLabelString(c_iter->dst_);
 }
-// 左<=右则跳转
+// 左>=右则跳转
 void AssemblyMaker::TranslateJnl(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-	OpRegisterGeneral(MOV, EDX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-	assemble_buffer << "\n    cmp     eax, edx"
-					<< "\n    jnl     " << GenerateLabelString(c_iter->dst_);
+	OpRegisterGeneral(CMP, EAX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
+	assemble_buffer << "\n    jnl    " << GenerateLabelString(c_iter->dst_);
 }
 
 void AssemblyMaker::TranslateLabel(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
@@ -1473,4 +1464,4 @@ string AssemblyMaker::GenerateLabelString(int label_index)
 // 寄存器名
 const char * const AssemblyMaker::RegisterName[4] = {"eax", "ebx", "ecx", "edx"};
 const char * const AssemblyMaker::SingleOperatorName[4] = {"neg ", "push", "imul", "idiv"};
-const char * const AssemblyMaker::DoubleOperatorName[4] = {"mov ", "add ", "sub ", "lea "};
+const char * const AssemblyMaker::DoubleOperatorName[5] = {"mov ", "add ", "sub ", "lea ", "cmp "};

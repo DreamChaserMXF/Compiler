@@ -20,7 +20,7 @@ private:
 	AssemblyMaker(const AssemblyMaker &) throw();
 	enum REGISTER{EAX, EBX, ECX, EDX};
 	enum SINGLEOPERATOR{NEG, PUSH, IMUL, IDIV};
-	enum DOUBLEOPERATOR{MOV, ADD, SUB, LEA};
+	enum DOUBLEOPERATOR{MOV, ADD, SUB, LEA, CMP};
 
 	void Head() throw();
 	void StackSegment() throw();
@@ -91,7 +91,7 @@ private:
 
 	static const char * const RegisterName[4];	// ¼Ä´æÆ÷Ãû
 	static const char * const SingleOperatorName[4];
-	static const char * const DoubleOperatorName[4];
+	static const char * const DoubleOperatorName[5];
 
 	const vector<Quaternary> &quaternarytable_;
 	const TokenTable &tokentable_;

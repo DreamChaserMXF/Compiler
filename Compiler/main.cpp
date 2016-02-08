@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 
 	// 输入输出文件名
 	//const string kCodeFileName = "TestCase\\example.cpp";
-	//const string kCodeFileName = "TestCase\\00_test.cpp";
+	const string kCodeFileName = "TestCase\\00_generaltest.cpp";
 	//const string kCodeFileName = "TestCase\\01_write.cpp";
 	//const string kCodeFileName = "TestCase\\02_read.cpp";
 	//const string kCodeFileName = "TestCase\\03_arithmetic.cpp";
@@ -33,15 +33,15 @@ int main(int argc, char *argv[])
 	//const string kCodeFileName = "TestCase\\08_functioncall_factorial.cpp";
 	//const string kCodeFileName = "TestCase\\09_functioncall_statement_extension.cpp";
 	//const string kCodeFileName = "TestCase\\10_procedure_reference_parameter.cpp";
-	const string kCodeFileName = "TestCase\\11_function_reference_parameter.cpp";
+	//const string kCodeFileName = "TestCase\\11_function_reference_parameter.cpp";
 	const string kTokenFileName = "TestCase\\result1_tokenlist.txt";
 	const string kTokenTableFileName = "TestCase\\result2_tokentable.txt";
 	const string kStringTableFileName = "TestCase\\result3_stringtable.txt";
 	const string kSyntaxFileName = "TestCase\\result4_syntaxprocess.txt";
 	const string kQuaternaryCodeFileName = "TestCase\\result5_midcode.txt";
-	const string kAssemblyCodeFileName = "TestCase\\result6_assembly.asm";
+	const string kAssemblyCodeFileName = "TestCase\\result_final_assembly.asm";
 	// 删除原有的文件
-	string delete_command = "del ";
+	string delete_command = "del ";	// 当要删除的文件不存在时，@并没有关闭错误提示
 	system((delete_command + kTokenFileName).c_str());
 	system((delete_command + kTokenTableFileName).c_str());
 	system((delete_command + kStringTableFileName).c_str());
@@ -98,18 +98,18 @@ int main(int argc, char *argv[])
 
 	// 汇编过程
 	// 先确定不带后缀的汇编文件名
-	string object_file = kAssemblyCodeFileName.substr(0, kAssemblyCodeFileName.find_last_of('.'));
+	string object_path_file = kAssemblyCodeFileName.substr(0, kAssemblyCodeFileName.find_last_of('.'));
+	string object_single_file = object_path_file.substr(object_path_file.find('\\') + 1, object_path_file.length() - object_path_file.find('\\') - 1);
 	// 删除原有文件
-	system((delete_command + object_file + ".obj").c_str());
-	system((delete_command + object_file + ".exe").c_str());
+	system((delete_command + object_single_file + ".obj").c_str());
+	system((delete_command + object_single_file + ".exe").c_str());
 	// 汇编
 	string ml_command = "masm32\\bin\\ml.exe /c /coff ";
 	string link_command = "masm32\\bin\\link.exe /SUBSYSTEM:CONSOLE /OPT:NOREF ";
-	system((ml_command + object_file + ".asm").c_str());
-	object_file = object_file.substr(object_file.find('\\') + 1, object_file.length() - object_file.find('\\') - 1);
-	system((link_command + object_file + ".obj").c_str());
+	system((ml_command + object_path_file + ".asm").c_str());
+	system((link_command + object_single_file + ".obj").c_str());
 	// 运行
-	system((object_file + ".exe").c_str());
+	system((object_single_file + ".exe").c_str());
 	//system("masm32\\bin\\ml.exe /c /coff TestCase/result6_assembly.asm TestCase/result60_assembly.obj");	// 这里的执行应用程序的目录一定要用右斜杠
 	//system("masm32\\bin\\link.exe /SUBSYSTEM:CONSOLE /OPT:NOREF result6_assembly.obj");
 	//system("result6_assembly.exe");

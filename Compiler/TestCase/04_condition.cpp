@@ -40,6 +40,18 @@ begin
 		else if sequence[i] < 1
 		then write("\nsequence[i] < 1 ", sequence[i])
 		else write("\n1 <= sequence[i] <= 3 ", sequence[i])
-	end
+	end;
+	write("\n");
+	// case语句测试
+	case i of
+		0: write("i = 0");
+		1: write("i = 1");
+		2: write("i = 2");
+		3: write("i = 3");
+		4: write("i = 4");
+		5: write("i = 5");
+		6: write("i = 6")
+	end;
+	write("\n");
 end
 .
