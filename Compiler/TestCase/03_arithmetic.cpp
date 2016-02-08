@@ -38,7 +38,7 @@ begin
 	write(i+j);
 	write(j+i);
 	write(i+j+k);
-	write((i+j)+k);
+	write(((i+j)+k));
 	write(i+(j+k));
 	write(k+j+i);
 	write(i+sequence[1]);

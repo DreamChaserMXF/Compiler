@@ -1783,32 +1783,12 @@ void SyntaxAnalyzer::Condition(int endlabel, size_t depth) throw()				// 条件
 	ExpressionAttribute left_attribute = Expression(depth + 1);
 	// 化简数组元素为临时变量
 	SimplifyArrayOperand(left_attribute);
-	if(		Token::LT	!= token_.type_
-		&&	Token::LEQ	!= token_.type_
-		&&	Token::GT	!= token_.type_
-		&&	Token::GEQ	!= token_.type_
-		&&	Token::EQU	!= token_.type_
-		&&	Token::NEQ	!= token_.type_
-		)
-	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be logic operator in the middle of Condition\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return;
-	}
-	Token compare_token = token_;
-	lexical_analyzer_.GetNextToken(token_);
-	ExpressionAttribute right_attribute = Expression(depth + 1);
-	// 化简数组为临时变量
-	SimplifyArrayOperand(right_attribute);
-
+		
+	bool isonlyexpression = false;
 	// 生成有条件的跳转语句
 	// 不符合条件时才会跳转，所以这里的操作符与读到的token要反一下
 	Quaternary q_jmp_condition;
-	switch(compare_token.type_)
+	switch(token_.type_)	// 这个单词可能是关系运算符，但也有可能是THEN（当条件中仅有一个表达式时）
 	{
 	case Token::LT:
 		q_jmp_condition.op_ = Quaternary::JNL;
@@ -1828,10 +1808,36 @@ void SyntaxAnalyzer::Condition(int endlabel, size_t depth) throw()				// 条件
 	case Token::NEQ:
 		q_jmp_condition.op_ = Quaternary::JE;
 		break;
+	case Token::THEN:
+		q_jmp_condition.op_ = Quaternary::JE;
+		isonlyexpression = true;
+		break;
 	// 因为之前已经检查过了，所以正常情况下不可能有default
 	default:
-		assert(false);
+		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be logic operator in the middle of Condition\n";
+		is_successful_ = false;
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
+		{ 
+			lexical_analyzer_.GetNextToken(token_);
+		}
+		return;
 		break;
+	}
+	ExpressionAttribute right_attribute;
+	if(!isonlyexpression)	// 如果还有下一个表达式，再继续读取
+	{
+		lexical_analyzer_.GetNextToken(token_);
+		right_attribute = Expression(depth + 1);
+		// 化简数组为临时变量
+		SimplifyArrayOperand(right_attribute);
+	}
+	else
+	{
+		right_attribute.addressingmethod_ = Quaternary::IMMEDIATE_ADDRESSING;
+		right_attribute.value_ = 0;
+		right_attribute.offset_addressingmethod_ = Quaternary::IMMEDIATE_ADDRESSING;
+		right_attribute.offset_ = 0;
+		right_attribute.decoratetype_ = TokenTableItem::VOID;
 	}
 	// 操作数
 	q_jmp_condition.method1_ = left_attribute.addressingmethod_;
