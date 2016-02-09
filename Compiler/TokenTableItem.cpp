@@ -3,13 +3,13 @@
 #include <vector>
 using std::vector;
 
-TokenTableItem::TokenTableItem(string name, ItemType item_type, DecorateType decorate_type, bool isref, int value, int level, int defineline, int addr) throw()
-	: valid_(true), name_(name), itemtype_(item_type), decoratetype_(decorate_type), isref_(isref), value_(value), level_(level), defineline_(defineline), usedline_(), addr_(addr)
+TokenTableItem::TokenTableItem(string name, ItemType item_type, DecorateType decorate_type, bool isref, int value, int level, int addr) throw()
+	: valid_(true), name_(name), itemtype_(item_type), decoratetype_(decorate_type), isref_(isref), value_(value), level_(level), addr_(addr)
 { }
-void TokenTableItem::AddUsedLine(int line_number) throw()
-{
-	usedline_.insert(line_number);
-}
+//void TokenTableItem::AddUsedLine(int line_number) throw()
+//{
+//	usedline_.insert(line_number);
+//}
 
 string TokenTableItem::toString() const throw()
 {
@@ -28,26 +28,26 @@ string TokenTableItem::toString() const throw()
 	buf.width(4);
 	buf << level_ << "  ";
 	buf.width(4);
-	buf << defineline_ << "  ";
-	buf << "{";
-	set<int>::const_iterator s_iter = usedline_.begin();
-	if(s_iter != usedline_.end())
-	{
-		buf.width(2);
-		buf << *s_iter;
-		while(++s_iter != usedline_.end())
-		{
-			buf << ",";
-			buf.width(3);
-			buf << std::right << *s_iter;
-		}
-		buf << "}  ";
-	}
-	else
-	{
-		buf << " }  ";
-	}
-	
+	//buf << defineline_ << "  ";
+	//buf << "{";
+	//set<int>::const_iterator s_iter = usedline_.begin();
+	//if(s_iter != usedline_.end())
+	//{
+	//	buf.width(2);
+	//	buf << *s_iter;
+	//	while(++s_iter != usedline_.end())
+	//	{
+	//		buf << ",";
+	//		buf.width(3);
+	//		buf << std::right << *s_iter;
+	//	}
+	//	buf << "}  ";
+	//}
+	//else
+	//{
+	//	buf << " }  ";
+	//}
+	//
 	return buf.str();
 }
 

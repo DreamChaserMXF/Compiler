@@ -7,7 +7,8 @@
 using std::ostringstream;
 
 
-LexicalAnalyzer::LexicalAnalyzer(const string &srcFileName) throw() : srcfile_(srcFileName), currentline_(0), token_vector_(), token_iter_(), string_set()
+LexicalAnalyzer::LexicalAnalyzer(const string &srcFileName) throw() : 
+srcfile_(srcFileName), currentline_(0), token_vector_(), token_iter_(), code_lines_(), string_set()
 {}
 
 bool LexicalAnalyzer::IsBound() const throw()
@@ -20,15 +21,17 @@ bool LexicalAnalyzer::IsBound() const throw()
 bool LexicalAnalyzer::Parse() throw()							// 进行词法分析
 {
 	bool isSuccessful = true;
-	//if(!srcfile_.is_open())	// 检查文件是否打开
-	//{
-	//	return false;
-	//}
+	if(!srcfile_.is_open())	// 检查文件是否打开
+	{
+		return false;
+	}
 	
 	// 清空token栈
 	token_vector_.clear();
 	// 清空常量字符串表
 	string_set.clear();
+	// 清空代码行
+	code_lines_.clear();
 	// 开始按词法状态图进行解析
 	Token token;
 	currentline_ = 0;
@@ -167,6 +170,7 @@ char LexicalAnalyzer::getNextChar(bool skipSpace)				// 得到下一个字符
 			{
 				if(getline(srcfile_, line))	// 读取成功
 				{
+					code_lines_.push_back(line);	// 添进代码行中
 					++currentline_;
 					iter = line.begin();
 				}
@@ -188,6 +192,7 @@ char LexicalAnalyzer::getNextChar(bool skipSpace)				// 得到下一个字符
 		{
 			if(getline(srcfile_, line))	// 读取成功
 			{
+				code_lines_.push_back(line);	// 添进代码行中
 				++currentline_;
 				iter = line.begin();
 				return '\n';

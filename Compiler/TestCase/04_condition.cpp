@@ -44,14 +44,18 @@ begin
 	write("\n");
 	// case语句测试
 	case i of
-		0: write("i = 0");
-		1: write("i = 1");
-		2: write("i = 2");
+		0, 1, 2: write("i <= 2");
 		3: write("i = 3");
 		4: write("i = 4");
 		5: write("i = 5");
-		6: write("i = 6")
+		6: write("i = 6");
+		7: write("i = 7")
 	end;
 	write("\n");
+	if i
+	then write("expression as bool value")
+	else write("condition limited")
+	;
+	write("\n")
 end
 .

@@ -16,9 +16,6 @@
     <Filter Include="Header Files\Lexical">
       <UniqueIdentifier>{6a0c80b0-fd5a-4695-9734-8058cd1edda2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\TokenTable">
-      <UniqueIdentifier>{0f46ef8b-68e9-4494-a566-0e2e5cae848d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\MidCode">
       <UniqueIdentifier>{1b5ab5d8-0115-41cb-a43f-2449ee2efa9c}</UniqueIdentifier>
     </Filter>
@@ -43,6 +40,15 @@
     <Filter Include="Header Files\Syntax">
       <UniqueIdentifier>{fca74da2-c544-44d2-833e-32f5da72aa8a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Semantics">
+      <UniqueIdentifier>{99cc8595-d1cd-4499-a8e5-2aadbafd77e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Semantics">
+      <UniqueIdentifier>{62ad4877-92bf-4eb9-a383-ebf174a5e2ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\TokenTable">
+      <UniqueIdentifier>{d6a9d6a7-4622-4cd0-a3ef-39d9198b6d26}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Print.h">
@@ -66,15 +72,6 @@
     <ClInclude Include="Quaternary.h">
       <Filter>Header Files\MidCode</Filter>
     </ClInclude>
-    <ClInclude Include="TokenTable.h">
-      <Filter>Header Files\TokenTable</Filter>
-    </ClInclude>
-    <ClInclude Include="TokenTableException.h">
-      <Filter>Header Files\TokenTable</Filter>
-    </ClInclude>
-    <ClInclude Include="TokenTableItem.h">
-      <Filter>Header Files\TokenTable</Filter>
-    </ClInclude>
     <ClInclude Include="SyntaxAnalyzer.h">
       <Filter>Header Files\Syntax</Filter>
     </ClInclude>
@@ -83,6 +80,21 @@
     </ClInclude>
     <ClInclude Include="EscapeSequence.h">
       <Filter>Header Files\Lexical</Filter>
+    </ClInclude>
+    <ClInclude Include="SemanticsAnalyzer.h">
+      <Filter>Header Files\Semantics</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenTableException.h">
+      <Filter>Header Files\Semantics</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenTable.h">
+      <Filter>Header Files\TokenTable</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenTableItem.h">
+      <Filter>Header Files\TokenTable</Filter>
+    </ClInclude>
+    <ClInclude Include="MidCodeGenerator.h">
+      <Filter>Header Files\MidCode</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -104,17 +116,20 @@
     <ClCompile Include="AssemblyMaker.cpp">
       <Filter>Source Files\Assembly</Filter>
     </ClCompile>
+    <ClCompile Include="SyntaxAnalyzer.cpp">
+      <Filter>Source Files\Syntax</Filter>
+    </ClCompile>
+    <ClCompile Include="EscapeSequence.cpp">
+      <Filter>Source Files\Lexical</Filter>
+    </ClCompile>
     <ClCompile Include="TokenTable.cpp">
       <Filter>Source Files\TokenTable</Filter>
     </ClCompile>
     <ClCompile Include="TokenTableItem.cpp">
       <Filter>Source Files\TokenTable</Filter>
     </ClCompile>
-    <ClCompile Include="SyntaxAnalyzer.cpp">
-      <Filter>Source Files\Syntax</Filter>
-    </ClCompile>
-    <ClCompile Include="EscapeSequence.cpp">
-      <Filter>Source Files\Lexical</Filter>
+    <ClCompile Include="SemanticsAnalyzer.cpp">
+      <Filter>Source Files\Semantics</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

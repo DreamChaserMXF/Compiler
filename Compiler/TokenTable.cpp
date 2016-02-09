@@ -9,7 +9,7 @@
 TokenTable::TokenTable() throw() : rows_(), subroutine_tokentableindex_stack_(), addr_(0), subroutine_tokentableaddr_stack_()
 { 
 	
-	subroutine_tokentableindex_stack_.push(0);// 这行有必要，因为在SearchDefinitionInCurrentLevel的时候要用到top元素
+	subroutine_tokentableindex_stack_.push(0);// 这行有必要，因为在IsInLocalActiveScope的时候要用到top元素
 	subroutine_tokentableaddr_stack_.push(0); // 这行似乎没有必要
 }
 
@@ -47,7 +47,7 @@ void TokenTable::Relocate() throw()
 }
 
 // 查找在当前子程序中是否存在定义（用于常/变量定义语句）
-bool TokenTable::SearchDefinitionInCurrentLevel(const string &name) throw()
+bool TokenTable::IsInLocalActiveScope(const string &name) throw()
 {
 	iterator iter = rows_.begin() + subroutine_tokentableindex_stack_.top();
 	if(iter != rows_.end())
@@ -233,7 +233,7 @@ vector<ExpressionAttribute> TokenTable::GetProcFuncParameterAttributes(const_ite
 string TokenTable::toString() const throw()
 {
 	std::ostringstream buf;
-	buf << "NO.\tValid Name        ItemType DecorateType Isref Value Addr Level DefLine UsedLine\n";
+	buf << "NO.\tValid Name        ItemType DecorateType Isref Value Addr Level\n";
 	for(const_iterator iter = rows_.begin(); iter != rows_.end(); ++iter)
 	{
 		buf << distance(rows_.begin(), iter) << '\t' << iter->toString() << '\n';
@@ -258,17 +258,17 @@ void TokenTable::Print(std::ostream &output) const throw()
 
 void TokenTable::AddConstItem(Token constIdentifier, TokenTableItem::DecorateType decoratetype_, int value, int level) throw()
 {
-	TokenTableItem item(constIdentifier.value_.identifier, TokenTableItem::CONST, decoratetype_, false, value, level, constIdentifier.lineNumber_, 0);
+	TokenTableItem item(constIdentifier.value_.identifier, TokenTableItem::CONST, decoratetype_, false, value, level, 0);
 	rows_.push_back(item);
 }
 void TokenTable::AddVariableItem(Token variableIdentifier, TokenTableItem::DecorateType decoratetype_, int level) throw()
 {
-	TokenTableItem item(variableIdentifier.value_.identifier, TokenTableItem::VARIABLE, decoratetype_, false, 0, level, variableIdentifier.lineNumber_, addr_++);
+	TokenTableItem item(variableIdentifier.value_.identifier, TokenTableItem::VARIABLE, decoratetype_, false, 0, level, addr_++);
 	rows_.push_back(item);
 }
 void TokenTable::AddArrayItem(Token arrayIdentifier, TokenTableItem::DecorateType decoratetype_, int arrayLength, int level) throw()
 {
-	TokenTableItem item(arrayIdentifier.value_.identifier, TokenTableItem::ARRAY, decoratetype_, false, arrayLength, level, arrayIdentifier.lineNumber_, addr_);
+	TokenTableItem item(arrayIdentifier.value_.identifier, TokenTableItem::ARRAY, decoratetype_, false, arrayLength, level, addr_);
 	rows_.push_back(item);
 	// 符号表中增加一个数组，addr_要加上数组的长度以示数组的存在
 	addr_ += arrayLength;
@@ -276,13 +276,13 @@ void TokenTable::AddArrayItem(Token arrayIdentifier, TokenTableItem::DecorateTyp
 int TokenTable::AddProcedureItem(Token procedureIdentifier, int level) throw()
 {
 	// 由于过程在运行栈中不占空间，故addr_保持不变
-	TokenTableItem item(procedureIdentifier.value_.identifier, TokenTableItem::PROCEDURE, TokenTableItem::VOID, false, 0, level, procedureIdentifier.lineNumber_, addr_);
+	TokenTableItem item(procedureIdentifier.value_.identifier, TokenTableItem::PROCEDURE, TokenTableItem::VOID, false, 0, level, addr_);
 	rows_.push_back(item);
 	return rows_.size() - 1;
 }
 int TokenTable::AddFunctionItem(Token functionIdentifier, int level) throw()
 {
-	TokenTableItem item(functionIdentifier.value_.identifier, TokenTableItem::FUNCTION, TokenTableItem::VOID, false, 0, level, functionIdentifier.lineNumber_, addr_++);
+	TokenTableItem item(functionIdentifier.value_.identifier, TokenTableItem::FUNCTION, TokenTableItem::VOID, false, 0, level, addr_++);
 	rows_.push_back(item);
 	return rows_.size() - 1;
 }
@@ -310,7 +310,7 @@ void TokenTable::SetFunctionReturnType(const string &func_name, TokenTableItem::
 
 void TokenTable::AddParameterItem(Token parameterIdentifier, TokenTableItem::DecorateType decoratetype_, bool isref, int level) throw()
 {
-	TokenTableItem item(parameterIdentifier.value_.identifier, TokenTableItem::PARAMETER, decoratetype_, isref, 0, level, parameterIdentifier.lineNumber_, addr_++);
+	TokenTableItem item(parameterIdentifier.value_.identifier, TokenTableItem::PARAMETER, decoratetype_, isref, 0, level, addr_++);
 	rows_.push_back(item);
 }
 

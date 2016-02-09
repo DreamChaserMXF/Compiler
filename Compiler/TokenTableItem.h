@@ -18,8 +18,8 @@ public:
 	// 这里的排布顺序是按照类型转换严格顺序递增的，程序的逻辑判断也依赖了这一点
 	enum DecorateType{VOID = 0, CHAR = 1, INTEGER = 2};	
 
-	TokenTableItem(string name, ItemType item_type, DecorateType decorate_type, bool isref, int value, int level, int defineline, int addr) throw();
-	void AddUsedLine(int line_number) throw();
+	TokenTableItem(string name, ItemType item_type, DecorateType decorate_type, bool isref, int value, int level, int addr) throw();
+	//void AddUsedLine(int line_number) throw();
 	string toString() const throw();
 
 // 这里感觉还是设为public为好
@@ -31,8 +31,8 @@ public:
 	bool			isref_;	// 是否为引用参数
 	int				value_;
 	int				level_;
-	int				defineline_;
-	set<int>		usedline_;
+	//int				defineline_;
+	//set<int>		usedline_;
 	int				addr_;
 
 

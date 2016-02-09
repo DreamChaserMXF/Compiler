@@ -16,8 +16,10 @@
     <ClInclude Include="ExpressionAttribute.h" />
     <ClInclude Include="LexException.h" />
     <ClInclude Include="LexicalAnalyzer.h" />
+    <ClInclude Include="MidCodeGenerator.h" />
     <ClInclude Include="Print.h" />
     <ClInclude Include="Quaternary.h" />
+    <ClInclude Include="SemanticsAnalyzer.h" />
     <ClInclude Include="SyntaxAnalyzer.h" />
     <ClInclude Include="SyntaxException.h" />
     <ClInclude Include="Token.h" />
@@ -32,6 +34,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Print.cpp" />
     <ClCompile Include="Quaternary.cpp" />
+    <ClCompile Include="SemanticsAnalyzer.cpp" />
     <ClCompile Include="SyntaxAnalyzer.cpp" />
     <ClCompile Include="Token.cpp" />
     <ClCompile Include="TokenTable.cpp" />

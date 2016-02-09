@@ -1,0 +1,6 @@
+0	
+
+1	
+after swap, sequence[0] = 
+2	sequence[0] = 
+3	sequence[1] = 
