@@ -44,7 +44,7 @@ begin
 	write("\n");
 	// case语句测试
 	case i of
-		0, 1, 2: write("i <= 2");
+		FALSE, 0, TRUE, 2: write("i <= 2");
 		3: write("i = 3");
 		4: write("i = 4");
 		5: write("i = 5");
@@ -53,7 +53,7 @@ begin
 	end;
 	write("\n");
 	if i
-	then write("expression as bool value")
+	then write("take expression result as a condition")
 	else write("condition limited")
 	;
 	write("\n")

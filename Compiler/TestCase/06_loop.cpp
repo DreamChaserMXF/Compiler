@@ -4,7 +4,9 @@ sequence : array[100] of integer;
 
 
 begin
-	// 计算n以内的，除去[10, 20]之间的质数（n<100）
+	// 计算100以内的质数
+	write("输入100以内的整数n，求出除[10,20]以外的，不大于n的质数\n");
+	write("n: ");
 	read(n);
 	k := 0;
 	for i := 2 to n do
@@ -17,7 +19,7 @@ begin
 			if i / j * j = i
 			then break;
 		end;
-		if j = i	// 是质数
+		if j = i	// ??????
 		then 
 		begin
 			sequence[k] := i;

@@ -31,6 +31,7 @@ public:
 	void Print(ostream &output) const throw();			// 输出到流
 	void ResetTokenPos() throw();						// 重置符号vector的迭代器token_vector_的位置
 	bool GetNextToken(Token &token) throw();			// 获取下一符号，成功则返回true，读到符号尾则返回false
+	string GetLine(size_t line_no) throw();
 	vector<string> getStringTable() const throw();		// 获得常量字符串表
 private:
 	LexicalAnalyzer(const LexicalAnalyzer&) throw();	// 声明private的复制构造函数，但并不实现==>禁用复制

@@ -3,6 +3,7 @@
 #include "EscapeSequence.h"
 #include <sstream>
 #include <fstream>
+#include <cassert>
 
 using std::ostringstream;
 
@@ -148,6 +149,12 @@ bool LexicalAnalyzer::GetNextToken(Token &token) throw()	// 获取下一符号
 	}
 }
 
+string LexicalAnalyzer::GetLine(size_t line_no) throw()
+{
+	assert(line_no > 0 && line_no <= code_lines_.size());
+	return code_lines_[line_no - 1];
+}
+
 vector<string> LexicalAnalyzer::getStringTable() const throw()
 {
 	return vector<string>(string_set.begin(), string_set.end());
@@ -176,6 +183,10 @@ char LexicalAnalyzer::getNextChar(bool skipSpace)				// 得到下一个字符
 				}
 				else						// 读到文件尾
 				{
+					// 当另一个LexicalAnalyzer对象调用该函数时，下面一行语句作为其iter的初始化语句
+					// 否则，第二个lexicial_analyzer可能会对无效的iter执行return *(iter++);语句，造成程序崩溃
+					// TODO 重现该BUG
+					//iter = line.end();	
 					return '\0';
 				}
 			}
@@ -199,6 +210,7 @@ char LexicalAnalyzer::getNextChar(bool skipSpace)				// 得到下一个字符
 			}
 			else						// 读到文件尾
 			{
+				//iter = line.end();
 				return '\0';
 			}
 		}

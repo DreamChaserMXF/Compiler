@@ -32,6 +32,7 @@
     <ClCompile Include="EscapeSequence.cpp" />
     <ClCompile Include="LexicalAnalyzer.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MidCodeGenerator.cpp" />
     <ClCompile Include="Print.cpp" />
     <ClCompile Include="Quaternary.cpp" />
     <ClCompile Include="SemanticsAnalyzer.cpp" />

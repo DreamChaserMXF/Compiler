@@ -6,7 +6,7 @@ lastChar : char;
 sequence : array[100] of integer;
 
 function func(i : integer) : integer;
-	function func1(var j : integer) : char;
+	function func1(j : integer) : char;
 	begin
 		func1 := func(j) + 10;
 	end;
@@ -45,5 +45,6 @@ begin
 	write("\n输出函数返回值");
 	write(func(100));
 	write('\a');
+	write('\n');
 end
 .

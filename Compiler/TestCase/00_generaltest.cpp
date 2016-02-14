@@ -1,3 +1,4 @@
+const c = 1, d = 2;
 var a, b : integer;
 procedure proc();
 begin
@@ -12,5 +13,8 @@ begin
 	then write("1")
 	else write("bug");
 	write("\n");
+	c();
+	c := aa;
+	proc(c);
 end
 .

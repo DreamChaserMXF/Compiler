@@ -28,6 +28,8 @@ end;
 
 begin
 	i := 0;
+	write("汉诺塔游戏，请输入a塔的圆盘数量n\n");
+	write("n: ");
 	read(n);
 	hanoi(n);
 	write("number of moving step is ", i);

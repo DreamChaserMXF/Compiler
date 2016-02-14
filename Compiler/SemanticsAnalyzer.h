@@ -14,6 +14,10 @@ public:
 	bool Print(const string &filename) const throw();
 	void Print(std::ostream &output) const throw();
 private:
+	enum ErrorType{
+		REDEFINITION, UNDEFINITION, ARGUMENTNUMBERNOTMATCH, WRONGTYPE, OUTERCONTINUE, OUTERBREAK,
+	};
+	
 	SemanticsAnalyzer(const SemanticsAnalyzer&) throw();
 	
 	void PrintFunctionFrame(const char *func_name, size_t depth) throw();// 输出函数帧信息，depth是语法分析时的函数调用深度
@@ -59,6 +63,8 @@ private:
 
 	void ReadStatement(size_t depth) throw();			// 读语句
 	void WriteStatement(size_t depth) throw();			// 写语句
+
+	void ErrorHandle(ErrorType error_type, const char *errinfo = NULL) throw();
 
 	// 数据成员
 	LexicalAnalyzer &lexical_analyzer_;				// 绑定的词法分析器

@@ -31,6 +31,7 @@ bool SemanticsAnalyzer::Parse() throw()
 	Routine(depth + 1);
 	return is_successful_;
 }
+
 TokenTable SemanticsAnalyzer::GetTokenTable() const throw()
 {
 	return tokentable_;
@@ -84,11 +85,7 @@ void SemanticsAnalyzer::Routine(size_t depth) throw()
 	// 解析分程序
 	SubRoutine(depth + 1);
 	// 判断结束符号
-	if(token_.type_ != Token::PERIOD)
-	{
-		std::cout << "line " << token_.lineNumber_ << ": " << token_.toString() << '\t' << "should be '.' at the end of Routine\n";
-		is_successful_ = false;
-	}
+	assert(Token::PERIOD == token_.type_);
 }
 
 // <分程序> ::= [<常量说明部分>][<变量说明部分>]{[<过程说明部分>]| [<函数说明部分>]}<复合语句>
@@ -114,15 +111,8 @@ void SemanticsAnalyzer::SubRoutine(size_t depth) throw()
 		FunctionPart(depth + 1);
 	}
 	// 一个必选分支
-	if(token_.type_ == Token::BEGIN)
-	{
-		StatementBlockPart(depth + 1);
-	}
-	else
-	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  didn't find sentence block in subroutine\n";
-		return;
-	}
+	assert(token_.type_ == Token::BEGIN);
+	StatementBlockPart(depth + 1);
 }
 
 // <常量说明部分> ::= const<常量定义>{,<常量定义>};
@@ -159,8 +149,7 @@ void SemanticsAnalyzer::constantDefination(size_t depth) throw()
 	// 常量定义，插入符号表
 	if(tokentable_.IsInLocalActiveScope(constIdentifier.value_.identifier))
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  redifinition\n";
-		is_successful_ = false;
+		ErrorHandle(REDEFINITION);
 	}
 	else if(Token::CONST_INTEGER == token_.type_)
 	{
@@ -248,8 +237,7 @@ void SemanticsAnalyzer::TypeSpecification(size_t depth) throw()
 		{
 			if(tokentable_.IsInLocalActiveScope(iter->value_.identifier))	// 重定义后，仍然插入当前定义（也可不插入）
 			{
-				std::cout << "line " << iter->lineNumber_ << ":  " << iter->toString() << "  redifinition\n";
-				is_successful_ = false;
+				ErrorHandle(REDEFINITION);
 			}
 			tokentable_.AddArrayItem(*iter, decoratetype_, arrayLength, level_);
 		}
@@ -260,8 +248,7 @@ void SemanticsAnalyzer::TypeSpecification(size_t depth) throw()
 		{
 			if(tokentable_.IsInLocalActiveScope(iter->value_.identifier))
 			{
-				std::cout << "line " << iter->lineNumber_ << ":  " << iter->toString() << "  redifinition\n";
-				is_successful_ = false;
+				ErrorHandle(REDEFINITION);
 			}
 			tokentable_.AddVariableItem(*iter, decoratetype_, level_);
 		}
@@ -284,11 +271,7 @@ void SemanticsAnalyzer::ProcedurePart(size_t depth) throw()
 		SubRoutine(depth + 1);
 		tokentable_.Relocate();
 		--level_;
-		if(Token::SEMICOLON != token_.type_)
-		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ';' at the end of procedure\n";
-			is_successful_ = false;
-		}
+		assert(token_.type_ == Token::SEMICOLON);
 		lexical_analyzer_.GetNextToken(token_);	// 读入分号的下一个单词
 	}while(Token::PROCEDURE == token_.type_);
 }
@@ -308,8 +291,7 @@ void SemanticsAnalyzer::ProcedureHead(size_t depth) throw()
 	string proc_name = token_.value_.identifier;
 	if(tokentable_.IsInLocalActiveScope(token_.value_.identifier))	// 重定义时，仍然插入重定义的过程定义（因为仍然插入后影响不大，而不插入的话，会影响该次的过程分程序的语法语义分析）
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  redifinition\n";
-		is_successful_ = false;
+		ErrorHandle(REDEFINITION);
 	}
 	tokentable_.AddProcedureItem(token_, level_++);// 过程名之后leve要+1
 	// 定位（将过程名后紧邻的位置设为局部作用域的起始点）
@@ -360,8 +342,7 @@ void SemanticsAnalyzer::FunctionHead(size_t depth) throw()
 	string func_name = token_.value_.identifier;
 	if(tokentable_.IsInLocalActiveScope(token_.value_.identifier))	// 重定义时，仍然插入重定义的过程定义（因为仍然插入后影响不大，而不插入的话，会影响该次的函数分程序的语法语义分析）
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  redifinition\n";
-		is_successful_ = false;
+		ErrorHandle(REDEFINITION);
 	}
 	tokentable_.AddFunctionItem(token_, level_++);// 添加完函数名之后leve要+1
 	// 定位
@@ -445,8 +426,7 @@ int SemanticsAnalyzer::ParameterTerm(size_t depth) throw()
 	{
 		if(tokentable_.IsInLocalActiveScope(iter->value_.identifier))
 		{
-			std::cout << "line " << iter->lineNumber_ << ":  " << iter->toString() << "  redifinition\n";
-			is_successful_ = false;
+			ErrorHandle(REDEFINITION);
 		}
 		tokentable_.AddParameterItem(*iter, decoratetype, isref, level_);
 	} // 存符号表完成
@@ -489,41 +469,27 @@ void SemanticsAnalyzer::Statement(size_t depth) throw()
 		iter = tokentable_.SearchDefinition(token_);	// 查找符号表中的定义
 		if(iter == tokentable_.end())
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  undeclared identifier\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
-			return;
+			ErrorHandle(UNDEFINITION);
+			//return;
 		}
 		lexical_analyzer_.GetNextToken(token_);
 		if(Token::LEFT_PAREN == token_.type_)	// 过程或函数调用
 		{
-			if(iter->itemtype_ != TokenTableItem::PROCEDURE
+			if(iter != tokentable_.end()
+				&& iter->itemtype_ != TokenTableItem::PROCEDURE
 				&& iter->itemtype_ != TokenTableItem::FUNCTION)	// 检查其属性是否为过程或函数
 			{
-				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  not declared as a procedure\n";
-				is_successful_ = false;
-				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-				{ 
-					lexical_analyzer_.GetNextToken(token_);
-				}
-				return;
+				ErrorHandle(WRONGTYPE, (iter->name_ + " is not declared as a procedure").c_str());
+				//return;
 			}
 			vector<ExpressionAttribute> proc_func_attributes = tokentable_.GetProcFuncParameterAttributes(iter);
 			
-			// TODO 在ProcFuncCallStatement中检查参数类型与数量
 			ProcFuncCallStatement(idToken, proc_func_attributes, depth + 1);
-		}
-		else if(Token::ASSIGN == token_.type_
-			|| Token::LEFT_BRACKET == token_.type_)
-		{
-			AssigningStatement(idToken, iter, depth + 1);		
 		}
 		else
 		{
-			assert(false);
+			assert(Token::ASSIGN == token_.type_ || Token::LEFT_BRACKET == token_.type_);
+			AssigningStatement(idToken, iter, depth + 1);		
 		}
 		break;
 	case Token::IF:
@@ -574,13 +540,8 @@ void SemanticsAnalyzer::AssigningStatement(const Token &idToken, TokenTable::ite
 		// 语义检查
 		if(iter->itemtype_ != TokenTableItem::ARRAY)	// 检查是否为数组名
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  subscript requires array or pointer type\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
-			return;
+			ErrorHandle(WRONGTYPE, (iter->name_ + " is not declared as an array").c_str());
+			//return;
 		}
 		// 读入表示下标的表达式
 		lexical_analyzer_.GetNextToken(token_);
@@ -593,19 +554,9 @@ void SemanticsAnalyzer::AssigningStatement(const Token &idToken, TokenTable::ite
 		&& iter->itemtype_ != TokenTableItem::PARAMETER
 		&& iter->itemtype_ != TokenTableItem::FUNCTION)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot be assigned\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return;
+		ErrorHandle(WRONGTYPE, (iter->name_ + " cannot be assigned").c_str());
+		//return;
 	}
-	// 以下三行为抛出异常做准备，放在GetNextToken前是为了准确记录赋值号的行号
-	static Token errToken;
-	errToken.type_ = Token::ASSIGN;
-	errToken.lineNumber_ = token_.lineNumber_;
-
 	// 现在的token_应为赋值号
 	assert(Token::ASSIGN == token_.type_);
 	// 读入赋值号右边的表达式
@@ -697,17 +648,15 @@ TokenTableItem::DecorateType SemanticsAnalyzer::Factor(size_t depth) throw()				
 #endif
 		// 语义检查
 		TokenTable::iterator iter = tokentable_.SearchDefinition(token_);	// 寻找定义
-		// 记录修饰类型
-		factor_attribute = iter->decoratetype_;
 		if(iter == tokentable_.end())
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  undeclared identifier\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
-			return factor_attribute;
+			ErrorHandle(UNDEFINITION);
+			//return factor_attribute;
+		}
+		else
+		{
+			// 记录修饰类型
+			factor_attribute = iter->decoratetype_;
 		}
 		Token idToken = token_;	// 记下，待用
 		lexical_analyzer_.GetNextToken(token_);
@@ -715,15 +664,11 @@ TokenTableItem::DecorateType SemanticsAnalyzer::Factor(size_t depth) throw()				
 		if(Token::LEFT_BRACKET == token_.type_)
 		{
 			// 语义检查：是否为数组名
-			if(iter->itemtype_ != TokenTableItem::ARRAY)	
+			if(iter != tokentable_.end()
+				&& iter->itemtype_ != TokenTableItem::ARRAY)	
 			{
-				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  subscript requires array or pointer type\n";
-				is_successful_ = false;
-				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-				{ 
-					lexical_analyzer_.GetNextToken(token_);
-				}
-				return factor_attribute;
+				ErrorHandle(WRONGTYPE, (iter->name_ + " is not declared as an array").c_str());
+				//return factor_attribute;
 			}
 			// 读入作为下标的表达式
 			lexical_analyzer_.GetNextToken(token_);
@@ -736,15 +681,11 @@ TokenTableItem::DecorateType SemanticsAnalyzer::Factor(size_t depth) throw()				
 		else if(Token::LEFT_PAREN == token_.type_)	// 左括号，函数调用
 		{
 			// 语义检查：是否为函数
-			if(iter->itemtype_ != TokenTableItem::FUNCTION)
+			if(iter != tokentable_.end()
+				&& iter->itemtype_ != TokenTableItem::FUNCTION)
 			{
-				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  not declared as a function\n";
-				is_successful_ = false;
-				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-				{ 
-					lexical_analyzer_.GetNextToken(token_);
-				}
-				return factor_attribute;
+				ErrorHandle(WRONGTYPE, (iter->name_ + " is not declared as a function").c_str());
+				//return factor_attribute;
 			}
 			// 语义：类型匹配
 			// 从符号表中取出函数的参数类型，待FunctionCallStatement去匹配参数
@@ -755,17 +696,13 @@ TokenTableItem::DecorateType SemanticsAnalyzer::Factor(size_t depth) throw()				
 		else	// 单独一个标识符
 		{
 			// 语义检查：是否为变量、常量或过程/函数的参数
-			if(iter->itemtype_ != TokenTableItem::VARIABLE 
+			if(iter != tokentable_.end()
+				&& iter->itemtype_ != TokenTableItem::VARIABLE 
 				&& iter->itemtype_ != TokenTableItem::PARAMETER 
 				&& iter->itemtype_ != TokenTableItem::CONST)
 			{
-				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  single token Factor should be varaible or constant\n";
-				is_successful_ = false;
-				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-				{ 
-					lexical_analyzer_.GetNextToken(token_);
-				}
-				return factor_attribute;
+				ErrorHandle(WRONGTYPE, (iter->name_ + " should be varaible or parameter or constant").c_str());
+				//return factor_attribute;
 			}
 		}
 	}
@@ -787,18 +724,15 @@ TokenTableItem::DecorateType SemanticsAnalyzer::Factor(size_t depth) throw()				
 		factor_attribute = TokenTableItem::INTEGER;
 		lexical_analyzer_.GetNextToken(token_);
 	}
-	else if(Token::CONST_CHAR == token_.type_)	// 字符型字面常量
+	else
 	{
-
+		// 字符型字面常量
+		assert(Token::CONST_CHAR == token_.type_);
 #ifdef SEMANTICSDEBUG
 	semantics_process_buffer_ << semantics_format_string_ << "  " << token_.toString() << std::endl;
 #endif
 		factor_attribute = TokenTableItem::CHAR;
 		lexical_analyzer_.GetNextToken(token_);
-	}
-	else
-	{
-		assert(false);
 	}
 	return factor_attribute;
 }
@@ -884,23 +818,6 @@ void SemanticsAnalyzer::CaseElement(size_t depth) throw()					// 情况表元素
 {
 	PrintFunctionFrame("CaseElement()", depth);
 
-//	TokenTable::iterator iter = tokentable_.SearchDefinition(token_);
-//	if(Token::CONST_INTEGER != token_.type_
-//		&& Token::CONST_CHAR != token_.type_
-//		&& tokentable_.end() == iter)
-//	{
-//		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be constant integer or character or constant variable after \"case\"\n";
-//		is_successful_ = false;
-//		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号
-//		{ 
-//			lexical_analyzer_.GetNextToken(token_);
-//		}
-//		return;
-//	}
-//#ifdef SEMANTICSDEBUG
-//	semantics_process_buffer_ << semantics_format_string_ << "  " << token_.toString() << std::endl;
-//#endif
-//
 	TokenTable::iterator iter;
 	bool first_item = true;
 	do
@@ -918,13 +835,8 @@ void SemanticsAnalyzer::CaseElement(size_t depth) throw()					// 情况表元素
 			&& Token::CONST_CHAR != token_.type_
 			&& tokentable_.end() == iter)
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be constant integer or character after \"case\"\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
-			return ;
+			ErrorHandle(WRONGTYPE, (iter->name_ + " should be constant integer or character or constant variable after \"case\"").c_str());
+			//return ;
 		}
 #ifdef SEMANTICSDEBUG
 	semantics_process_buffer_ << semantics_format_string_ << "  " << token_.toString() << std::endl;
@@ -959,28 +871,19 @@ void SemanticsAnalyzer::ReadStatement(size_t depth) throw()			// 读语句
 		TokenTable::iterator iter = tokentable_.SearchDefinition(token_);
 		if(iter == tokentable_.end())
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  undeclared identifier\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
-			return;
+			ErrorHandle(UNDEFINITION);
+			//return;
 		}
 		// 读取下一个单词，判断是否为数组元素
 		lexical_analyzer_.GetNextToken(token_);
 		if(Token::LEFT_BRACKET == token_.type_)	// 数组元素
 		{
 			// 类型检查
-			if(iter->itemtype_ != TokenTableItem::ARRAY)	// 检查是否为数组变量
+			if(iter != tokentable_.end()
+				&& iter->itemtype_ != TokenTableItem::ARRAY)	// 检查是否为数组变量
 			{
-				std::cout << "line " << token_.lineNumber_ << ":  " << iter->name_ << "  is not an array\n";
-				is_successful_ = false;
-				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-				{ 
-					lexical_analyzer_.GetNextToken(token_);
-				}
-				return;
+				ErrorHandle(WRONGTYPE, (iter->name_ + " is not declared as an array").c_str());
+				//return;
 			}
 			// 读入数组下标的第一个单词
 			lexical_analyzer_.GetNextToken(token_);
@@ -988,6 +891,12 @@ void SemanticsAnalyzer::ReadStatement(size_t depth) throw()			// 读语句
 			 Expression(depth + 1);
 			// 读入右中括号的下一个单词
 			lexical_analyzer_.GetNextToken(token_);
+		}
+		else if(iter != tokentable_.end()
+			&& iter->itemtype_ != TokenTableItem::VARIABLE
+			&& iter->itemtype_ != TokenTableItem::PARAMETER)
+		{
+			ErrorHandle(WRONGTYPE, (iter->name_ + " cannot be assigned").c_str());
 		}
 	}while(Token::COMMA == token_.type_);
 	// 读右括号的下一个单词
@@ -1069,24 +978,15 @@ void SemanticsAnalyzer::ForLoopStatement(size_t depth) throw()			// for循环语句
 	TokenTable::iterator loopvar_iter = tokentable_.SearchDefinition(token_);
 	if(loopvar_iter == tokentable_.end())
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  undeclared identifier\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return;
+		ErrorHandle(UNDEFINITION);
+		//return;
 	}
-	if(loopvar_iter->itemtype_ != TokenTableItem::VARIABLE
+	if(loopvar_iter != tokentable_.end()
+	&& loopvar_iter->itemtype_ != TokenTableItem::VARIABLE
 	&& loopvar_iter->itemtype_ != TokenTableItem::PARAMETER)	// 检查是否为变量或参数
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot be assigned in for loop\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return;
+		ErrorHandle(WRONGTYPE, (loopvar_iter->name_ + " cannot be assigned").c_str());
+		//return;
 	}
 	// 读取赋值号
 	lexical_analyzer_.GetNextToken(token_);
@@ -1111,13 +1011,7 @@ void SemanticsAnalyzer::ContinueStatement(size_t depth) throw()	// continue
 	if(loop_level <= 0)
 	{
 		// 报错
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  no loop body found around \"continue\"\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return;
+		ErrorHandle(OUTERCONTINUE);
 	}
 	// 读入下一个单词并返回
 	lexical_analyzer_.GetNextToken(token_);
@@ -1129,13 +1023,7 @@ void SemanticsAnalyzer::BreakStatement(size_t depth) throw()		// break
 	if(loop_level <= 0)
 	{
 		// 报错
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  no loop body found around \"break\"\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return;
+		ErrorHandle(OUTERBREAK);
 	}
 	// 读入下一个单词并返回
 	lexical_analyzer_.GetNextToken(token_);
@@ -1150,47 +1038,29 @@ void SemanticsAnalyzer::ProcFuncCallStatement(const Token proc_token, const vect
 
 	// 语法：读入右括号或参数表的第一个单词
 	lexical_analyzer_.GetNextToken(token_);
-	if(parameter_attributes.size() == 0)	// 如果函数本身就没有参数的话，就不用读参数了
+	if(Token::RIGHT_PAREN != token_.type_)
 	{
-		assert(Token::RIGHT_PAREN == token_.type_);
-		lexical_analyzer_.GetNextToken(token_);	// 读函数调用完毕后的下一个单词
-		return;
+		ArgumentList(parameter_attributes, depth + 1);
 	}
-	// 语法：读参数，并生成设置参数的四元式
-	ArgumentList(parameter_attributes, depth + 1);
 	assert(Token::RIGHT_PAREN == token_.type_);
 	lexical_analyzer_.GetNextToken(token_);
 
-	//// 语义检查：过程参数与过程声明是否匹配
-	//if(parameter_attributes.size() != exp_attributes.size())	// 检查参数数量
+	//// 语法：读入右括号或参数表的第一个单词
+	//lexical_analyzer_.GetNextToken(token_);
+	//if(parameter_attributes.size() == 0)	// 如果函数本身就没有参数的话，就不用读参数了
 	//{
-	//	std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  procedure/function does not take " << exp_attributes.size() << " argument";
-	//	if(exp_attributes.size() > 1)
+	//	if(Token::RIGHT_PAREN != token_.type_)
 	//	{
-	//		std::cout << "s\n";
+	//		// 语义
 	//	}
-	//	else
-	//	{
-	//		std::cout << "\n";
-	//	}
-	//	is_successful_ = false;
-	//	while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-	//	{ 
-	//		lexical_analyzer_.GetNextToken(token_);
-	//	}
+	//	lexical_analyzer_.GetNextToken(token_);	// 读函数调用完毕后的下一个单词
 	//	return;
 	//}
-	//for(int i = 0; i < static_cast<int>(exp_attributes.size()); ++i)
-	//{
-	//	// 左小于右小于表示不能从右操作数类型转到左操作数类型
-	//	if(parameter_attributes[i].decoratetype_ < exp_attributes[i].decoratetype_)
-	//	{
-	//		std::cout << "warning: line " << token_.lineNumber_ << ":  " << token_.toString() 
-	//			<< "  cannot convert parameter " << i + 1 << " from " << TokenTableItem::DecorateTypeString[exp_attributes[i].decoratetype_]
-	//		<< " to " <<  TokenTableItem::DecorateTypeString[parameter_attributes[i].decoratetype_] <<"\n";
-	//		// 这里仅仅是检查了参数类型不匹配，语法分析还可继续，故不返回
-	//	}
-	//}
+	//// 语法：读参数，并生成设置参数的四元式
+	//ArgumentList(parameter_attributes, depth + 1);
+	//assert(Token::RIGHT_PAREN == token_.type_);
+	//lexical_analyzer_.GetNextToken(token_);
+
 }
 
 
@@ -1213,17 +1083,20 @@ void SemanticsAnalyzer::ArgumentList(const vector<ExpressionAttribute> &paramete
 		if(parameter_attributes.size() < para_count)
 		{
 			// 实际参数过多
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() 
-				<< "  procedure/function calling statement has too many arguments ";
-			is_successful_ = false;
-			while(Token::COMMA == token_.type_)
-			{
-				lexical_analyzer_.GetNextToken(token_);
-				argument_decoratetype = Expression(depth + 1);
-			}
+			ErrorHandle(ARGUMENTNUMBERNOTMATCH);
+			//return;
+			//std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() 
+			//	<< "  procedure/function calling statement has too many arguments ";
+			//is_successful_ = false;
+			//while(Token::COMMA == token_.type_)
+			//{
+			//	lexical_analyzer_.GetNextToken(token_);
+			//	argument_decoratetype = Expression(depth + 1);
+			//}
 		}
 		// 类型匹配检查
-		if(parameter_attributes[para_count - 1].decoratetype_ < argument_decoratetype)
+		if(parameter_attributes.size() >= para_count
+			&& parameter_attributes[para_count - 1].decoratetype_ < argument_decoratetype)
 		{
 			std::cout << "warning: line " << token_.lineNumber_ << ":  " << token_.toString() 
 				<< "  cannot convert parameter " << para_count << " from " << TokenTableItem::DecorateTypeString[argument_decoratetype]
@@ -1231,4 +1104,70 @@ void SemanticsAnalyzer::ArgumentList(const vector<ExpressionAttribute> &paramete
 			// 这里仅仅是检查了参数类型不匹配，语法分析还可继续，故不返回
 		}
 	}while(Token::COMMA == token_.type_);
+}
+
+
+void SemanticsAnalyzer::ErrorHandle(ErrorType error_type, const char *errinfo) throw()
+{
+	using std::cout;
+	is_successful_ = false;
+	cout << "semantics error(" << error_type << ")";
+	int offset = lexical_analyzer_.GetLine(token_.lineNumber_).find_first_not_of(" \t\n");
+	int count = lexical_analyzer_.GetLine(token_.lineNumber_).find_last_not_of(" \t\n") - offset + 1;
+	string errline = offset == string::npos ? "" : lexical_analyzer_.GetLine(token_.lineNumber_).substr(offset, count);
+	switch(error_type)
+	{
+	case REDEFINITION:	// 重定义时，不需要读完整条语句，因为不影响继续的分析
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << "\terror token: " << token_.toString() << "\nerror info: " << "redefinition\n";
+		break;
+	case UNDEFINITION:	// 未定义时，要读完整条语句并返回，因为符号未定义，则迭代器失效，不能继续当前块的分析
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << "\terror token: " << token_.toString() << "\nerror info: " << "undefinition\n";
+		break;
+	case ARGUMENTNUMBERNOTMATCH:// 参数数量不匹配时，要读完整条语句并返回，因为参数数量不匹配，则无法继续判断参数类型，需要直接返回
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << "\terror token: " << token_.toString() << "\nerror info: " << "argument number doesn't match the declaration\n";
+		break;
+	case WRONGTYPE:// 参数数量不匹配时，要读完整条语句并返回，因为参数数量不匹配，则无法继续判断参数类型，需要直接返回
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << "\terror token: " << token_.toString() << "\nerror info: " << errinfo << "\n";
+		break;
+	case OUTERCONTINUE:	// 不影响语义分析，无须继续读完整句
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << "\terror token: " << token_.toString() << "\nerror info: " << "no loop body found around \"continue\"\n";
+		break;
+	case OUTERBREAK:// 不影响语义分析，无须继续读完整句
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << "\terror token: " << token_.toString() << "\nerror info: " << "no loop body found around \"break\"\n";
+		break;
+	//case REDEFINITION:	// 重定义时，不需要读完整条语句，因为不影响继续的分析
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "\terror token: " << token_.toString() << "\nerror info: " << "redefinition\n";
+	//	break;
+	//case UNDEFINITION:	// 未定义时，要读完整条语句并返回，因为符号未定义，则迭代器失效，不能继续当前块的分析
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "\terror token: " << token_.toString() << "\nerror info: " << "undefinition\n";
+	//	break;
+	//case ARGUMENTNUMBERNOTMATCH:// 参数数量不匹配时，要读完整条语句并返回，因为参数数量不匹配，则无法继续判断参数类型，需要直接返回
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "\terror token: " << token_.toString() << "\nerror info: " << "argument number doesn't match the declaration\n";
+	//	break;
+	//case WRONGTYPE:// 参数数量不匹配时，要读完整条语句并返回，因为参数数量不匹配，则无法继续判断参数类型，需要直接返回
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "\terror token: " << token_.toString() << "\nerror info: " << errinfo << "\n";
+	//	break;
+	//case OUTERCONTINUE:	// 不影响语义分析，无须继续读完整句
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "\terror token: " << token_.toString() << "\nerror info: " << "no loop body found around \"continue\"\n";
+	//	break;
+	//case OUTERBREAK:// 不影响语义分析，无须继续读完整句
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "\terror token: " << token_.toString() << "\nerror info: " << "no loop body found around \"break\"\n";
+	//	break;
+	default:
+		// 未知错误
+		assert(false);
+		break;
+	}
 }

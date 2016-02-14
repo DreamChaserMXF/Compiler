@@ -74,8 +74,20 @@ void SyntaxAnalyzer::Routine(size_t depth) throw()
 	// 判断结束符号
 	if(token_.type_ != Token::PERIOD)
 	{
-		std::cout << "line " << token_.lineNumber_ << ": " << token_.toString() << '\t' << "should be '.' at the end of Routine\n";
-		is_successful_ = false;
+		if(Token::NIL != token_.type_)	// 程序并没有结束
+		{
+			ErrorHandle(WRONGENDINGTOKEN);
+		}
+		else	// 程序确实结束了
+		{
+			ErrorHandle(LACKENDINGPERIOD);
+		}
+		return;
+	}
+	// 验证PERIOD后面是否还有单词
+	if(lexical_analyzer_.GetNextToken(token_))
+	{
+		ErrorHandle(REDUNDANTTOOKEN);
 	}
 }
 
@@ -109,8 +121,7 @@ void SyntaxAnalyzer::SubRoutine(size_t depth) throw()
 	}
 	else
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  didn't find sentence block in subroutine\n";
-		return;
+		ErrorHandle(NOSTATEMENTBLOCK);
 	}
 }
 
@@ -129,21 +140,8 @@ void SyntaxAnalyzer::ConstantPart(size_t depth) throw()
 	} while(token_.type_ == Token::COMMA);
 	if(token_.type_ != Token::SEMICOLON)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ';' after constant definition\n";
-		is_successful_ = false;
-		if(Token::VAR == token_.type_ || Token::PROCEDURE == token_.type_ || Token::FUNCTION == token_.type_ || Token::BEGIN == token_.type_)//	这里可能是忘记加分号了，所以直接返回而不读取下一个单词
-		{
-			return;	
-		}
-		else
-		{
-			while(token_.type_ != Token::NIL  && token_.type_ != Token::SEMICOLON)	// 若是其他单词，表示常量说明部分还未结束，故要读到下一个分号
-			{
-				lexical_analyzer_.GetNextToken(token_);
-			};
-			lexical_analyzer_.GetNextToken(token_);
-			return;
-		}
+		ErrorHandle(LACKSEMICOLON);
+		//return;	// 这里暂不返回，要执行最后一条语句，读取了分号后的下一个单词后再返回
 	}
 	lexical_analyzer_.GetNextToken(token_);
 }
@@ -155,12 +153,7 @@ void SyntaxAnalyzer::constantDefination(size_t depth) throw()
 
 	if(token_.type_ != Token::IDENTIFIER)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be identifier at the beginning of constant definition\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::COMMA && token_.type_ != Token::SEMICOLON)	// 读到下一个逗号或分号
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKIDENTIFIER);
 		return;
 	}
 #ifdef SYNTAXDEBUG
@@ -171,24 +164,14 @@ void SyntaxAnalyzer::constantDefination(size_t depth) throw()
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::EQU)
 	{
-		std::cout << "line " << token_.lineNumber_ << ": " << token_.toString() << "  should be '=' after identifier\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::COMMA && token_.type_ != Token::SEMICOLON)	// 读到下一个逗号或分号
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKEQU);
 		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::CONST_INTEGER 
 	&& token_.type_ != Token::CONST_CHAR)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be constant integer or character after '='\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::COMMA && token_.type_ != Token::SEMICOLON)	// 读到下一个逗号或分号
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKCONSTANT);
 		return;
 	}
 #ifdef SYNTAXDEBUG
@@ -210,25 +193,8 @@ void SyntaxAnalyzer::VariablePart(size_t depth) throw()
 		VariableDefinition(depth + 1);
 		if(token_.type_ != Token::SEMICOLON)
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ';' after variable definition\n";
-			is_successful_ = false;
-			if(Token::IDENTIFIER == token_.type_)	// 忘记加分号，后面还有变量定义
-			{
-				continue;
-			}
-			else
-			{
-				// 忘记加分号了，后面又无法继续接上变量定义，只能跳转到下一部分
-				while(Token::NIL != token_.type_ && Token::SEMICOLON != token_.type_ && Token::PROCEDURE != token_.type_ && Token::FUNCTION != token_.type_ && Token::BEGIN == token_.type_)
-				{
-					lexical_analyzer_.GetNextToken(token_);
-				}
-				if(Token::SEMICOLON == token_.type_)
-				{
-					lexical_analyzer_.GetNextToken(token_);
-				}
-				return;
-			}
+			ErrorHandle(LACKSEMICOLON);
+			//return;	// 暂不返回，待读取分号的下一个单词
 		}
 		lexical_analyzer_.GetNextToken(token_);
 	}while(token_.type_ == Token::IDENTIFIER);
@@ -241,17 +207,8 @@ void SyntaxAnalyzer::VariableDefinition(size_t depth) throw()
 
 	if(token_.type_ != Token::IDENTIFIER)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be identifier at the beginning of variable definition\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::IDENTIFIER&& token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、下一个标识符或PROCEDURE FUNCTION BEGIN
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		if(token_.type_ != Token::IDENTIFIER)	// 若读到的不是标识符，则返回上一层处理
-		{
-			return;
-		}
-		// 读到了标识符，则继续执行
+		ErrorHandle(LACKIDENTIFIER);
+		return;
 	}
 #ifdef SYNTAXDEBUG
 	syntax_process_buffer_ << syntax_format_string_ << "  " << token_.toString() << std::endl;
@@ -262,17 +219,8 @@ void SyntaxAnalyzer::VariableDefinition(size_t depth) throw()
 		lexical_analyzer_.GetNextToken(token_);
 		if(token_.type_ != Token::IDENTIFIER)
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be identifier at the beginning of variable definition\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::IDENTIFIER && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、下一个标识符或PROCEDURE FUNCTION BEGIN
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
-			if(token_.type_ != Token::IDENTIFIER)	// 若读到的不是标识符，则返回上一层处理
-			{
-				return;
-			}
-			// 读到了标识符，则继续执行
+			ErrorHandle(LACKIDENTIFIER);
+			return;
 		}
 #ifdef SYNTAXDEBUG
 	syntax_process_buffer_ << syntax_format_string_ << "  " << token_.toString() << std::endl;
@@ -281,16 +229,7 @@ void SyntaxAnalyzer::VariableDefinition(size_t depth) throw()
 	}
 	if(token_.type_ != Token::COLON)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ':' after identifier to specify the type\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::RW_INTEGER && token_.type_ != Token::RW_CHAR && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、类型说明符、分号、PROCEDURE FUNCTION BEGIN
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		if(Token::RW_INTEGER == token_.type_ || Token::RW_CHAR == token_.type_)	// 若读到了类型说明符
-		{
-			TypeSpecification(depth + 1);
-		}
+		ErrorHandle(LACKTYPECOLON);
 		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
@@ -309,23 +248,13 @@ void SyntaxAnalyzer::TypeSpecification(size_t depth) throw()
 		lexical_analyzer_.GetNextToken(token_);
 		if(token_.type_ != Token::LEFT_BRACKET)
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be '[' after \"array\"\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、PROCEDURE FUNCTION BEGIN
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
-			return;	// 数组这里的出错处理太过麻烦，故直接跳过这句，返回结果。
+			ErrorHandle(LACKLEFTBRACKET);
+			return;
 		}
 		lexical_analyzer_.GetNextToken(token_);
 		if(token_.type_ != Token::CONST_INTEGER)
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be a constant integer after '['\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、PROCEDURE FUNCTION BEGIN
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
+			ErrorHandle(LACKCONSTINTEGER);
 			return;
 		}
 #ifdef SYNTAXDEBUG
@@ -334,23 +263,13 @@ void SyntaxAnalyzer::TypeSpecification(size_t depth) throw()
 		lexical_analyzer_.GetNextToken(token_);
 		if(token_.type_ != Token::RIGHT_BRACKET)
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ']' to match '['\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、PROCEDURE FUNCTION BEGIN
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
+			ErrorHandle(LACKRIGHTBRACKET);
 			return;
 		}
 		lexical_analyzer_.GetNextToken(token_);
 		if(token_.type_ != Token::OF)
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"of\" after []\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、PROCEDURE FUNCTION BEGIN
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
+			ErrorHandle(LACKOF);
 			return;
 		}
 		lexical_analyzer_.GetNextToken(token_);
@@ -359,12 +278,7 @@ void SyntaxAnalyzer::TypeSpecification(size_t depth) throw()
 	if(token_.type_ != Token::RW_INTEGER
 		&& token_.type_ != Token::RW_CHAR)	// 若没有类型说明
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"integer\" or \"char\" for type specification\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、PROCEDURE FUNCTION BEGIN
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKRWTYPE);
 		return;
 	}
 #ifdef SYNTAXDEBUG
@@ -384,8 +298,8 @@ void SyntaxAnalyzer::ProcedurePart(size_t depth) throw()
 		SubRoutine(depth + 1);
 		if(Token::SEMICOLON != token_.type_)
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ';' at the end of procedure\n";
-			is_successful_ = false;
+			ErrorHandle(LACKSEMICOLON);
+			//return;	// 暂不返回，待读取分号的下一个单词
 		}
 		lexical_analyzer_.GetNextToken(token_);	// 分程序结束后应读入分号
 	}while(Token::PROCEDURE == token_.type_);
@@ -403,37 +317,17 @@ void SyntaxAnalyzer::ProcedureHead(size_t depth) throw()
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::IDENTIFIER)	// 未找到过程名
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be a procedure name after \"procedure\"\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、PROCEDURE FUNCTION BEGIN
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		if(Token::SEMICOLON == token_.type_)	// 分号后再读一个单词，可能会进入分程序
-		{
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKIDENTIFIER);
 		return;
 	}
 #ifdef SYNTAXDEBUG
 	syntax_process_buffer_ << syntax_format_string_ << "  " << token_.toString() << std::endl;
 #endif
-	// 插入过程名到符号表
-	string proc_name = token_.value_.identifier;	
 	// 继续读取单词
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::LEFT_PAREN)	// 没有读到左括号，视作没有参数
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  redifinition\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、PROCEDURE FUNCTION BEGIN
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		if(Token::SEMICOLON == token_.type_)	// 分号后再读一个单词，可能会进入分程序
-		{
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKLEFTPAREN);
 		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
@@ -444,32 +338,14 @@ void SyntaxAnalyzer::ProcedureHead(size_t depth) throw()
 	}
 	if(token_.type_ != Token::RIGHT_PAREN)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  need ')' to match '('\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、PROCEDURE FUNCTION BEGIN
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		if(Token::SEMICOLON == token_.type_)	// 分号后再读一个单词，可能会进入分程序
-		{
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return ;
+		ErrorHandle(LACKRIGHTPAREN);
+		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::SEMICOLON)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ';' at the end of procedure declaration\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、PROCEDURE FUNCTION BEGIN
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		if(Token::SEMICOLON == token_.type_)
-		{
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return ;
+		ErrorHandle(LACKSEMICOLON);
+		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
 	return ;
@@ -486,8 +362,8 @@ void SyntaxAnalyzer::FunctionPart(size_t depth) throw()
 		SubRoutine(depth + 1);
 		if(Token::SEMICOLON != token_.type_)	// 分程序结束后应读入分号
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ';' at the end of function\n";
-			is_successful_ = false;
+			ErrorHandle(LACKSEMICOLON);
+			return;
 		}
 		lexical_analyzer_.GetNextToken(token_);	// 读入结尾的分号
 	}while(Token::FUNCTION == token_.type_);
@@ -505,38 +381,17 @@ void SyntaxAnalyzer::FunctionHead(size_t depth) throw()
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::IDENTIFIER)	// 未找到函数名
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be a function name after \"function\"\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、BEGIN
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		if(Token::SEMICOLON == token_.type_)
-		{
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return ;
+		ErrorHandle(LACKIDENTIFIER);
+		return;
 	}
 #ifdef SYNTAXDEBUG
 	syntax_process_buffer_ << syntax_format_string_ << "  " << token_.toString() << std::endl;
 #endif
-	// 插入函数名到符号表
-	string func_name = token_.value_.identifier;
-	// 定位
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::LEFT_PAREN)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  redifinition\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、FUNCTION BEGIN
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		if(Token::SEMICOLON == token_.type_)	// 分号后再读一个单词，可能会进入分程序
-		{
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return ;
+		ErrorHandle(LACKLEFTPAREN);
+		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
 	if(	Token::VAR == token_.type_
@@ -546,39 +401,21 @@ void SyntaxAnalyzer::FunctionHead(size_t depth) throw()
 	}
 	if(token_.type_ != Token::RIGHT_PAREN)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  need ')' to match '('\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、FUNCTION BEGIN
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		if(Token::SEMICOLON == token_.type_)	// 分号后再读一个单词，可能会进入分程序
-		{
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return ;
+		ErrorHandle(LACKRIGHTPAREN);
+		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
-	if(token_.type_ != Token::COLON)	// 假设是忘记冒号
+	if(token_.type_ != Token::COLON)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ':' after Parameter Statement\n";
-		is_successful_ = false;
+		ErrorHandle(LACKTYPECOLON);
+		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
 	if(	token_.type_ != Token::RW_INTEGER
 		&& token_.type_ != Token::RW_CHAR)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"integer\" or \"char\" after ':' to specify the return type\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、FUNCTION BEGIN
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		if(Token::SEMICOLON == token_.type_)	// 分号后再读一个单词，可能会进入分程序
-		{
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return ;
+		ErrorHandle(LACKRWTYPE);
+		return;
 	}
 #ifdef SYNTAXDEBUG
 	syntax_process_buffer_ << syntax_format_string_ << "  " << token_.toString() << std::endl;
@@ -586,9 +423,8 @@ void SyntaxAnalyzer::FunctionHead(size_t depth) throw()
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::SEMICOLON)	// 这里有可能是落了分号，所以不再继续读
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ';' at the end of function head\n";
-		is_successful_ = false;
-		return ;
+		ErrorHandle(LACKSEMICOLON);
+		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
 	return ;
@@ -621,16 +457,8 @@ void SyntaxAnalyzer::ParameterTerm(size_t depth) throw()
 	}
 	if(token_.type_ != Token::IDENTIFIER)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be parameter name surrounded by parentheses\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::COMMA  && token_.type_ != Token::SEMICOLON)	// 读到结尾、分号、BEGIN
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		if(Token::IDENTIFIER != token_.type_)
-		{
-			return ;
-		}
+		ErrorHandle(LACKIDENTIFIER);
+		return;
 	}
 #ifdef SYNTAXDEBUG
 	syntax_process_buffer_ << syntax_format_string_ << "  " << token_.toString() << std::endl;
@@ -641,16 +469,8 @@ void SyntaxAnalyzer::ParameterTerm(size_t depth) throw()
 		lexical_analyzer_.GetNextToken(token_);
 		if(token_.type_ != Token::IDENTIFIER)
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be parameter name after ','\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::IDENTIFIER)	// 读到结尾、分号、BEGIN
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
-			if(Token::IDENTIFIER != token_.type_)
-			{
-				return ;
-			}
+			ErrorHandle(LACKIDENTIFIER);
+			return;
 		}
 #ifdef SYNTAXDEBUG
 	syntax_process_buffer_ << syntax_format_string_ << "  " << token_.toString() << std::endl;
@@ -659,25 +479,15 @@ void SyntaxAnalyzer::ParameterTerm(size_t depth) throw()
 	}
 	if(token_.type_ != Token::COLON)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ':' to specify the type after parameter name\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、PROCEDURE FUNCTION BEGIN
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return ;
+		ErrorHandle(LACKTYPECOLON);
+		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
 	if(	token_.type_ != Token::RW_INTEGER
 		&& token_.type_ != Token::RW_CHAR)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"integer\" or \"char\" after ':' to specify the parameter type\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// 读到结尾、分号、PROCEDURE FUNCTION BEGIN
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return ;
+		ErrorHandle(LACKRWTYPE);
+		return;
 	}
 #ifdef SYNTAXDEBUG
 	syntax_process_buffer_ << syntax_format_string_ << "  " << token_.toString() << std::endl;
@@ -687,19 +497,6 @@ void SyntaxAnalyzer::ParameterTerm(size_t depth) throw()
 	return ;
 }
 
-// <实在参数表> ::= <表达式>{,<表达式>}
-void SyntaxAnalyzer::ArgumentList(size_t depth) throw()			// 实参表
-{
-	PrintFunctionFrame("ArgumentList()", depth);
-
-	Expression(depth + 1);
-	while(Token::COMMA == token_.type_)
-	{
-		lexical_analyzer_.GetNextToken(token_);
-		Expression(depth + 1);
-	}
-	return ;
-}
 
 // <复合语句> ::= begin <语句>{;<语句>} end
 void SyntaxAnalyzer::StatementBlockPart(size_t depth) throw()	// 复合语句
@@ -714,16 +511,7 @@ void SyntaxAnalyzer::StatementBlockPart(size_t depth) throw()	// 复合语句
 	}while(token_.type_ == Token::SEMICOLON);
 	if(token_.type_ != Token::END)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"end\" at the end of Statement Block\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		if(Token::END == token_.type_)
-		{
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKSEMICOLON);	// 注：这里大部分出错原因都是缺少了分号，而不是真的忘记写end
 		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
@@ -752,25 +540,9 @@ void SyntaxAnalyzer::Statement(size_t depth) throw()
 		{
 			AssigningStatement(depth + 1);		
 		}
-		else if(Token::COLON == token_.type_
-			|| Token::EQU == token_.type_)	// 此分支专门为了检查赋值号写错的情况
-		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  please check the spelling of the assigning operator\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
-			return;
-		}
 		else
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  syntax error after identifier\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
+			ErrorHandle(LACKASSIGNINGTOKEN);
 			return;
 		}
 		break;
@@ -829,12 +601,7 @@ void SyntaxAnalyzer::AssigningStatement(size_t depth)			// 赋值语句
 		// 语法检查
 		if(token_.type_ != Token::RIGHT_BRACKET)
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ']' to match '['\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
+			ErrorHandle(LACKRIGHTBRACKET);
 			return;
 		}
 		lexical_analyzer_.GetNextToken(token_);
@@ -842,12 +609,7 @@ void SyntaxAnalyzer::AssigningStatement(size_t depth)			// 赋值语句
 	// 语法检查
 	if(token_.type_ != Token::ASSIGN)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  \":=\" doesn't occur in the Assigning Statement\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKASSIGNINGTOKEN);
 		return;
 	}
 
@@ -866,18 +628,11 @@ void SyntaxAnalyzer::Expression(size_t depth) throw()				// 表达式
 	{
 		lexical_analyzer_.GetNextToken(token_);
 	}
-
 	Term(depth + 1);
 
-	Quaternary q_term;
-	ExpressionAttribute new_term;
-	bool is_first_operator = true;
 	while(	Token::PLUS == token_.type_
 		||	Token::MINUS == token_.type_)
 	{
-		// 确定四元式的操作符
-		q_term.op_ = Token::PLUS == token_.type_ ? Quaternary::ADD : Quaternary::SUB;
-		
 		// 读取下一项
 		lexical_analyzer_.GetNextToken(token_);
 		Term(depth + 1);
@@ -891,16 +646,9 @@ void SyntaxAnalyzer::Term(size_t depth) throw()						// 项
 
 	Factor(depth + 1);
 
-	ExpressionAttribute new_factor;
-	Quaternary q_factor;
-	bool is_first_operator = true;
 	while(	token_.type_ == Token::MUL
 		||	token_.type_ == Token::DIV)
 	{
-		// 确定四元式的操作符
-		q_factor.op_ = Token::MUL == token_.type_ ? Quaternary::MUL : Quaternary::DIV;
-
-		// 语法分析：读取下一项
 		lexical_analyzer_.GetNextToken(token_);
 		Factor(depth + 1);
 	}
@@ -931,13 +679,8 @@ void SyntaxAnalyzer::Factor(size_t depth) throw()					// 因子
 			// 语法检查
 			if(token_.type_ != Token::RIGHT_BRACKET)
 			{
-				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ']' to match '['\n";
-				is_successful_ = false;
-				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-				{ 
-					lexical_analyzer_.GetNextToken(token_);
-				}
-				return ;
+				ErrorHandle(LACKRIGHTBRACKET);
+				return;
 			}
 			// 读入右中括号的下一个单词 <bug fixed by mxf at 21:28 1.29 2016>
 			lexical_analyzer_.GetNextToken(token_);
@@ -946,11 +689,6 @@ void SyntaxAnalyzer::Factor(size_t depth) throw()					// 因子
 		{
 			ProcFuncCallStatement(depth + 1);			
 		}
-		else
-		{
-			// 单独的标识符
-		}
-
 	}
 	else if(Token::LEFT_PAREN == token_.type_)	// 括号括起来的表达式
 	{
@@ -961,13 +699,8 @@ void SyntaxAnalyzer::Factor(size_t depth) throw()					// 因子
 		Expression(depth + 1);	// 记录类型
 		if(token_.type_ != Token::RIGHT_PAREN)
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match '('\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
-			return ;
+			ErrorHandle(LACKRIGHTPAREN);
+			return;
 		}
 		lexical_analyzer_.GetNextToken(token_);
 	}
@@ -990,12 +723,8 @@ void SyntaxAnalyzer::Factor(size_t depth) throw()					// 因子
 	else
 	{
 		// 语法：出错处理
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  not a legal Factor\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(WRONGFACTOR);
+		return;
 	}
 	return ;
 }
@@ -1013,12 +742,7 @@ void SyntaxAnalyzer::IfStatement(size_t depth) throw()				// 条件语句
 	// 语法检查
 	if(Token::THEN != token_.type_)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"then\" after Condition\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKTHEN);
 		return;
 	}
 	// 读取if成功后的语句
@@ -1028,7 +752,6 @@ void SyntaxAnalyzer::IfStatement(size_t depth) throw()				// 条件语句
 	// 读取else的语句（如果有的话）
 	if(Token::ELSE == token_.type_)
 	{
-		// 读取else中的语句
 		lexical_analyzer_.GetNextToken(token_);
 		Statement(depth + 1);
 	}
@@ -1054,12 +777,7 @@ void SyntaxAnalyzer::Condition(size_t depth) throw()				// 条件
 		break;
 	// 因为之前已经检查过了，所以正常情况下不可能有default
 	default:
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be logic operator in the middle of Condition\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKLOGICOPERATOR);
 		return;
 		break;
 	}
@@ -1082,9 +800,8 @@ void SyntaxAnalyzer::CaseStatement(size_t depth) throw()			// 情况语句
 	Expression(depth + 1);
 	if(Token::OF != token_.type_)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"of\" to specify the certain case\n";
-		is_successful_ = false;
-		// 这里假设是忘记写of，故不返回
+		ErrorHandle(LACKOF);
+		return;
 	}
 	do
 	{
@@ -1095,16 +812,7 @@ void SyntaxAnalyzer::CaseStatement(size_t depth) throw()			// 情况语句
 	// 检测结束标志
 	if(Token::END != token_.type_)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"end\" at the end of case Statement\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		if(Token::END == token_.type_)
-		{
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKSEMICOLON);
 		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
@@ -1117,15 +825,11 @@ void SyntaxAnalyzer::CaseElement(size_t depth) throw()					// 情况表元素
 	PrintFunctionFrame("CaseElement()", depth);
 
 	if(Token::CONST_INTEGER != token_.type_
-		&& Token::CONST_CHAR != token_.type_)
+	&& Token::CONST_CHAR != token_.type_
+	&& Token::IDENTIFIER != token_.type_)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be constant integer or character or constant variable after \"case\"\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return ;
+		ErrorHandle(LACKCONSTANTORIDENTIFIER);
+		return;
 	}
 #ifdef SYNTAXDEBUG
 	syntax_process_buffer_ << syntax_format_string_ << "  " << token_.toString() << std::endl;
@@ -1136,15 +840,11 @@ void SyntaxAnalyzer::CaseElement(size_t depth) throw()					// 情况表元素
 	{
 		lexical_analyzer_.GetNextToken(token_);
 		if(Token::CONST_INTEGER != token_.type_
-			&& Token::CONST_CHAR != token_.type_)
+		&& Token::CONST_CHAR != token_.type_
+		&& Token::IDENTIFIER != token_.type_)
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be constant integer or character after \"case\"\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
-			return ;
+			ErrorHandle(LACKCONSTANTORIDENTIFIER);
+			return;
 		}
 #ifdef SYNTAXDEBUG
 	syntax_process_buffer_ << syntax_format_string_ << "  " << token_.toString() << std::endl;
@@ -1154,13 +854,8 @@ void SyntaxAnalyzer::CaseElement(size_t depth) throw()					// 情况表元素
 	}
 	if(Token::COLON != token_.type_)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ':' after constant to specify the certain action\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
-		return ;
+		ErrorHandle(LACKCASECOLON);
+		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
 	Statement(depth + 1);
@@ -1180,12 +875,7 @@ void SyntaxAnalyzer::ReadStatement(size_t depth) throw()			// 读语句
 
 	if(Token::LEFT_PAREN != token_.type_)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be '(' to specify the arguments\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKLEFTPAREN);
 		return;
 	}
 	
@@ -1194,12 +884,7 @@ void SyntaxAnalyzer::ReadStatement(size_t depth) throw()			// 读语句
 		lexical_analyzer_.GetNextToken(token_);
 		if(Token::IDENTIFIER != token_.type_)
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be variable name in the location of read argument\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
+			ErrorHandle(LACKIDENTIFIER);
 			return;
 		}
 #ifdef SYNTAXDEBUG
@@ -1216,8 +901,8 @@ void SyntaxAnalyzer::ReadStatement(size_t depth) throw()			// 读语句
 			// 判断右括号
 			if(Token::RIGHT_BRACKET != token_.type_)
 			{
-				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ']' to match '['\n";
-				is_successful_ = false;
+				ErrorHandle(LACKRIGHTBRACKET);
+				return;
 			}
 			else
 			{
@@ -1229,12 +914,7 @@ void SyntaxAnalyzer::ReadStatement(size_t depth) throw()			// 读语句
 	
 	if(Token::RIGHT_PAREN != token_.type_)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKLEFTBRACKET);
 		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
@@ -1254,12 +934,7 @@ void SyntaxAnalyzer::WriteStatement(size_t depth) throw()			// 写语句
 	
 	if(Token::LEFT_PAREN != token_.type_)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be '(' to specify the arguments\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKLEFTPAREN);
 		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
@@ -1284,19 +959,13 @@ void SyntaxAnalyzer::WriteStatement(size_t depth) throw()			// 写语句
 	
 	if(Token::RIGHT_PAREN != token_.type_)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKRIGHTPAREN);
 		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
 }
 
 // <while循环语句> ::= while <条件> do <语句>
-// <while循环语句> ::= while @Label<check> <条件> @JZLabel<end> do <语句> @JMPLabel<check> @Label<end>
 void SyntaxAnalyzer::WhileLoopStatement(size_t depth) throw()			// while循环语句
 {
 	PrintFunctionFrame("WhileLoopStatement()", depth);
@@ -1308,12 +977,7 @@ void SyntaxAnalyzer::WhileLoopStatement(size_t depth) throw()			// while循环语句
 	// 语法检查
 	if(Token::DO != token_.type_)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"do\" before loop body\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKDO);
 		return;
 	}
 	// 读入循环体的第一个单词
@@ -1323,9 +987,6 @@ void SyntaxAnalyzer::WhileLoopStatement(size_t depth) throw()			// while循环语句
 }
 
 // <for循环语句> ::= for <标识符> := <表达式> （downto | to） <表达式> do <语句>
-// <for循环语句> ::= for <标识符> := <表达式> （downto | to）
-// @ASG<init> @JMPLABEL<check> @Label<vary> @ASG<vary> @Label<check> <表达式> @JZLABEL<end> 
-// do <语句>@JMPLABEL<vary>@Label<end>
 void SyntaxAnalyzer::ForLoopStatement(size_t depth) throw()			// for循环语句
 {
 	PrintFunctionFrame("ForLoopStatement()", depth);
@@ -1336,12 +997,7 @@ void SyntaxAnalyzer::ForLoopStatement(size_t depth) throw()			// for循环语句
 	lexical_analyzer_.GetNextToken(token_);
 	if(Token::IDENTIFIER != token_.type_)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be loop variable name after for\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKIDENTIFIER);
 		return;
 	}
 #ifdef SYNTAXDEBUG
@@ -1351,12 +1007,7 @@ void SyntaxAnalyzer::ForLoopStatement(size_t depth) throw()			// for循环语句
 	lexical_analyzer_.GetNextToken(token_);
 	if(Token::ASSIGN != token_.type_)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \":=\" after loop variable\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKASSIGNINGTOKEN);
 		return;
 	}
 	// 读取表达式
@@ -1367,12 +1018,7 @@ void SyntaxAnalyzer::ForLoopStatement(size_t depth) throw()			// for循环语句
 	if(Token::DOWNTO != token_.type_
 		&& Token::TO != token_.type_)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"to\" or \"downto\" after variable assigning\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKTO_DOWNTO);
 		return;
 	}
 	// 保存递增/减符号
@@ -1384,12 +1030,7 @@ void SyntaxAnalyzer::ForLoopStatement(size_t depth) throw()			// for循环语句
 	// 读取DO
 	if(Token::DO != token_.type_)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be do after loop head\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKDO);
 		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
@@ -1420,32 +1061,255 @@ void SyntaxAnalyzer::ProcFuncCallStatement(size_t depth)	// 过程调用语句
 	// 语法检查
 	if(Token::LEFT_PAREN != token_.type_)
 	{
-		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be '(' to specify the argument\n";
-		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-		{ 
-			lexical_analyzer_.GetNextToken(token_);
-		}
+		ErrorHandle(LACKLEFTPAREN);
 		return;
 	}
 	// 语法：读入右括号或参数表的第一个单词
 	lexical_analyzer_.GetNextToken(token_);
 	// 语法：读参数
-	// TODO 在语义代码中作相应修改
 	if(Token::RIGHT_PAREN != token_.type_)
 	{
 		ArgumentList(depth + 1);
 		// 语法检查
 		if(Token::RIGHT_PAREN != token_.type_)
 		{
-			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
-			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// 读到结尾或分号或END
-			{ 
-				lexical_analyzer_.GetNextToken(token_);
-			}
+			ErrorHandle(LACKRIGHTPAREN);
 			return;
 		}
 	}
 	lexical_analyzer_.GetNextToken(token_);
+}
+
+
+// <实在参数表> ::= <表达式>{,<表达式>}
+void SyntaxAnalyzer::ArgumentList(size_t depth) throw()			// 实参表
+{
+	PrintFunctionFrame("ArgumentList()", depth);
+
+	Expression(depth + 1);
+	while(Token::COMMA == token_.type_)
+	{
+		lexical_analyzer_.GetNextToken(token_);
+		Expression(depth + 1);
+	}
+	return ;
+}
+
+void SyntaxAnalyzer::ErrorHandle(ErrorType error_type) throw()
+{
+	using std::cout;
+	is_successful_ = false;
+	int offset = lexical_analyzer_.GetLine(token_.lineNumber_).find_first_not_of(" \t\n");
+	int count = lexical_analyzer_.GetLine(token_.lineNumber_).find_last_not_of(" \t\n") - offset + 1;
+	string errline = offset == string::npos ? "" : lexical_analyzer_.GetLine(token_.lineNumber_).substr(offset, count);
+
+	cout << "syntax error(" << error_type << ")";
+	//switch(error_type)
+	//{
+	//case LACKENDINGPERIOD:
+	//	cout << "\nerror info: lack '.' at the end of program\n";
+	//	break;
+	//case WRONGENDINGTOKEN:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be '.' at the end of program\n";
+	//	break;
+	//case REDUNDANTTOOKEN:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "redundant token after '.'\n";
+	//	break;
+	//case NOSTATEMENTBLOCK:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "didn't find statement block in subroutine\n";
+	//	break;
+	//case LACKSEMICOLON:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be ';' after the sentence(or do you forget ','?)\n";
+	//	break;
+	//case LACKIDENTIFIER:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be an identifier\n";
+	//	break;
+	//case LACKEQU:	// 只在常量定义时出现
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be '=' after identifier\n";
+	//	break;
+	//case LACKCONSTANT:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be constant integer or character\n";
+	//	break;
+	//case LACKTYPECOLON:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be ':' to specify the type\n";
+	//	break;
+	//case LACKLEFTBRACKET:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be '[' to specify an array\n";
+	//	break;
+	//case LACKRIGHTBRACKET:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be ']' to match '['\n";
+	//	break;
+	//case LACKCONSTINTEGER:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "need a constant integer\n";
+	//	break;
+	//case LACKOF:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be \"of\" after [] to specify array type\n";
+	//	break;
+	//case LACKRWTYPE:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be \"integer\" or \"char\" for type specification\n";
+	//	break;
+	//case LACKLEFTPAREN:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be '('\n";
+	//	break;
+	//case LACKRIGHTPAREN:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be ')' to match '('\n";
+	//	break;
+	//case LACKASSIGNINGTOKEN:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be \":=\"\n";
+	//	break;
+	//case WRONGFACTOR:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "illegal factor, should be a value or variable\n";
+	//	break;
+	//case LACKTHEN:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "need \"then\" after if condition\n";
+	//	break;
+	//case LACKLOGICOPERATOR:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be a logic operator or \"then\"\n";
+	//	break;
+	//case LACKCONSTANTORIDENTIFIER:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be constant integer or character or identifier\n";
+	//	break;
+	//case LACKCASECOLON:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be ':' to specify the case action\n";
+	//	break;
+	//case LACKDO:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be \"do\" before loop body\n";
+	//	break;
+	//case LACKTO_DOWNTO:
+	//	cout << "  line " << token_.lineNumber_ << ": " << lexical_analyzer_.GetLine(token_.lineNumber_)
+	//		 << "  error token: " << token_.toString() << "\nerror info: " << "should be \"to\" or \"downto\" after variable assigning\n";
+	//	break;
+	//default:
+	//	// 未知错误
+	//	assert(false);
+	//	break;
+	//}
+	switch(error_type)
+	{
+	case LACKENDINGPERIOD:
+		cout << "\nerror info: lack '.' at the end of program\n";
+		break;
+	case WRONGENDINGTOKEN:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be '.' at the end of program\n";
+		break;
+	case REDUNDANTTOOKEN:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "redundant token after '.'\n";
+		break;
+	case NOSTATEMENTBLOCK:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "didn't find statement block in subroutine\n";
+		break;
+	case LACKSEMICOLON:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be ';' after the sentence(or do you forget ','?)\n";
+		break;
+	case LACKIDENTIFIER:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be an identifier\n";
+		break;
+	case LACKEQU:	// 只在常量定义时出现
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be '=' after identifier\n";
+		break;
+	case LACKCONSTANT:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be constant integer or character\n";
+		break;
+	case LACKTYPECOLON:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be ':' to specify the type\n";
+		break;
+	case LACKLEFTBRACKET:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be '[' to specify an array\n";
+		break;
+	case LACKRIGHTBRACKET:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be ']' to match '['\n";
+		break;
+	case LACKCONSTINTEGER:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "need a constant integer\n";
+		break;
+	case LACKOF:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be \"of\" after [] to specify array type\n";
+		break;
+	case LACKRWTYPE:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be \"integer\" or \"char\" for type specification\n";
+		break;
+	case LACKLEFTPAREN:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be '('\n";
+		break;
+	case LACKRIGHTPAREN:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be ')' to match '('\n";
+		break;
+	case LACKASSIGNINGTOKEN:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be \":=\"\n";
+		break;
+	case WRONGFACTOR:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "illegal factor, should be a value or variable\n";
+		break;
+	case LACKTHEN:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "need \"then\" after if condition\n";
+		break;
+	case LACKLOGICOPERATOR:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be a logic operator or \"then\"\n";
+		break;
+	case LACKCONSTANTORIDENTIFIER:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be constant integer or character or identifier\n";
+		break;
+	case LACKCASECOLON:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be ':' to specify the case action\n";
+		break;
+	case LACKDO:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be \"do\" before loop body\n";
+		break;
+	case LACKTO_DOWNTO:
+		cout << "  line " << token_.lineNumber_ << ": " << errline
+			 << " \terror token: " << token_.toString() << "\nerror info: " << "should be \"to\" or \"downto\" after variable assigning\n";
+		break;
+	default:
+		// 未知错误
+		assert(false);
+		break;
+	}
+	while(Token::NIL != token_.type_ && Token::SEMICOLON != token_.type_)	// 读完整条语句
+	{
+		lexical_analyzer_.GetNextToken(token_);
+	}
 }

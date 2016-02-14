@@ -209,8 +209,12 @@ size_t TokenTable::size() const throw()
 // iter指向符号表中的过程/函数项
 vector<ExpressionAttribute> TokenTable::GetProcFuncParameterAttributes(const_iterator iter) throw()
 {
-	assert(iter != rows_.end());
+	//assert(iter != rows_.end());
 	vector<ExpressionAttribute> attributes;
+	if(rows_.end() == iter)
+	{
+		return attributes;
+	}
 	ExpressionAttribute cur_attr;
 	++iter;
 	while(iter != rows_.end() && TokenTableItem::PARAMETER == iter->itemtype_)

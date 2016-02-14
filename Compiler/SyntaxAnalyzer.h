@@ -13,6 +13,13 @@ public:
 	bool Print(const string &filename) const throw();
 	void Print(std::ostream &output) const throw();
 private:
+
+	enum ErrorType{
+		LACKENDINGPERIOD, WRONGENDINGTOKEN, REDUNDANTTOOKEN, NOSTATEMENTBLOCK, LACKSEMICOLON, LACKIDENTIFIER, LACKEQU,
+		LACKCONSTANT, LACKTYPECOLON, LACKCASECOLON, LACKLEFTBRACKET, LACKRIGHTBRACKET, LACKLEFTPAREN, LACKRIGHTPAREN, LACKCONSTINTEGER, LACKOF, 
+		LACKRWTYPE, LACKASSIGNINGTOKEN, WRONGFACTOR, LACKTHEN, LACKLOGICOPERATOR, LACKCONSTANTORIDENTIFIER, LACKDO, LACKTO_DOWNTO,
+	};
+
 	SyntaxAnalyzer(const SyntaxAnalyzer&) throw();
 	
 	void PrintFunctionFrame(const char *func_name, size_t depth) throw();// 输出函数帧信息，depth是语法分析时的函数调用深度
@@ -33,7 +40,6 @@ private:
 	void FunctionHead(size_t depth) throw();			// 函数首部
 	void ParameterList(size_t depth) throw();			// 形参表
 	void ParameterTerm(size_t depth) throw();			// 形参段
-	void ArgumentList(size_t depth) throw();// 实参表
 
 	void StatementBlockPart(size_t depth) throw();		// 复合语句部分
 	void Statement(size_t depth) throw();				// 语句
@@ -59,7 +65,9 @@ private:
 	void BreakStatement(size_t depth) throw();			// break
 
 	void ProcFuncCallStatement(size_t depth) throw();	// 过程/函数调用语句
+	void ArgumentList(size_t depth) throw();// 实参表
 
+	void ErrorHandle(ErrorType error_type) throw();
 
 	// 数据成员
 	LexicalAnalyzer &lexical_analyzer_;		// 绑定的词法分析器

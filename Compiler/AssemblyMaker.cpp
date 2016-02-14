@@ -90,7 +90,8 @@ void AssemblyMaker::DataSegment() throw()
 			iter != stringtable_[i].end(); ++iter)
 		{
 			// 每48个整数换一行（如果设为极限，即49个数换行，但最后还有一个0，加上之后可能就超了
-			if(iter != stringtable_[i].begin() && distance(iter, stringtable_[i].begin()) % 47 == 0)	
+			// 更新：不知为何，这次实验时，33个整数就超了...
+			if(iter != stringtable_[i].begin() && distance(iter, stringtable_[i].begin()) % 31 == 0)	
 			{
 				assemble_buffer << static_cast<int>(*iter) << "\n	                     db ";
 			}
