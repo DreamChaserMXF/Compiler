@@ -102,6 +102,8 @@ map<Token::TokenType, string> Token::InitTokenTypeToStringMap() throw()
 	tsMap.insert(map<TokenType,string>::value_type(MINUS,				"MINUS"					));
 	tsMap.insert(map<TokenType,string>::value_type(MUL,					"MUL"					));
 	tsMap.insert(map<TokenType,string>::value_type(DIV,					"DIV"					));
+	tsMap.insert(map<TokenType,string>::value_type(LOGICOR,				"OR"					));
+	tsMap.insert(map<TokenType,string>::value_type(LOGICAND,			"AND"					));
 	tsMap.insert(map<TokenType,string>::value_type(LT,					"LT"					));
 	tsMap.insert(map<TokenType,string>::value_type(LEQ,					"LEQ"					));
 	tsMap.insert(map<TokenType,string>::value_type(GT,					"GT"					));

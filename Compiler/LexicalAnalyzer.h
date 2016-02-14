@@ -44,6 +44,8 @@ private:
 	void LetterHandle			(Token &token, char &ch) throw();				// 处理字母
 	void StringHandle			(Token &token, char &ch) throw(LexException);	// 处理字符串常量
 	void CharHandle				(Token &token, char &ch) throw(LexException);	// 处理字符常量
+	void LogicOrHandle			(Token &token, char &ch) throw(LexException);	// 处理逻辑或
+	void LogicAndHandle			(Token &token, char &ch) throw(LexException);	// 处理逻辑与	
 	void ColonHandle			(Token &token, char &ch) throw();				// 处理冒号
 	void LessthanHandle			(Token &token, char &ch) throw();				// 处理小于号
 	void GreaterthanHandle		(Token &token, char &ch) throw();				// 处理大于号

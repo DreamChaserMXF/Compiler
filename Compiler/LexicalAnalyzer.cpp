@@ -55,11 +55,10 @@ bool LexicalAnalyzer::Parse() throw()							// 进行词法分析
 			isSuccessful = false;
 			std::cout << ex.what() << std::endl;
 			// 进行词法错误恢复
-			do
+			while(ch != '\0' && !isspace(ch))
 			{
 				ch = getNextChar();
 			}
-			while(ch != '\0' && !isspace(ch));
 			token.type_ = Token::NIL;
 			continue;
 		}
@@ -239,6 +238,15 @@ void LexicalAnalyzer::ParseCurrentToken(Token &token, char &ch) throw(LexExcepti
 	{
 		CharHandle(token, ch);
 	}
+	// 双字符的情况
+	else if('|' == ch)
+	{
+		LogicOrHandle(token, ch);
+	}
+	else if('&' == ch)
+	{
+		LogicAndHandle(token, ch);
+	}
 	// 可能为单字符或双字符的情况
 	else if(':' == ch)
 	{
@@ -416,7 +424,7 @@ void LexicalAnalyzer::StringHandle(Token &token, char &ch) throw(LexException)		
 	}
 	else
 	{
-		throw LexException("wrong string constant definition: require \" as an end sign", ch, currentline_);
+		throw LexException("wrong string constant : require \" as an end sign", ch, currentline_);
 	}
 }
 void LexicalAnalyzer::CharHandle(Token &token, char &ch) throw(LexException)						// 处理字符常量
@@ -425,7 +433,7 @@ void LexicalAnalyzer::CharHandle(Token &token, char &ch) throw(LexException)				
 	ch = getNextChar();	// 读取单引号后面的那个字符
 	if(!isprint(ch))	// 判断是不是字母或者数字
 	{
-		throw LexException("wrong character constant definition: require letter after \"'\"", ch, currentline_);
+		throw LexException("wrong character constant: require letter after \"'\"", ch, currentline_);
 	}
 	else	// 读取结束的单引号
 	{
@@ -442,11 +450,43 @@ void LexicalAnalyzer::CharHandle(Token &token, char &ch) throw(LexException)				
 		}
 		else	// 如果不是单引号
 		{
-			throw LexException("wrong character constant definition: require \"'\"", ch, currentline_);
+			throw LexException("wrong character constant: require \"'\"", ch, currentline_);
 		}
 	}
 }
-
+void LexicalAnalyzer::LogicOrHandle(Token &token, char &ch) throw(LexException)	// 处理逻辑或
+{
+	token.value_.identifier.clear();
+	token.value_.identifier.push_back(ch);
+	token.lineNumber_ = currentline_;
+	ch = getNextChar();// 读取|的下一个符号
+	if('|' == ch)
+	{
+		token.value_.identifier.push_back('|');
+		token.type_ = Token::LOGICOR;
+	}
+	else
+	{
+		throw LexException("wrong logic or: require another '|'", ch, currentline_);
+	}
+}
+void LexicalAnalyzer::LogicAndHandle(Token &token, char &ch) throw(LexException)	// 处理逻辑与
+{
+	token.value_.identifier.clear();
+	token.value_.identifier.push_back(ch);
+	token.lineNumber_ = currentline_;
+	ch = getNextChar();// 读取|的下一个符号
+	if('&' == ch)
+	{
+		token.value_.identifier.push_back(ch);
+		token.type_ = Token::LOGICAND;
+		ch = getNextChar();
+	}
+	else
+	{
+		throw LexException("wrong logic and: require another '&'", ch, currentline_);
+	}
+}
 void LexicalAnalyzer::ColonHandle(Token &token, char &ch) throw()					// 处理冒号
 {
 	token.value_.identifier.clear();
