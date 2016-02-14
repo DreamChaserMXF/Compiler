@@ -1,147 +1,110 @@
 Parse()
 |   Routine()
 |   |   SubRoutine()
+|   |   |   ConstantPart()
+|   |   |   |   constantDefination()
+|   |   |   |     IDENTIFIER  c
+|   |   |   |     CONST_INTEGER  1
+|   |   |   |   constantDefination()
+|   |   |   |     IDENTIFIER  d
+|   |   |   |     CONST_INTEGER  2
 |   |   |   VariablePart()
 |   |   |   |   VariableDefinition()
-|   |   |   |     IDENTIFIER  sequence
+|   |   |   |     IDENTIFIER  a
+|   |   |   |     IDENTIFIER  b
 |   |   |   |   |   TypeSpecification()
-|   |   |   |   |     ARRAY
-|   |   |   |   |     CONST_INTEGER  10
 |   |   |   |   |     RW_INTEGER
-|   |   |   FunctionPart()
-|   |   |   |   FunctionHead()
-|   |   |   |     IDENTIFIER  func
-|   |   |   |   |   ParameterList()
-|   |   |   |   |   |   ParameterTerm()
-|   |   |   |   |   |     IDENTIFIER  i
-|   |   |   |   |   |     IDENTIFIER  j
-|   |   |   |   |   |     RW_INTEGER
-|   |   |   |   |   |     RW_INTEGER
+|   |   |   ProcedurePart()
+|   |   |   |   ProcedureHead()
+|   |   |   |     IDENTIFIER  proc
 |   |   |   |   SubRoutine()
-|   |   |   |   |   VariablePart()
-|   |   |   |   |   |   VariableDefinition()
-|   |   |   |   |   |     IDENTIFIER  tmp
-|   |   |   |   |   |   |   TypeSpecification()
-|   |   |   |   |   |   |     RW_INTEGER
 |   |   |   |   |   StatementBlockPart()
 |   |   |   |   |   |   Statement()
-|   |   |   |   |   |     IDENTIFIER  tmp
-|   |   |   |   |   |   |   AssigningStatement()
-|   |   |   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |     IDENTIFIER  i
-|   |   |   |   |   |   Statement()
-|   |   |   |   |   |     IDENTIFIER  i
-|   |   |   |   |   |   |   AssigningStatement()
-|   |   |   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |     IDENTIFIER  j
-|   |   |   |   |   |   Statement()
-|   |   |   |   |   |     IDENTIFIER  j
-|   |   |   |   |   |   |   AssigningStatement()
-|   |   |   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |     IDENTIFIER  tmp
+|   |   |   |   ProcedureHead()
+|   |   |   |     IDENTIFIER  proc2
+|   |   |   |   SubRoutine()
+|   |   |   |   |   StatementBlockPart()
 |   |   |   |   |   |   Statement()
 |   |   |   StatementBlockPart()
 |   |   |   |   Statement()
-|   |   |   |     IDENTIFIER  sequence
-|   |   |   |   |   AssigningStatement()
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     CONST_INTEGER  0
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     CONST_INTEGER  3
-|   |   |   |   Statement()
-|   |   |   |     IDENTIFIER  sequence
+|   |   |   |     IDENTIFIER  a
 |   |   |   |   |   AssigningStatement()
 |   |   |   |   |   |   Expression()
 |   |   |   |   |   |   |   Term()
 |   |   |   |   |   |   |   |   Factor()
 |   |   |   |   |   |   |   |     CONST_INTEGER  1
+|   |   |   |   Statement()
+|   |   |   |     IDENTIFIER  b
+|   |   |   |   |   AssigningStatement()
 |   |   |   |   |   |   Expression()
 |   |   |   |   |   |   |   Term()
 |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     CONST_INTEGER  7
+|   |   |   |   |   |   |   |     CONST_INTEGER  -1
 |   |   |   |   Statement()
-|   |   |   |   |   WriteStatement()
-|   |   |   |   |     WRITE
-|   |   |   |   |     CONST_STRING  sequence[0] = 
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     IDENTIFIER  sequence
-|   |   |   |   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  0
-|   |   |   |   Statement()
-|   |   |   |   |   WriteStatement()
-|   |   |   |   |     WRITE
-|   |   |   |   |     CONST_STRING  sequence[1] = 
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     IDENTIFIER  sequence
-|   |   |   |   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  1
-|   |   |   |   Statement()
-|   |   |   |     IDENTIFIER  func
-|   |   |   |   |   ProcFuncCallStatement()
-|   |   |   |   |   |   ArgumentList()
-|   |   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |     IDENTIFIER  sequence
-|   |   |   |   |   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  0
-|   |   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |     IDENTIFIER  sequence
-|   |   |   |   |   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  1
-|   |   |   |   Statement()
-|   |   |   |   |   WriteStatement()
-|   |   |   |   |     WRITE
-|   |   |   |   |     CONST_STRING  
-after swap, sequence[0] = 
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     IDENTIFIER  sequence
-|   |   |   |   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  0
-|   |   |   |   Statement()
-|   |   |   |   |   WriteStatement()
-|   |   |   |   |     WRITE
-|   |   |   |   |     CONST_STRING  sequence[1] = 
-|   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |     IDENTIFIER  sequence
-|   |   |   |   |   |   |   |   |   Expression()
-|   |   |   |   |   |   |   |   |   |   Term()
-|   |   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  1
+|   |   |   |   |   IfStatement()
+|   |   |   |   |   |   Condition()
+|   |   |   |   |   |   |   BoolExpression()
+|   |   |   |   |   |   |   |   BoolTerm()
+|   |   |   |   |   |   |   |   |   BoolFactor()
+|   |   |   |   |   |   |   |   |   |   IsExpression()
+|   |   |   |   |   |   |   |   |   |   |   ExpressionTest()
+|   |   |   |   |   |   |   |   |   |   |   |   TermTest()
+|   |   |   |   |   |   |   |   |   |   |   |   |   FactorTest()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   ExpressionTest()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   TermTest()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   FactorTest()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |     IDENTIFIER  a
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   TermTest()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   FactorTest()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |     IDENTIFIER  b
+|   |   |   |   |   |   |   |   |   |   BoolExpression()
+|   |   |   |   |   |   |   |   |   |   |   BoolTerm()
+|   |   |   |   |   |   |   |   |   |   |   |   BoolFactor()
+|   |   |   |   |   |   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |     IDENTIFIER  a
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |     IDENTIFIER  b
+|   |   |   |   |   |   |   |   |   |   |   |   BoolFactor()
+|   |   |   |   |   |   |   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |     IDENTIFIER  c
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |     IDENTIFIER  d
+|   |   |   |   |   |   Statement()
+|   |   |   |   |   |   |   WriteStatement()
+|   |   |   |   |   |   |     WRITE
+|   |   |   |   |   |   |     CONST_STRING  1
+|   |   |   |   |   |   Statement()
+|   |   |   |   |   |   |   WriteStatement()
+|   |   |   |   |   |   |     WRITE
+|   |   |   |   |   |   |     CONST_STRING  bug
 |   |   |   |   Statement()
 |   |   |   |   |   WriteStatement()
 |   |   |   |   |     WRITE
 |   |   |   |   |     CONST_STRING  
 
+|   |   |   |   Statement()
+|   |   |   |     IDENTIFIER  c
+|   |   |   |   |   ProcFuncCallStatement()
+|   |   |   |   Statement()
+|   |   |   |     IDENTIFIER  c
+|   |   |   |   |   AssigningStatement()
+|   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |     IDENTIFIER  aa
+|   |   |   |   Statement()
+|   |   |   |     IDENTIFIER  proc
+|   |   |   |   |   ProcFuncCallStatement()
+|   |   |   |   |   |   ArgumentList()
+|   |   |   |   |   |   |   Expression()
+|   |   |   |   |   |   |   |   Term()
+|   |   |   |   |   |   |   |   |   Factor()
+|   |   |   |   |   |   |   |   |     IDENTIFIER  c
 |   |   |   |   Statement()
 

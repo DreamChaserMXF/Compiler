@@ -147,6 +147,15 @@ bool LexicalAnalyzer::GetNextToken(Token &token) throw()	// 获取下一符号
 		return false;
 	}
 }
+vector<Token>::const_iterator LexicalAnalyzer::GetTokenPosition() const throw()
+{
+	return token_iter_;
+}
+
+void LexicalAnalyzer::SetTokenPosition(vector<Token>::const_iterator iter) throw()
+{
+	token_iter_ = iter;
+}
 
 string LexicalAnalyzer::GetLine(size_t line_no) throw()
 {

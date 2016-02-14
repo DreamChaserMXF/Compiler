@@ -46,12 +46,21 @@ private:
 
 	void AssigningStatement(size_t depth) throw();	// 赋值语句
 
-	void Expression(size_t depth) throw();	// 表达式，返回表达式的类型
-	void Term(size_t depth) throw();		// 项
-	void Factor(size_t depth) throw();		// 因子
+	void Expression(size_t depth) throw();		// 表达式
+	void Term(size_t depth) throw();			// 项
+	void Factor(size_t depth) throw();			// 因子
 
-	void IfStatement(size_t depth) throw();			// 条件语句
-	void Condition(size_t depth) throw();// 条件
+	void IfStatement(size_t depth) throw();		// 条件语句
+	void Condition(size_t depth) throw();		// 条件
+	void BoolExpression(size_t depth) throw();	// 布尔表达式
+	void BoolTerm(size_t depth) throw();		// 布尔项
+	void BoolFactor(size_t depth) throw();		// 布尔因子
+	bool IsExpression(size_t depth) throw();
+	bool ExpressionTest(size_t depth) throw();
+	bool TermTest(size_t depth) throw();
+	bool FactorTest(size_t depth) throw();
+	bool ProcFuncCallStatementTest(size_t depth) throw();	// 过程/函数调用语句
+	bool ArgumentListTest(size_t depth) throw();// 实参表
 
 	void CaseStatement(size_t depth) throw();			// 情况语句
 	void CaseElement(size_t depth) throw();	// 情况表元素

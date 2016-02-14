@@ -31,6 +31,8 @@ public:
 	void Print(ostream &output) const throw();			// 输出到流
 	void ResetTokenPos() throw();						// 重置符号vector的迭代器token_vector_的位置
 	bool GetNextToken(Token &token) throw();			// 获取下一符号，成功则返回true，读到符号尾则返回false
+	vector<Token>::const_iterator GetTokenPosition() const throw();	// 获得当前的token迭代器
+	void SetTokenPosition(vector<Token>::const_iterator iter) throw();	// 设置当前的token迭代器
 	string GetLine(size_t line_no) throw();
 	vector<string> getStringTable() const throw();		// 获得常量字符串表
 private:
