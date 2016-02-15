@@ -24,11 +24,11 @@ feature:
 4.2 escape character handling
 4.3 continue and break among loop body
 4.4 automatic type inference when calling write()
-4.5 minimized the number of temporary variables
-4.6 optimized the constant operating process while compiling
+4.5 minimize the number of temporary variables
+4.6 optimize the constant operating process while compiling
+*4.7 support compound condition statement, such as (a > b && c > d || 1 + 3 && 2 || e), and do plenty of optimization for it
 
 5. limitation
-5.1 only supports simple condition statement(if a > b), doesn't support compound condition statement such as (a > b || c < d)
-5.2 only support single file compiling
-5.3 no general optimization in intermediate code
-5.4 only for intel-x86 architecture with 32 bits assembly language.
+5.1 only support single file compiling
+5.2 no general optimization in intermediate code
+5.3 only for intel-x86 architecture with 32 bits assembly language.
