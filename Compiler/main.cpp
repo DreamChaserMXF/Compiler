@@ -161,8 +161,8 @@ int main(int argc, char *argv[])
 		remove((object_truncated_file + ".obj").c_str());
 		remove((object_truncated_file + ".exe").c_str());
 		// ª„±‡
-		string ml_command = "masm32\\bin\\ml.exe /c /coff ";
-		string link_command = "masm32\\bin\\link.exe /SUBSYSTEM:CONSOLE /OPT:NOREF ";
+		string ml_command = "masm32\\masmbin\\ml.exe /c /coff ";
+		string link_command = "masm32\\masmbin\\link.exe /SUBSYSTEM:CONSOLE /OPT:NOREF ";
 		system((ml_command + object_relative_path + ".asm").c_str());
 		system((link_command + object_truncated_file + ".obj").c_str());
 		// ‘À––
