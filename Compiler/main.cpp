@@ -32,18 +32,18 @@ int main(int argc, char *argv[])
 	kCodeFileNames[10] = "TestCase\\10_procedure_reference_parameter.cpp";
 	kCodeFileNames[11] = "TestCase\\11_function_reference_parameter.cpp";
 
-	kInputFileNames[0] = "TestCase\\00input_generaltest.txt";
-	kInputFileNames[1] = "TestCase\\01input_write.txt";
-	kInputFileNames[2] = "TestCase\\02input_read.txt";
-	kInputFileNames[3] = "TestCase\\03input_arithmetic.txt";
-	kInputFileNames[4] = "TestCase\\04input_condition.txt";
-	kInputFileNames[5] = "TestCase\\05input_array.txt";
-	kInputFileNames[6] = "TestCase\\06input_loop.txt";
-	kInputFileNames[7] = "TestCase\\07input_procedurecall.txt";
-	kInputFileNames[8] = "TestCase\\08input_functioncall_factorial.txt";
-	kInputFileNames[9] = "TestCase\\09input_functioncall_statement_extension.txt";
-	kInputFileNames[10] = "TestCase\\10input_procedure_reference_parameter.txt";
-	kInputFileNames[11] = "TestCase\\11input_function_reference_parameter.txt";
+	kInputFileNames[0] = "TestCase\\00_input_generaltest.txt";
+	kInputFileNames[1] = "TestCase\\01_input_write.txt";
+	kInputFileNames[2] = "TestCase\\02_input_read.txt";
+	kInputFileNames[3] = "TestCase\\03_input_arithmetic.txt";
+	kInputFileNames[4] = "TestCase\\04_input_condition.txt";
+	kInputFileNames[5] = "TestCase\\05_input_array.txt";
+	kInputFileNames[6] = "TestCase\\06_input_loop.txt";
+	kInputFileNames[7] = "TestCase\\07_input_procedurecall.txt";
+	kInputFileNames[8] = "TestCase\\08_input_functioncall_factorial.txt";
+	kInputFileNames[9] = "TestCase\\09_input_functioncall_statement_extension.txt";
+	kInputFileNames[10] = "TestCase\\10_input_procedure_reference_parameter.txt";
+	kInputFileNames[11] = "TestCase\\11_input_function_reference_parameter.txt";
 
 	// 输出的文件
 	const string kTokenFileName			= "TestCase\\result1_tokenlist.txt";
@@ -59,9 +59,10 @@ int main(int argc, char *argv[])
 	//freopen("TestCase\\testinput.txt", "r", stdin);
 	for(int i = 0; i < 12; ++i)
 	{
-		if(i > 0) break;
+		//if(i > 4) break;
 		//if(i != 6 && i != 7) continue;
-		cout <<"i = " <<  i << endl;
+		cout <<"\ni = " <<  i << endl;
+		Sleep(1000);
 		// 输入重定向
 		freopen(kInputFileNames[i].c_str(), "r", stdin);
 
@@ -158,7 +159,7 @@ int main(int argc, char *argv[])
 		string object_truncated_file = object_relative_path.substr(object_relative_path.find('\\') + 1, object_relative_path.length() - object_relative_path.find('\\') - 1);
 		// 删除原有文件
 		remove((object_truncated_file + ".obj").c_str());
-		//remove((object_truncated_file + ".exe").c_str());
+		remove((object_truncated_file + ".exe").c_str());
 		// 汇编
 		string ml_command = "masm32\\bin\\ml.exe /c /coff ";
 		string link_command = "masm32\\bin\\link.exe /SUBSYSTEM:CONSOLE /OPT:NOREF ";

@@ -146,13 +146,31 @@ EAX, EDX用作计算，EBP用作基指针，EBX用作计算外层的EBP。ECX用作计算数组下标的偏移
 在语义分析和中间代码生成时，测试函数可以照搬语法分析的测试函数，因为单从语法结构上就可判定是算术表达式还是布尔表达式。
 语义分析中，布尔表达式、布尔项与布尔因子，由于不需要处理标识符和符号表，故这三个函数和语法分析中的也是一样的。
 
-在中间代码生成的过程优化中，优化的地点为：
-1. 当BoolFactor中只是一个简单的条件判断，而非复杂的布尔表达式时，可在BoolTerm中分析完BoolFactor后，取消一个Label的设置（该Label专门为当BooLFactor为布尔表达式时设定）；
-2. 当BoolTerm中只有一个Factor，且Factor为简单条件时，可在BoolTerm中取消最后一个向积极标识跳转的语句，并更改BoolFactor中唯一一个跳转语句，将其由“否定则跳转至消极标志”改为“肯定则跳转至积极标志”
-3. 当BoolTerm中只有一个Factor，且Factor为简单条件时，可在BoolExpression中取消一个Label的设置（该Label专门为当BooLTerm中有多个BoolFactor，或仅有一个BoolFactor但其为布尔表达式时设定）。此时还须更改BoolTerm中唯一一个跳转语句的指令。
-4. 当BoolExpression中只有一个简单的BoolTerm时，可取消BoolExpression中最后一个向消极标识跳转的语句，并更改BoolTerm中唯一一个跳转语句，将其由“肯定则跳转至积极标志”改为“否定则跳转至消极标志”
-5. 对BoolTerm中最后一个BoolFactor，以及BoolExpression中最后一个BoolTerm的优化：
-	因为BoolTerm中最后一个BoolFactor可能有跳转至label_negative的跳转语句，然而最后一个BoolFactor的label_negative之后紧跟着的就是JMP语句，故将最后一个BoolFactor中的跳转至label_negative的跳转语句的跳转地址改为label_negative之后紧跟着的JMP语句的跳转地址
-	BoolExpression中同理
-6. IfStatement中，打下label_beginthen的前一句可能就是BoolExpression中的JMP<label_positive>语句，故可同时去掉这两句
+在语义动作中，以if then @Label<beginthen> statement1 @JMP<end> @Label<endthen> else statement2 @Label<end>为例
+布尔表达式、布尔项、布尔因子，均有两个参数：积极标志与消极标识，分别表示其正确时要跳转至的地址，与错误时要跳转至的地址。
+布尔表达式的积极标志为Label_beginthen，消极标志为Label_endthen
+布尔表达式与布尔项公用一个积极标志，每个布尔项后设置一个自己的消极标志
+布尔项与布尔因子公用一个消极标志，每个布尔因子后设置一个自己的积极标志
+
+对布尔表达式来说，在最后添加一个向消极标志的无条件跳转语句。将向积极标志的跳转工作交由布尔项完成，此时便可实现短路求值
+对布尔项来说，在最后添加一个向积极标志的无条件跳转语句。将向消极标志的跳转工作交由布尔因子完成，此时便可实现短路求值
+对布尔因子来说，若其为简单条件，则设置条件跳转语句，其跳转动作与条件的语义相反，跳转目的为消极标志。
+若其为布尔表达式，则将积极标志与消极标志传入布尔表达式的解析过程。
+
+在中间代码生成的过程，对标识的设置，与跳转语句进行优化，优化的情况为：
+1) 单条件优化：
+    取消不必要的Label
+	1. 当BoolFactor中只是一个简单的条件判断，而非复杂的布尔表达式时，可在BoolTerm中分析完该BoolFactor后，取消一个Label的设置（该Label专门为当BooLFactor为布尔表达式时设定）；
+	2. 当BoolTerm中只有一个Factor，且Factor为简单条件时，可在BoolExpression中取消一个Label的设置（该Label专门为当BooLTerm中有多个BoolFactor，或仅有一个BoolFactor但其为布尔表达式时设定）；
+    取消不必要的跳转语句
+	3. 当BoolTerm中只有一个Factor，且Factor为简单条件时，可在BoolTerm中取消最后一个向积极标识跳转的语句，并更改BoolFactor中唯一一个跳转语句，将其由“否定则跳转至消极标志”改为“肯定则跳转至积极标志”
+	4. 当BoolExpression中只有一个简单的BoolTerm（即BoolTerm中只有一个简单条件）时，可取消BoolExpression中最后一个向消极标识跳转的语句，并更改BoolTerm中唯一一个跳转语句，将其由“肯定则跳转至积极标志”改为“否定则跳转至消极标志”	
+2) 最右子元素优化：
+	1. 因为BoolTerm中最后一个BoolFactor可能有(当其为布尔表达式时)跳转至该BoolFactor的label_positive的跳转语句，然而最后一个BoolFactor的label_positive之后紧跟着的就是JMP语句，跳转到该BoolTerm的label_positive。故将最后一个BoolFactor中的跳转至BoolFactor的label_positive的跳转语句的跳转地址改为BoolTerm的label_positive，即之后紧跟着的JMP语句的跳转地址
+	2. 因为BoolExpression中最后一个BoolTerm可能有(当其为布尔表达式时)跳转至该BoolTerm的label_negative的跳转语句，然而最后一个BoolTerm的label_negative之后紧跟着的就是JMP语句，跳转到该BoolExpression的label_negative。故将最后一个BoolTerm中的跳转至BoolTerm的label_negative的跳转语句的跳转地址改为BoolExpression的label_negative，即之后紧跟着的JMP语句的跳转地址
+4) 跨层次优化：
+	1. IfStatement和WhileStatement中，打下label_beginthen的前一句可能就是BoolExpression中的JMP<label_positive>语句，故可去掉JMP语句。
+	2. 每一个JMP语句，若其下一个语句是Label，且前一个语句是条件跳转，且条件跳转的目的是JMP语句的下一个语句的Label标志，则可去掉该JMP语句，并且将前一个条件跳转语句取反，跳至原JMP语句要跳转的位置。
+	   一个典型的例子就是，当处理if(1 < 2 || 3 < 4)时，对3<4的跳转的优化
+	3. if和while条件分析完成后，对每一个Label语句（除了while的checklabel），判断其是否被作为目的地址使用过，若未曾使用，则取消该Label语句
 至此，完成所有优化

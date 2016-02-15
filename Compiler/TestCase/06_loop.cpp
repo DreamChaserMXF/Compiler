@@ -11,8 +11,7 @@ begin
 	k := 0;
 	for i := 2 to n do
 	begin
-		if i >= 10
-		then if i <= 20
+		if i >= 10 && i <= 20
 			then continue;
 		for j := 2 to i - 1 do
 		begin

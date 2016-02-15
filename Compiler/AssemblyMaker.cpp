@@ -251,6 +251,8 @@ void AssemblyMaker::TranslateQuaternary(const vector<Quaternary>::const_iterator
 	// 将四元式翻译为汇编码
 	switch(c_iter->op_)
 	{
+	case Quaternary::NIL_OP:	// 空指令，不翻译
+		break;
 	case Quaternary::NEG:
 		TranslateNeg(c_iter, para_num, var_space, level);
 		break;

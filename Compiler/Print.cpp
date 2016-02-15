@@ -43,13 +43,18 @@ void PrintOperand(Quaternary::AddressingMethod type, int value, const TokenTable
 
 void PrintQuaternaryVector(const vector<Quaternary> &quaternarytable, const TokenTable &tokentable, ostream &out) throw()
 {
+	int i = 0;
 	for(vector<Quaternary>::const_iterator iter = quaternarytable.begin();
 		iter != quaternarytable.end(); ++iter)
 	{
 		// Êä³öÐòºÅ
+		if(Quaternary::NIL_OP == iter->op_)
+		{
+			continue;
+		}
 		out.width(3);
 		out.setf(ios::right);
-		out << distance(quaternarytable.begin(), iter) << '\t';
+		out << i++ << '\t';
 		// Êä³ö²Ù×÷·û
 		out.width(9);
 		out.setf(ios::right);

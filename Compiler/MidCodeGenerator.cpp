@@ -1,5 +1,4 @@
-#include "MidCodeGenerator.h"
-
+#include "SyntaxAnalyzer.h"
 #include "MidCodeGenerator.h"
 #include "TokenTableItem.h"
 #include "Quaternary.h"
@@ -1151,44 +1150,44 @@ ExpressionAttribute MidCodeGenerator::Factor(size_t depth) throw()					// 因子
 //}
 
 // <条件语句> ::= if<条件>then<语句>[else<语句>]
-// <条件语句> ::= if<条件>@JMP_endthen @LABEL_beginthen then<语句>@LABEL_endthen
-// <条件语句> ::= if<条件>@JMP_endthen @LABEL_beginthen then<语句>@JMP_endelse @LABEL_endthen else<语句>@LABEL_endelse
+// <条件语句> ::= if<条件>@LABEL_beginthen then<语句>@LABEL_endthen
 // <条件语句> ::= if<条件>@LABEL_beginthen then<语句>@JMP_endelse @LABEL_endthen else<语句>@LABEL_endelse
 void MidCodeGenerator::IfStatement(size_t depth) throw()				// 条件语句
 {
 	PrintFunctionFrame("IfStatement()", depth);
 
 	assert(Token::IF == token_.type_);
+	int begin_quaternary_index = quaternarytable_.size();	// 用于一个if语句的优化
 
 	// 申请两个label，标识then语句块的开始处和结束处
-	int label_endthen = label_index_++;
 	int label_beginthen = label_index_++;
+	int label_endthen = label_index_++;
 	
 	// 读取条件语句
 	lexical_analyzer_.GetNextToken(token_);
 	bool multi_jmp = Condition(label_beginthen, label_endthen, depth + 1);	// 在condition中设置跳转语句
 	assert(Token::THEN == token_.type_);
 	
-	//// 程序执行完condition后，还没有跳转，那么就跳转到label_endthen
-	//Quaternary q_jmp_endthen(Quaternary::JMP, 
-	//		Quaternary::NIL_ADDRESSING, 0,
-	//		Quaternary::NIL_ADDRESSING, 0,
-	//		Quaternary::IMMEDIATE_ADDRESSING, label_endthen);
-	//quaternarytable_.push_back(q_jmp_endthen);
-	// 不能优化的情况
+	// 不能进行单条件优化的情况
 	if(multi_jmp)
 	{
+		// 测试前一句是否为到label_beginthen的无条件跳转语句，若是，则可优化
+		if(Quaternary::JMP == quaternarytable_.back().op_
+			&& label_beginthen == quaternarytable_.back().dst_)
+		{
+			quaternarytable_.pop_back();
+		}
 		// 设置label_beginthen
-		Quaternary q_label_beginthen(Quaternary::LABEL, 
-					Quaternary::NIL_ADDRESSING, 0,
-					Quaternary::NIL_ADDRESSING, 0,
-					Quaternary::IMMEDIATE_ADDRESSING, label_beginthen);
-		quaternarytable_.push_back(q_label_beginthen);
+		TryLabel(begin_quaternary_index, label_beginthen);
 	}
-	else	// 优化掉label_beginthen
-	{
-		--label_index_;
-	}
+	//else	// 优化掉label_beginthen
+	//{
+	//	--label_index_;	错！Condition中已经用了若干label编号，这里不能直接自减。实际上，不需要回收，因为它根本不占资源。
+	//}
+
+	// 对Condition中某些语句做优化（见【Appendix1设计备注 24-4】）
+	SpecialOptimize(begin_quaternary_index);
+
 	// 读取if成功后的语句
 	lexical_analyzer_.GetNextToken(token_);
 	Statement(depth + 1);
@@ -1236,13 +1235,14 @@ bool MidCodeGenerator::Condition(int label_positive, int label_negative, size_t 
 }
 
 // <布尔表达式> ::= <布尔项> [<逻辑或> <布尔项>]
-// <布尔表达式> ::= <布尔项> [<逻辑或> <布尔项>] @JMP<label_negative>
+// <布尔表达式> ::= <布尔项>@Label<endterm> [<逻辑或> <布尔项>@Label<endterm>] @JMP<label_negative>
 // 如果整个布尔表达式中只有一条语句的话，就返回false。否则返回true。（用来判断是否要优化）
 bool MidCodeGenerator::BoolExpression(int label_positive, int label_negative, size_t depth) throw()	// 布尔表达式
 {
 	PrintFunctionFrame("BoolExpression()", depth);
 	bool isfirst = true;
 	bool multi_jmp = false;
+	size_t quaternary_index = 0;
 	do
 	{
 		if(!isfirst)
@@ -1254,32 +1254,22 @@ bool MidCodeGenerator::BoolExpression(int label_positive, int label_negative, si
 		{
 			isfirst = false;
 		}
-		//BoolTerm(label_positive, label_endterm, depth + 1);
-		//// 打下term结束的label
-		//Quaternary q_label(Quaternary::LABEL,
-		//	Quaternary::NIL_ADDRESSING, 0,
-		//	Quaternary::NIL_ADDRESSING, 0,
-		//	Quaternary::IMMEDIATE_ADDRESSING, label_endterm);
-		//quaternarytable_.push_back(q_label);
 		
 		// BoolTerm中，正确项直接跳转至label_positive
 		// 失败项跳转至label_endterm
 		// 当BoolTerm只有一个简单的BoolFactor项时，可省略label_endterm
 		int label_endterm = label_index_++;
+		quaternary_index = quaternarytable_.size();
 		if(BoolTerm(label_positive, label_endterm, depth + 1))
 		{
 			multi_jmp = true;
 			// 打下term结束的label
-			Quaternary q_label(Quaternary::LABEL,
-				Quaternary::NIL_ADDRESSING, 0,
-				Quaternary::NIL_ADDRESSING, 0,
-				Quaternary::IMMEDIATE_ADDRESSING, label_endterm);
-			quaternarytable_.push_back(q_label);
+			TryLabel(quaternary_index, label_endterm);
 		}
-		else
-		{
-			--label_index_;
-		}
+		//else	这个else可有可无
+		//{
+		//	--label_index_;
+		//}
 	}while(Token::LOGICOR == token_.type_);
 	// 如果整个Expression只有一条跳转指令（此时跳转指令的类型应为“正确则跳至积极标志”）
 	// 更新为“错误则跳至消极标志”，此时，若正确，则正常执行（因为后面紧跟着的就是正确时的语句块）
@@ -1312,26 +1302,61 @@ bool MidCodeGenerator::BoolExpression(int label_positive, int label_negative, si
 		}
 		quaternarytable_.back().dst_ = label_negative;
 	}
-	else // 有多条跳转指令时，不能优化
+	else // 有多条跳转指令时
 	{
-		// 全部term都失败，则跳转到label_negative
-		Quaternary q_jmp(Quaternary::JMP,
-			Quaternary::NIL_ADDRESSING, 0,
-			Quaternary::NIL_ADDRESSING, 0,
-			Quaternary::IMMEDIATE_ADDRESSING, label_negative);
-		quaternarytable_.push_back(q_jmp);
+		 //判断一下，上一条语句是否是Label
+		 //如果是的话，说明最后一个Term有多条跳转语句，可能跳转到上一条语句的Label
+		 //优化一下，将之前跳转到上条语句的Label的跳转语句，全部跳至label_positive
+		if(Quaternary::LABEL == quaternarytable_.back().op_)
+		{
+			int last_label = quaternarytable_.back().dst_;
+			for(size_t i = quaternary_index; i < quaternarytable_.size(); ++i)
+			{
+				switch(quaternarytable_[i].op_)
+				{
+				case Quaternary::JMP:
+				case Quaternary::JE:
+				case Quaternary::JNE:
+				case Quaternary::JG:
+				case Quaternary::JNG:
+				case Quaternary::JL:
+				case Quaternary::JNL:
+					if(quaternarytable_[i].dst_ == last_label)
+					{
+						quaternarytable_[i].dst_ = label_negative;
+					}
+					break;
+				default:
+					break;
+				}
+			}
+			// 上条Label语句已经没用了，可以删掉啦
+			quaternarytable_.pop_back();
+		}
+		// 如果上条语句不是Label，说明Term中只有一条跳转语句，也有优化的机会（见【Appendix1设计备注 24--4-1,2】）
+		// 但在这里没有足够的信息还无法进行优化
+		else
+		{
+			// 全部term都失败，则跳转到label_negative
+			Quaternary q_jmp(Quaternary::JMP,
+				Quaternary::NIL_ADDRESSING, 0,
+				Quaternary::NIL_ADDRESSING, 0,
+				Quaternary::IMMEDIATE_ADDRESSING, label_negative);
+			quaternarytable_.push_back(q_jmp);
+		}
 	}
 	return multi_jmp;
 }
 
 // <布尔项> ::= <布尔因子> [<逻辑与><布尔因子>]
-// <布尔项> ::= <布尔因子> [<逻辑与><布尔因子>] @JMP<label_positive>
+// <布尔项> ::= <布尔因子>@Label<endfactor> [<逻辑与><布尔因子>@Label<endfactor>] @JMP<label_positive>
 // 当有多个BoolFactor，或仅有一个BoolFactor但其为布尔表达式时，函数返回true
 bool MidCodeGenerator::BoolTerm(int label_positive, int label_negative, size_t depth) throw()			// 布尔项
 {
 	PrintFunctionFrame("BoolTerm()", depth);
 	bool isfirst = true;
 	bool multi_jmp = false;
+	size_t quaternary_index = 0;
 	do
 	{
 		if(!isfirst)
@@ -1344,20 +1369,17 @@ bool MidCodeGenerator::BoolTerm(int label_positive, int label_negative, size_t d
 			isfirst = false;
 		}
 		int label_endfactor = label_index_++;
+		quaternary_index = quaternarytable_.size();
 		if(BoolFactor(label_endfactor, label_negative, depth + 1))	// 当BoolFactor中为布尔表达式时，才需要有endfactor
 		{
 			multi_jmp = true;
 			// 打下factor结束的label
-			Quaternary q_label(Quaternary::LABEL,
-				Quaternary::NIL_ADDRESSING, 0,
-				Quaternary::NIL_ADDRESSING, 0,
-				Quaternary::IMMEDIATE_ADDRESSING, label_endfactor);
-			quaternarytable_.push_back(q_label);
+			TryLabel(quaternary_index, label_endfactor);
 		}
-		else	// 回收未使用的label
-		{
-			--label_index_;
-		}
+		//else	// 回收未使用的label
+		//{
+		//	--label_index_;
+		//}
 	}while(Token::LOGICAND == token_.type_);
 	if(!multi_jmp)	// 只有一个BoolFactor，且其中只有一个简单条件跳转
 	{
@@ -1390,16 +1412,52 @@ bool MidCodeGenerator::BoolTerm(int label_positive, int label_negative, size_t d
 	}
 	else
 	{
-		Quaternary q_jmp(Quaternary::JMP,
-			Quaternary::NIL_ADDRESSING, 0,
-			Quaternary::NIL_ADDRESSING, 0,
-			Quaternary::IMMEDIATE_ADDRESSING, label_positive);
-		quaternarytable_.push_back(q_jmp);
+		// 判断一下，上一条语句是否是Label
+		// 如果是的话，说明最后一个Factor有多条跳转语句，可能跳转到上一条语句的Label
+		// 优化一下，将之前跳转到上条语句的Label的跳转语句，全部跳至label_positive
+		if(Quaternary::LABEL == quaternarytable_.back().op_)
+		{
+			int last_label = quaternarytable_.back().dst_;
+			for(size_t i = quaternary_index; i < quaternarytable_.size(); ++i)
+			{
+				switch(quaternarytable_[i].op_)
+				{
+				case Quaternary::JMP:
+				case Quaternary::JE:
+				case Quaternary::JNE:
+				case Quaternary::JG:
+				case Quaternary::JNG:
+				case Quaternary::JL:
+				case Quaternary::JNL:
+					if(quaternarytable_[i].dst_ == last_label)
+					{
+						quaternarytable_[i].dst_ = label_positive;
+					}
+					break;
+				default:
+					break;
+				}
+			}
+			// 上条Label语句已经没用了，可以删掉啦
+			quaternarytable_.pop_back();
+		}
+		// 如果上条语句不是Label，说明Factor中只有一条跳转语句，也有优化的机会（见【Appendix1设计备注 24-4-1,2】）
+		// 但在这里没有足够的信息还无法进行优化
+		else
+		{
+			Quaternary q_jmp(Quaternary::JMP,
+				Quaternary::NIL_ADDRESSING, 0,
+				Quaternary::NIL_ADDRESSING, 0,
+				Quaternary::IMMEDIATE_ADDRESSING, label_positive);
+			quaternarytable_.push_back(q_jmp);
+		}
 	}
 	return multi_jmp;
 }
 
-// <布尔因子> ::= <表达式>[<关系运算符><表达式>] | ‘(‘<布尔表达式>’)’
+// <布尔因子> ::= <表达式>@JE<Label_negative>
+// <布尔因子> ::= <表达式><关系运算符><表达式>@JZ<Label_negative>
+// <布尔因子> ::= '('<布尔表达式>')'
 // 返回值表示factor中是否为布尔表达式
 bool MidCodeGenerator::BoolFactor(int label_positive, int label_negative, size_t depth) throw()		// 布尔因子
 {
@@ -1676,6 +1734,131 @@ bool MidCodeGenerator::ArgumentListTest(size_t depth) throw()			// 实参表
 	return true;
 }
 
+// 对quaternarytable_从下标为begin_quaternary_index的元素开始检查
+// 如果有跳转语句，目的地为label_index，则打下label_index
+// 否则，不做任何标志
+void MidCodeGenerator::TryLabel(size_t begin_quaternary_index, int label_index) throw()
+{
+	Quaternary q_label(Quaternary::LABEL,
+		Quaternary::NIL_ADDRESSING, 0,
+		Quaternary::NIL_ADDRESSING, 0,
+		Quaternary::IMMEDIATE_ADDRESSING, label_index);
+	for(size_t i = begin_quaternary_index; i < quaternarytable_.size(); ++i)
+	{
+		switch(quaternarytable_[i].op_)
+		{
+		case Quaternary::JMP:
+		case Quaternary::JE:
+		case Quaternary::JNE:
+		case Quaternary::JG:
+		case Quaternary::JNG:
+		case Quaternary::JL:
+		case Quaternary::JNL:
+			if(quaternarytable_[i].dst_ == label_index)
+			{
+				quaternarytable_.push_back(q_label);
+				return;
+			}
+		default:
+			break;
+		}
+	}
+}
+
+static bool IsConditionJmp(Quaternary::OPCode op)
+{
+	switch(op)
+	{
+	case Quaternary::JE:
+	case Quaternary::JNE:
+	case Quaternary::JG:
+	case Quaternary::JNG:
+	case Quaternary::JL:
+	case Quaternary::JNL:
+		return true;
+	default:
+		return false;
+	}
+}
+
+// 详见【Appendix1设计备注 24-4】
+void MidCodeGenerator::SpecialOptimize(size_t begin_quaternary_index) throw()
+{
+	bool used = false;
+	for(size_t i = begin_quaternary_index; i < quaternarytable_.size() - 1; ++i)
+	{
+		// 取消特殊的JMP指令详见【Appendix1设计备注 24-4-1】
+		if(Quaternary::JMP == quaternarytable_[i].op_
+			&& Quaternary::LABEL == quaternarytable_[i + 1].op_
+			&& quaternarytable_[i - 1].dst_ == quaternarytable_[i + 1].dst_
+			&& IsConditionJmp(quaternarytable_[i - 1].op_))
+		{
+			switch(quaternarytable_[i - 1].op_)
+			{
+			case Quaternary::JE:
+				quaternarytable_[i - 1].op_ = Quaternary::JNE;
+				break;
+			case Quaternary::JNE:
+				quaternarytable_[i - 1].op_ = Quaternary::JE;
+				break;
+			case Quaternary::JG:
+				quaternarytable_[i - 1].op_ = Quaternary::JNG;
+				break;
+			case Quaternary::JNG:
+				quaternarytable_[i - 1].op_ = Quaternary::JG;
+				break;
+			case Quaternary::JL:
+				quaternarytable_[i - 1].op_ = Quaternary::JNL;
+				break;
+			case Quaternary::JNL:
+				quaternarytable_[i - 1].op_ = Quaternary::JL;
+				break;
+			default:
+				assert(false);
+				break;
+			} // end of switch
+			// 更改条件跳转语句的跳转标号
+			quaternarytable_[i - 1].dst_ = quaternarytable_[i].dst_;
+			// 取消JMP指令
+			quaternarytable_[i].op_ = Quaternary::NIL_OP;	
+			
+		}
+		// 试图取消Label指令 详见【Appendix1设计备注 24-4-1】
+		else if(Quaternary::LABEL == quaternarytable_[i].op_)
+		{	
+			used = false;
+			for(size_t j = begin_quaternary_index; j < i; ++j)
+			{
+				switch(quaternarytable_[j].op_)
+				{
+				case Quaternary::JMP:
+				case Quaternary::JE:
+				case Quaternary::JNE:
+				case Quaternary::JG:
+				case Quaternary::JNG:
+				case Quaternary::JL:
+				case Quaternary::JNL:
+					if(quaternarytable_[i].dst_ == quaternarytable_[j].dst_)
+					{
+						used = true;
+					}
+					break;
+				default:
+					break;
+				}
+				if(used)
+				{
+					break;
+				}
+			}
+			if(!used)	// 这个Label已经没用啦
+			{
+				quaternarytable_[i].op_ = Quaternary::NIL_OP;
+			}
+		} // end of if
+	} // end of for
+}
+
 //// <条件> ::= <表达式><关系运算符><表达式>
 //// 由if或for语句中传递下来label参数，标识if语句块或for循环体的结束
 //// 用于在处理condition时设置跳转语句
@@ -1754,6 +1937,7 @@ bool MidCodeGenerator::ArgumentListTest(size_t depth) throw()			// 实参表
 //		--tempvar_index_;
 //	}
 //}
+
 
 // <情况语句> ::= case <表达式> of <情况表元素>{; <情况表元素>}end
 void MidCodeGenerator::CaseStatement(size_t depth) throw()			// 情况语句
@@ -2022,11 +2206,15 @@ void MidCodeGenerator::WriteStatement(size_t depth) throw()			// 写语句
 }
 
 // <while循环语句> ::= while <条件> do <语句>
-// <while循环语句> ::= while @Label<check> <条件> @JZLabel<end> do <语句> @JMPLabel<check> @Label<end>
+// <while循环语句> ::= while @Label<check> <条件> do @Label<BeginDo> <语句> @JMPLabel<check> @Label<end>
 void MidCodeGenerator::WhileLoopStatement(size_t depth) throw()			// while循环语句
 {
 	PrintFunctionFrame("WhileLoopStatement()", depth);
 	assert(Token::WHILE == token_.type_);
+
+	// BUG! 不能在这里放，一定要放在checklabel的后面
+	// 否则由于checklabel是在后面被引用的，就会在SpecialOptimize中把checklabel优化掉
+	//size_t begin_quaternary_index = quaternarytable_.size();	// 四元式的起始位置
 
 	// 申请条件语句前面的label<check>和结束时的label<end>
 	int checklabel = label_index_++;
@@ -2041,23 +2229,28 @@ void MidCodeGenerator::WhileLoopStatement(size_t depth) throw()			// while循环语
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::IMMEDIATE_ADDRESSING, checklabel);
 	quaternarytable_.push_back(q_checklabel);
+	// Condition四元式的起始位置
+	size_t begin_quaternary_index = quaternarytable_.size();	
 	// 读取下一个单词，并进入条件语句
 	lexical_analyzer_.GetNextToken(token_);
-	Condition(label_begindo, label_enddo, depth + 1);	// 条件语句中会执行动作@JZLabel<end>
+	bool multi_jmp = Condition(label_begindo, label_enddo, depth + 1);	// 条件语句中会执行动作@JZLabel<end>
 	// 语法检查
 	assert(Token::DO == token_.type_);
-	// 插入跳转到label_endo的语句
-	Quaternary q_jmp_enddo(Quaternary::JMP,
-		Quaternary::NIL_ADDRESSING, 0,
-		Quaternary::NIL_ADDRESSING, 0,
-		Quaternary::IMMEDIATE_ADDRESSING, label_enddo);
-	quaternarytable_.push_back(q_jmp_enddo);
-	// 插入label_begindo的标签
-	Quaternary q_label_begindo(Quaternary::LABEL,
-		Quaternary::NIL_ADDRESSING, 0,
-		Quaternary::NIL_ADDRESSING, 0,
-		Quaternary::IMMEDIATE_ADDRESSING, label_begindo);
-	quaternarytable_.push_back(q_label_begindo);
+	// 不能进行单条件优化的情况
+	if(multi_jmp)
+	{
+		// 测试前一句是否为到label_begindo的无条件跳转语句，若是，则可优化
+		if(Quaternary::JMP == quaternarytable_.back().op_
+			&& label_begindo == quaternarytable_.back().dst_)
+		{
+			quaternarytable_.pop_back();
+		}
+		// 设置label_begindo
+		TryLabel(begin_quaternary_index, label_begindo);
+	}
+	// 对Condition中某些语句做优化（见【Appendix1设计备注 24-4】）
+	SpecialOptimize(begin_quaternary_index);
+
 	// 读入循环体的第一个单词
 	lexical_analyzer_.GetNextToken(token_);
 	// 读入循环体

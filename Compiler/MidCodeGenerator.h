@@ -66,6 +66,9 @@ private:
 	bool ProcFuncCallStatementTest(size_t depth) throw();	// 测试是否为过程/函数调用语句
 	bool ArgumentListTest(size_t depth) throw();// 测试是否为实参表
 
+	void TryLabel(size_t begin_quaternary_index, int label_index) throw();
+	void SpecialOptimize(size_t begin_quaternary_index) throw();
+
 	void CaseStatement(size_t depth) throw();			// 情况语句
 	vector<int> CaseElement(int caselabel, int endlabel, size_t depth) throw();	// 情况表元素
 

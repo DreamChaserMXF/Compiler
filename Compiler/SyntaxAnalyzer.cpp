@@ -7,13 +7,14 @@
 SyntaxAnalyzer::SyntaxAnalyzer(LexicalAnalyzer &lexical_analyzer) throw()
 	: lexical_analyzer_(lexical_analyzer), token_(), is_successful_(true), syntax_process_buffer_(), syntax_format_string_()
 {
-	lexical_analyzer.ResetTokenPos();
+	
 }
 
 
 bool SyntaxAnalyzer::Parse() throw()
 {
 	size_t depth = 0;
+	lexical_analyzer_.ResetTokenPos();
 	syntax_process_buffer_.str("");
 	syntax_format_string_.clear();
 	PrintFunctionFrame("Parse()", depth);

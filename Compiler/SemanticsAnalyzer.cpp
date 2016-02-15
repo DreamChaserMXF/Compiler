@@ -14,13 +14,14 @@ SemanticsAnalyzer::SemanticsAnalyzer(LexicalAnalyzer &lexical_analyzer)
 	token_(), level_(1),
 	is_successful_(true), semantics_process_buffer_(), semantics_format_string_(), tokenbuffer_()
 {
-	lexical_analyzer.ResetTokenPos();
+	
 }
 
 
 bool SemanticsAnalyzer::Parse() throw()
 {
 	size_t depth = 0;
+	lexical_analyzer_.ResetTokenPos();
 	semantics_process_buffer_.str("");
 	semantics_process_buffer_.clear();
 	semantics_format_string_.clear();

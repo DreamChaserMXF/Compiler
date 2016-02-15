@@ -20,8 +20,9 @@ scanf  PROTO C: ptr sbyte, :vararg
     _char_format_p       db '%c ', 0   ; for printf
     _string_format       db '%s', 0
     _String0             db 10,0
-    _String1             db 49,0
-    _String2             db 98,117,103,0
+    _String1             db 10,97,102,116,101,114,32,115,119,97,112,44,32,115,101,113,117,101,110,99,101,91,48,93,32,61,32,0
+    _String2             db 115,101,113,117,101,110,99,101,91,48,93,32,61,32,0
+    _String3             db 115,101,113,117,101,110,99,101,91,49,93,32,61,32,0
 
 .CODE
 
@@ -34,41 +35,64 @@ _main  proc far
     push    edx
     push    ebp
     mov     ebp,   esp
-    sub     esp,   0
+    sub     esp,   40
 
-    ;  1        JNG                2               1               2
-    mov     eax, 2
-    cmp     eax, 1
-    jng    _label2
-    ;  2        JNG                3               2               2
-    mov     eax, 3
-    cmp     eax, 2
-    jng    _label2
-    ;  3        JMP                0               0               1
-    jmp     _label1
-    ;  4      LABEL                0               0               2
-_label2:
-    ;  5        JMP                0               0               0
-    jmp     _label0
-    ;  6      LABEL                0               0               1
-_label1:
-    ;  7      WRITE                0               0       _string#1
-    push    offset  _String1
-    push    offset  _string_format
-    call    printf
-    add     esp, 8
-    ;  8        JMP                0               0               3
-    jmp     _label3
-    ;  9      LABEL                0               0               0
-_label0:
-    ; 10      WRITE                0               0       _string#2
+    ;  6       AASG                3               0      sequence#0
+    mov     dword ptr SS:[ebp - 4], 3
+    ;  7       AASG                7               1      sequence#0
+    mov     dword ptr SS:[ebp - 8], 7
+    ;  8      WRITE                0               0       _string#2
     push    offset  _String2
     push    offset  _string_format
     call    printf
     add     esp, 8
-    ; 11      LABEL                0               0               3
-_label3:
-    ; 12      WRITE                0               0       _string#0
+    ;  9      WRITE                0               0      sequence#0
+    push    dword ptr SS:[ebp - 4]
+    push    offset  _integer_format_p
+    call    printf
+    add     esp, 8
+    ; 10      WRITE                0               0       _string#3
+    push    offset  _String3
+    push    offset  _string_format
+    call    printf
+    add     esp, 8
+    ; 11      WRITE                0               1      sequence#0
+    push    dword ptr SS:[ebp - 8]
+    push    offset  _integer_format_p
+    call    printf
+    add     esp, 8
+    ; 12    SETREFP                0               0      sequence#0
+    lea     eax,    SS:[ebp - 4]
+    push    eax
+    ; 13    SETREFP                0               1      sequence#0
+    lea     eax,    SS:[ebp - 8]
+    push    eax
+    ; 14  FUNC_CALL                0               0               1
+    mov     SS:[esp - 4], ebp
+    sub     esp, 4
+    call    _func1
+    add     esp, 12
+    ; 15      WRITE                0               0       _string#1
+    push    offset  _String1
+    push    offset  _string_format
+    call    printf
+    add     esp, 8
+    ; 16      WRITE                0               0      sequence#0
+    push    dword ptr SS:[ebp - 4]
+    push    offset  _integer_format_p
+    call    printf
+    add     esp, 8
+    ; 17      WRITE                0               0       _string#3
+    push    offset  _String3
+    push    offset  _string_format
+    call    printf
+    add     esp, 8
+    ; 18      WRITE                0               1      sequence#0
+    push    dword ptr SS:[ebp - 8]
+    push    offset  _integer_format_p
+    call    printf
+    add     esp, 8
+    ; 19      WRITE                0               0       _string#0
     push    offset  _String0
     push    offset  _string_format
     call    printf
@@ -83,5 +107,31 @@ _label3:
     call    ExitProcess
 _main  endp
 
+
+    ;  1      BEGIN                0               0               1
+_func1  proc near
+    push    ebp
+    mov     ebp,   esp
+    sub     esp,   4
+
+    ;  2        ASG           i#ref2               0           tmp#4
+    mov     ebx,    SS:[ebp + 16]
+    mov     eax,    SS:[ebx]
+    mov     SS:[ebp - 4], eax
+    ;  3        ASG           j#ref3               0          i#ref2
+    mov     ebx,    SS:[ebp + 12]
+    mov     eax,    SS:[ebx]
+    mov     ebx,    SS:[ebp + 16]
+    mov     SS:[ebx], eax
+    ;  4        ASG            tmp#4               0          j#ref3
+    mov     eax,    SS:[ebp - 4]
+    mov     ebx,    SS:[ebp + 12]
+    mov     SS:[ebx], eax
+    ;  5        END                0               0               1
+func1_Exit:
+    mov     esp,    ebp
+    pop     ebp
+    ret
+_func1  endp
 
 end start

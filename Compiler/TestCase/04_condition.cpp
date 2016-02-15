@@ -6,6 +6,12 @@ sum : integer;
 sequence : array[100] of integer;
 
 begin
+	if (1 < 1 && 1 < 2 && 1 < 3
+	|| 2 > 1 && (2 = 2 || 2 = 1) && 2 < 3 && (5 > 1)
+	|| 3 = 1 && (3 > 2) && 3 = 3)
+	then write("\ntrue")
+	else write("\nfalse");
+
 	sequence[0] := 1;
 	sequence[1] := 2;
 	sequence[2] := 3;
@@ -17,7 +23,9 @@ begin
 	begin
 		if i < 3
 		then write("\ni < 3 ", i)
-		else write("\ni >= 3 ", i)
+		else write("\ni >= 3 ", i);
+		if i > 3 && i < 5
+		then write("\n3 < i < 5, i = ", i);
 	end;
 	// 嵌套条件语句测试
 	for i := 0 to 5 do
@@ -31,7 +39,8 @@ begin
 		else write("\n1 <= i <= 3 ", i)
 	end;
 	// 数组元素的条件语句测试
-	for i := 0 to 5 do
+	i := 0;
+	while i <= 5 do
 	begin
 		if sequence[i] > 5
 		then write("\nsequence[i] > 5 ", sequence[i])
@@ -39,7 +48,8 @@ begin
 		then write("\n3 < sequence[i] <= 5 ", sequence[i])
 		else if sequence[i] < 1
 		then write("\nsequence[i] < 1 ", sequence[i])
-		else write("\n1 <= sequence[i] <= 3 ", sequence[i])
+		else write("\n1 <= sequence[i] <= 3 ", sequence[i]);
+		i := i + 1;
 	end;
 	write("\n");
 	// case语句测试
@@ -52,6 +62,7 @@ begin
 		7: write("i = 7")
 	end;
 	write("\n");
+	// 单表达式作为条件测试
 	if i
 	then write("take expression result as a condition")
 	else write("condition limited")
