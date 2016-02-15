@@ -21,10 +21,8 @@
     <ClInclude Include="Quaternary.h" />
     <ClInclude Include="SemanticsAnalyzer.h" />
     <ClInclude Include="SyntaxAnalyzer.h" />
-    <ClInclude Include="SyntaxException.h" />
     <ClInclude Include="Token.h" />
     <ClInclude Include="TokenTable.h" />
-    <ClInclude Include="TokenTableException.h" />
     <ClInclude Include="TokenTableItem.h" />
   </ItemGroup>
   <ItemGroup>

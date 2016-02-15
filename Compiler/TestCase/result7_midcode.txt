@@ -1,0 +1,14 @@
+  0	    BEGIN               0               0              -1
+  1	      JNG               2               1               2
+  2	      JNG               3               2               2
+  3	      JMP               0               0               1
+  4	    LABEL               0               0               2
+  5	      JMP               0               0               0
+  6	    LABEL               0               0               1
+  7	    WRITE               0               0       _string#1
+  8	      JMP               0               0               3
+  9	    LABEL               0               0               0
+ 10	    WRITE               0               0       _string#2
+ 11	    LABEL               0               0               3
+ 12	    WRITE               0               0       _string#0
+ 13	      END               0               0              -1

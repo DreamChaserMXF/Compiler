@@ -1,9 +1,7 @@
 #include "MidCodeGenerator.h"
 
 #include "MidCodeGenerator.h"
-#include "SyntaxException.h"
 #include "TokenTableItem.h"
-#include "TokenTableException.h"
 #include "Quaternary.h"
 #include "ExpressionAttribute.h"
 #include <assert.h>
@@ -1097,139 +1095,665 @@ ExpressionAttribute MidCodeGenerator::Factor(size_t depth) throw()					// 因子
 	return factor_attribute;
 }
 
+//// <条件语句> ::= if<条件>then<语句>[else<语句>]
+//void MidCodeGenerator::IfStatement(size_t depth) throw()				// 条件语句
+//{
+//	PrintFunctionFrame("IfStatement()", depth);
+//
+//	assert(Token::IF == token_.type_);
+//
+//	// 先申请一个label
+//	int label1 = label_index_++;
+//	// 读取条件语句
+//	lexical_analyzer_.GetNextToken(token_);
+//	Condition(label1, depth + 1);	// 在condition中设置跳转语句
+//	assert(Token::THEN == token_.type_);
+//	// 读取if成功后的语句
+//	lexical_analyzer_.GetNextToken(token_);
+//	Statement(depth + 1);
+//
+//	// 读取else的语句
+//	if(Token::ELSE == token_.type_)
+//	{
+//		// 申请第二个label
+//		int label2 =  label_index_++;
+//		// 生成无条件跳转语句
+//		Quaternary q_jmp(Quaternary::JMP, 
+//			Quaternary::NIL_ADDRESSING, 0,
+//			Quaternary::NIL_ADDRESSING, 0,
+//			Quaternary::IMMEDIATE_ADDRESSING, label2);
+//		quaternarytable_.push_back(q_jmp);
+//		// 设置第一个label
+//		Quaternary q_label1(Quaternary::LABEL, 
+//				Quaternary::NIL_ADDRESSING, 0,
+//				Quaternary::NIL_ADDRESSING, 0,
+//				Quaternary::IMMEDIATE_ADDRESSING, label1);
+//		quaternarytable_.push_back(q_label1);
+//		// 读取else中的语句
+//		lexical_analyzer_.GetNextToken(token_);
+//		Statement(depth + 1);
+//		// 设置第二个label
+//		Quaternary q_label2(Quaternary::LABEL, 
+//			Quaternary::NIL_ADDRESSING, 0,
+//			Quaternary::NIL_ADDRESSING, 0,
+//			Quaternary::IMMEDIATE_ADDRESSING, label2);
+//		quaternarytable_.push_back(q_label2);
+//	}
+//	else	// 如果没有else语句，就在if语句块结束的时候设置第一个label
+//	{
+//		// 设置第一个label
+//		Quaternary q_label1(Quaternary::LABEL, 
+//				Quaternary::NIL_ADDRESSING, 0,
+//				Quaternary::NIL_ADDRESSING, 0,
+//				Quaternary::IMMEDIATE_ADDRESSING, label1);
+//		quaternarytable_.push_back(q_label1);
+//	}
+//}
+
 // <条件语句> ::= if<条件>then<语句>[else<语句>]
+// <条件语句> ::= if<条件>@JMP_endthen @LABEL_beginthen then<语句>@LABEL_endthen
+// <条件语句> ::= if<条件>@JMP_endthen @LABEL_beginthen then<语句>@JMP_endelse @LABEL_endthen else<语句>@LABEL_endelse
+// <条件语句> ::= if<条件>@LABEL_beginthen then<语句>@JMP_endelse @LABEL_endthen else<语句>@LABEL_endelse
 void MidCodeGenerator::IfStatement(size_t depth) throw()				// 条件语句
 {
 	PrintFunctionFrame("IfStatement()", depth);
 
 	assert(Token::IF == token_.type_);
 
-	// 先申请一个label
-	int label1 = label_index_++;
+	// 申请两个label，标识then语句块的开始处和结束处
+	int label_endthen = label_index_++;
+	int label_beginthen = label_index_++;
+	
 	// 读取条件语句
 	lexical_analyzer_.GetNextToken(token_);
-	Condition(label1, depth + 1);	// 在condition中设置跳转语句
+	bool multi_jmp = Condition(label_beginthen, label_endthen, depth + 1);	// 在condition中设置跳转语句
 	assert(Token::THEN == token_.type_);
+	
+	//// 程序执行完condition后，还没有跳转，那么就跳转到label_endthen
+	//Quaternary q_jmp_endthen(Quaternary::JMP, 
+	//		Quaternary::NIL_ADDRESSING, 0,
+	//		Quaternary::NIL_ADDRESSING, 0,
+	//		Quaternary::IMMEDIATE_ADDRESSING, label_endthen);
+	//quaternarytable_.push_back(q_jmp_endthen);
+	// 不能优化的情况
+	if(multi_jmp)
+	{
+		// 设置label_beginthen
+		Quaternary q_label_beginthen(Quaternary::LABEL, 
+					Quaternary::NIL_ADDRESSING, 0,
+					Quaternary::NIL_ADDRESSING, 0,
+					Quaternary::IMMEDIATE_ADDRESSING, label_beginthen);
+		quaternarytable_.push_back(q_label_beginthen);
+	}
+	else	// 优化掉label_beginthen
+	{
+		--label_index_;
+	}
 	// 读取if成功后的语句
 	lexical_analyzer_.GetNextToken(token_);
 	Statement(depth + 1);
 
+	Quaternary q_label_endthen(Quaternary::LABEL, 
+		Quaternary::NIL_ADDRESSING, 0,
+		Quaternary::NIL_ADDRESSING, 0,
+		Quaternary::IMMEDIATE_ADDRESSING, label_endthen);
 	// 读取else的语句
 	if(Token::ELSE == token_.type_)
 	{
-		// 申请第二个label
-		int label2 =  label_index_++;
+		// 申请第label，标识else语句块的结束处
+		int label_endelse =  label_index_++;
 		// 生成无条件跳转语句
-		Quaternary q_jmp(Quaternary::JMP, 
+		Quaternary q_jmp_endelse(Quaternary::JMP, 
 			Quaternary::NIL_ADDRESSING, 0,
 			Quaternary::NIL_ADDRESSING, 0,
-			Quaternary::IMMEDIATE_ADDRESSING, label2);
-		quaternarytable_.push_back(q_jmp);
-		// 设置第一个label
-		Quaternary q_label1(Quaternary::LABEL, 
-				Quaternary::NIL_ADDRESSING, 0,
-				Quaternary::NIL_ADDRESSING, 0,
-				Quaternary::IMMEDIATE_ADDRESSING, label1);
-		quaternarytable_.push_back(q_label1);
+			Quaternary::IMMEDIATE_ADDRESSING, label_endelse);
+		quaternarytable_.push_back(q_jmp_endelse);
+		// 设置label_endthen
+		quaternarytable_.push_back(q_label_endthen);
 		// 读取else中的语句
 		lexical_analyzer_.GetNextToken(token_);
 		Statement(depth + 1);
-		// 设置第二个label
-		Quaternary q_label2(Quaternary::LABEL, 
+		// 设置label_endelse
+		Quaternary q_label_endelse(Quaternary::LABEL, 
 			Quaternary::NIL_ADDRESSING, 0,
 			Quaternary::NIL_ADDRESSING, 0,
-			Quaternary::IMMEDIATE_ADDRESSING, label2);
-		quaternarytable_.push_back(q_label2);
+			Quaternary::IMMEDIATE_ADDRESSING, label_endelse);
+		quaternarytable_.push_back(q_label_endelse);
 	}
 	else	// 如果没有else语句，就在if语句块结束的时候设置第一个label
 	{
-		// 设置第一个label
-		Quaternary q_label1(Quaternary::LABEL, 
-				Quaternary::NIL_ADDRESSING, 0,
-				Quaternary::NIL_ADDRESSING, 0,
-				Quaternary::IMMEDIATE_ADDRESSING, label1);
-		quaternarytable_.push_back(q_label1);
+		// 设置labelendthen
+		quaternarytable_.push_back(q_label_endthen);
 	}
 }
 
-// <条件> ::= <表达式><关系运算符><表达式>
-// 由if或for语句中传递下来label参数，标识if语句块或for循环体的结束
-// 用于在处理condition时设置跳转语句
-void MidCodeGenerator::Condition(int endlabel, size_t depth) throw()				// 条件
+// <条件> ::= <布尔表达式>
+// 若Condition中只有一个跳转语句，则返回false，否则返回true
+bool MidCodeGenerator::Condition(int label_positive, int label_negative, size_t depth) throw()				// 条件
 {
 	PrintFunctionFrame("Condition()", depth);
+	return BoolExpression(label_positive, label_negative, depth + 1);
+}
 
-	ExpressionAttribute left_attribute = Expression(depth + 1);
-	// 化简数组元素为临时变量
-	SimplifyArrayOperand(left_attribute);
+// <布尔表达式> ::= <布尔项> [<逻辑或> <布尔项>]
+// <布尔表达式> ::= <布尔项> [<逻辑或> <布尔项>] @JMP<label_negative>
+// 如果整个布尔表达式中只有一条语句的话，就返回false。否则返回true。（用来判断是否要优化）
+bool MidCodeGenerator::BoolExpression(int label_positive, int label_negative, size_t depth) throw()	// 布尔表达式
+{
+	PrintFunctionFrame("BoolExpression()", depth);
+	bool isfirst = true;
+	bool multi_jmp = false;
+	do
+	{
+		if(!isfirst)
+		{
+			multi_jmp = true;
+			lexical_analyzer_.GetNextToken(token_);
+		}
+		else
+		{
+			isfirst = false;
+		}
+		//BoolTerm(label_positive, label_endterm, depth + 1);
+		//// 打下term结束的label
+		//Quaternary q_label(Quaternary::LABEL,
+		//	Quaternary::NIL_ADDRESSING, 0,
+		//	Quaternary::NIL_ADDRESSING, 0,
+		//	Quaternary::IMMEDIATE_ADDRESSING, label_endterm);
+		//quaternarytable_.push_back(q_label);
 		
-	bool isonlyexpression = false;
-	// 生成有条件的跳转语句
-	// 不符合条件时才会跳转，所以这里的操作符与读到的token要反一下
-	Quaternary q_jmp_condition;
-	switch(token_.type_)	// 这个单词可能是关系运算符，但也有可能是THEN（当条件中仅有一个表达式时）
+		// BoolTerm中，正确项直接跳转至label_positive
+		// 失败项跳转至label_endterm
+		// 当BoolTerm只有一个简单的BoolFactor项时，可省略label_endterm
+		int label_endterm = label_index_++;
+		if(BoolTerm(label_positive, label_endterm, depth + 1))
+		{
+			multi_jmp = true;
+			// 打下term结束的label
+			Quaternary q_label(Quaternary::LABEL,
+				Quaternary::NIL_ADDRESSING, 0,
+				Quaternary::NIL_ADDRESSING, 0,
+				Quaternary::IMMEDIATE_ADDRESSING, label_endterm);
+			quaternarytable_.push_back(q_label);
+		}
+		else
+		{
+			--label_index_;
+		}
+	}while(Token::LOGICOR == token_.type_);
+	// 如果整个Expression只有一条跳转指令（此时跳转指令的类型应为“正确则跳至积极标志”）
+	// 更新为“错误则跳至消极标志”，此时，若正确，则正常执行（因为后面紧跟着的就是正确时的语句块）
+	if(!multi_jmp)
 	{
-	case Token::LT:
-		q_jmp_condition.op_ = Quaternary::JNL;
-		break;
-	case Token::LEQ:
-		q_jmp_condition.op_ = Quaternary::JG;
-		break;
-	case Token::GT:
-		q_jmp_condition.op_ = Quaternary::JNG;
-		break;
-	case Token::GEQ:
-		q_jmp_condition.op_ = Quaternary::JL;
-		break;
-	case Token::EQU:
-		q_jmp_condition.op_ = Quaternary::JNE;
-		break;
-	case Token::NEQ:
-		q_jmp_condition.op_ = Quaternary::JE;
-		break;
-	case Token::THEN:
-		q_jmp_condition.op_ = Quaternary::JE;
-		isonlyexpression = true;
-		break;
-	default:
-		assert(false);
-		break;
+		// 更改BoolExpression中唯一一条跳转语句
+		switch(quaternarytable_.back().op_)
+		{
+		case Quaternary::JE:
+			quaternarytable_.back().op_ = Quaternary::JNE;
+			break;
+		case Quaternary::JNE:
+			quaternarytable_.back().op_ = Quaternary::JE;
+			break;
+		case Quaternary::JG:
+			quaternarytable_.back().op_ = Quaternary::JNG;
+			break;
+		case Quaternary::JNG:
+			quaternarytable_.back().op_ = Quaternary::JG;
+			break;
+		case Quaternary::JL:
+			quaternarytable_.back().op_ = Quaternary::JNL;
+			break;
+		case Quaternary::JNL:
+			quaternarytable_.back().op_ = Quaternary::JL;
+			break;
+		default:
+			assert(false);
+			break;
+		}
+		quaternarytable_.back().dst_ = label_negative;
 	}
-	ExpressionAttribute right_attribute;
-	if(!isonlyexpression)	// 如果还有下一个表达式，再继续读取
+	else // 有多条跳转指令时，不能优化
 	{
-		lexical_analyzer_.GetNextToken(token_);
-		right_attribute = Expression(depth + 1);
-		// 化简数组为临时变量
-		SimplifyArrayOperand(right_attribute);
+		// 全部term都失败，则跳转到label_negative
+		Quaternary q_jmp(Quaternary::JMP,
+			Quaternary::NIL_ADDRESSING, 0,
+			Quaternary::NIL_ADDRESSING, 0,
+			Quaternary::IMMEDIATE_ADDRESSING, label_negative);
+		quaternarytable_.push_back(q_jmp);
+	}
+	return multi_jmp;
+}
+
+// <布尔项> ::= <布尔因子> [<逻辑与><布尔因子>]
+// <布尔项> ::= <布尔因子> [<逻辑与><布尔因子>] @JMP<label_positive>
+// 当有多个BoolFactor，或仅有一个BoolFactor但其为布尔表达式时，函数返回true
+bool MidCodeGenerator::BoolTerm(int label_positive, int label_negative, size_t depth) throw()			// 布尔项
+{
+	PrintFunctionFrame("BoolTerm()", depth);
+	bool isfirst = true;
+	bool multi_jmp = false;
+	do
+	{
+		if(!isfirst)
+		{
+			multi_jmp = true;
+			lexical_analyzer_.GetNextToken(token_);
+		}
+		else
+		{
+			isfirst = false;
+		}
+		int label_endfactor = label_index_++;
+		if(BoolFactor(label_endfactor, label_negative, depth + 1))	// 当BoolFactor中为布尔表达式时，才需要有endfactor
+		{
+			multi_jmp = true;
+			// 打下factor结束的label
+			Quaternary q_label(Quaternary::LABEL,
+				Quaternary::NIL_ADDRESSING, 0,
+				Quaternary::NIL_ADDRESSING, 0,
+				Quaternary::IMMEDIATE_ADDRESSING, label_endfactor);
+			quaternarytable_.push_back(q_label);
+		}
+		else	// 回收未使用的label
+		{
+			--label_index_;
+		}
+	}while(Token::LOGICAND == token_.type_);
+	if(!multi_jmp)	// 只有一个BoolFactor，且其中只有一个简单条件跳转
+	{
+		// 更改BoolTerm中唯一一条跳转语句
+		switch(quaternarytable_.back().op_)
+		{
+		case Quaternary::JE:
+			quaternarytable_.back().op_ = Quaternary::JNE;
+			break;
+		case Quaternary::JNE:
+			quaternarytable_.back().op_ = Quaternary::JE;
+			break;
+		case Quaternary::JG:
+			quaternarytable_.back().op_ = Quaternary::JNG;
+			break;
+		case Quaternary::JNG:
+			quaternarytable_.back().op_ = Quaternary::JG;
+			break;
+		case Quaternary::JL:
+			quaternarytable_.back().op_ = Quaternary::JNL;
+			break;
+		case Quaternary::JNL:
+			quaternarytable_.back().op_ = Quaternary::JL;
+			break;
+		default:
+			assert(false);
+			break;
+		}
+		quaternarytable_.back().dst_ = label_positive;
 	}
 	else
 	{
-		right_attribute.addressingmethod_ = Quaternary::IMMEDIATE_ADDRESSING;
-		right_attribute.value_ = 0;
-		right_attribute.offset_addressingmethod_ = Quaternary::IMMEDIATE_ADDRESSING;
-		right_attribute.offset_ = 0;
-		right_attribute.decoratetype_ = TokenTableItem::VOID;
+		Quaternary q_jmp(Quaternary::JMP,
+			Quaternary::NIL_ADDRESSING, 0,
+			Quaternary::NIL_ADDRESSING, 0,
+			Quaternary::IMMEDIATE_ADDRESSING, label_positive);
+		quaternarytable_.push_back(q_jmp);
 	}
-	// 操作数
-	q_jmp_condition.method1_ = left_attribute.addressingmethod_;
-	q_jmp_condition.src1_ = left_attribute.value_;
-	q_jmp_condition.method2_ = right_attribute.addressingmethod_;
-	q_jmp_condition.src2_ = right_attribute.value_;
-	q_jmp_condition.method3_ = Quaternary::IMMEDIATE_ADDRESSING;
-	q_jmp_condition.dst_ = endlabel;
-	// 保存四元式
-	quaternarytable_.push_back(q_jmp_condition);
-	// 回收临时变量
-	if(Quaternary::TEMPORARY_ADDRESSING == left_attribute.addressingmethod_)
-	{
-		--tempvar_index_;
-	}
-	if(Quaternary::TEMPORARY_ADDRESSING == right_attribute.addressingmethod_)
-	{
-		--tempvar_index_;
-	}
+	return multi_jmp;
 }
+
+// <布尔因子> ::= <表达式>[<关系运算符><表达式>] | ‘(‘<布尔表达式>’)’
+// 返回值表示factor中是否为布尔表达式
+bool MidCodeGenerator::BoolFactor(int label_positive, int label_negative, size_t depth) throw()		// 布尔因子
+{
+	PrintFunctionFrame("BoolFactor()", depth);
+	bool multi_jmp = false;
+	// 先考虑非左括号的情况
+	if(Token::LEFT_PAREN != token_.type_ || IsExpression(depth + 1))
+	{
+		// 读取左表达式
+		ExpressionAttribute left_attribute = Expression(depth + 1);
+		// 化简数组元素为临时变量
+		SimplifyArrayOperand(left_attribute);
+		// 生成有条件的跳转语句
+		// 不符合条件时才会跳转，所以这里的操作符与读到的token要反一下
+		Quaternary q_jmp_condition;
+		switch(token_.type_)	// 这个单词可能是关系运算符，但也有可能是右括号或THEN或OR或AND（当条件中仅有一个表达式时）
+		{
+		case Token::LT:
+			q_jmp_condition.op_ = Quaternary::JNL;
+			break;
+		case Token::LEQ:
+			q_jmp_condition.op_ = Quaternary::JG;
+			break;
+		case Token::GT:
+			q_jmp_condition.op_ = Quaternary::JNG;
+			break;
+		case Token::GEQ:
+			q_jmp_condition.op_ = Quaternary::JL;
+			break;
+		case Token::EQU:
+			q_jmp_condition.op_ = Quaternary::JNE;
+			break;
+		case Token::NEQ:
+			q_jmp_condition.op_ = Quaternary::JE;
+			break;
+		default:
+			assert(Token::RIGHT_PAREN	== token_.type_
+				|| Token::THEN			== token_.type_
+				|| Token::LOGICOR		== token_.type_
+				|| Token::LOGICAND		== token_.type_);
+			q_jmp_condition.op_ = Quaternary::JE;
+			break;
+		}
+		ExpressionAttribute right_attribute;
+		if(Token::RIGHT_PAREN != token_.type_
+			&& Token::THEN != token_.type_
+			&& Token::LOGICOR != token_.type_
+			&& Token::LOGICAND != token_.type_)	// 如果还有下一个表达式，再继续读取
+		{
+			lexical_analyzer_.GetNextToken(token_);	// 读取关系运算符的下一个单词
+			right_attribute = Expression(depth + 1);
+			// 化简数组为临时变量
+			SimplifyArrayOperand(right_attribute);
+		}
+		else
+		{
+			right_attribute.addressingmethod_ = Quaternary::IMMEDIATE_ADDRESSING;
+			right_attribute.value_ = 0;
+			right_attribute.offset_addressingmethod_ = Quaternary::IMMEDIATE_ADDRESSING;
+			right_attribute.offset_ = 0;
+			right_attribute.decoratetype_ = TokenTableItem::VOID;
+		}
+		// 操作数
+		q_jmp_condition.method1_ = left_attribute.addressingmethod_;
+		q_jmp_condition.src1_ = left_attribute.value_;
+		q_jmp_condition.method2_ = right_attribute.addressingmethod_;
+		q_jmp_condition.src2_ = right_attribute.value_;
+		q_jmp_condition.method3_ = Quaternary::IMMEDIATE_ADDRESSING;
+		q_jmp_condition.dst_ = label_negative;
+		// 保存四元式
+		quaternarytable_.push_back(q_jmp_condition);
+		// 回收临时变量
+		if(Quaternary::TEMPORARY_ADDRESSING == left_attribute.addressingmethod_)
+		{
+			--tempvar_index_;
+		}
+		if(Quaternary::TEMPORARY_ADDRESSING == right_attribute.addressingmethod_)
+		{
+			--tempvar_index_;
+		}
+	}
+	else	// 第一个是左括号，且不能识别为表达式的情况
+	{
+		lexical_analyzer_.GetNextToken(token_);	// 读左括号的下一个单词
+		multi_jmp = BoolExpression(label_positive, label_negative, depth + 1);
+		lexical_analyzer_.GetNextToken(token_);	// 读右括号的下一个单词
+	}
+	return multi_jmp;
+}
+
+// <表达式> ::= [+|-]<项>{<加法运算符><项>}
+bool MidCodeGenerator::IsExpression(size_t depth) throw()
+{
+	PrintFunctionFrame("IsExpression()", depth);
+	vector<Token>::const_iterator iter = lexical_analyzer_.GetTokenPosition();
+	Token tmp = token_;
+	bool result = ExpressionTest(depth + 1);
+	token_ = tmp;
+	lexical_analyzer_.SetTokenPosition(iter);
+	return result;
+}
+
+
+// <表达式> ::= [+|-]<项>{<加法运算符><项>}
+bool MidCodeGenerator::ExpressionTest(size_t depth) throw()
+{
+	PrintFunctionFrame("ExpressionTest()", depth);
+
+	if(	Token::PLUS == token_.type_
+		|| Token::MINUS == token_.type_)
+	{
+		lexical_analyzer_.GetNextToken(token_);
+	}
+	if(!TermTest(depth + 1))
+	{
+		return false;
+	}
+
+	while(	Token::PLUS == token_.type_
+		||	Token::MINUS == token_.type_)
+	{
+		// 读取下一项
+		lexical_analyzer_.GetNextToken(token_);
+		if(!TermTest(depth + 1))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+// <项> ::= <因子>{<乘法运算符><因子>}
+bool MidCodeGenerator::TermTest(size_t depth) throw()						// 项
+{
+	PrintFunctionFrame("TermTest()", depth);
+
+	if(!FactorTest(depth + 1))
+	{
+		return false;
+	}
+
+	while(	token_.type_ == Token::MUL
+		||	token_.type_ == Token::DIV)
+	{
+		lexical_analyzer_.GetNextToken(token_);
+		if(!FactorTest(depth + 1))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+// <因子> ::= <标识符>(['['<表达式>']'] | [<函数调用语句>])
+//          | '('<表达式>')' 
+//          | <无符号整数> 
+//          | <字符>
+bool MidCodeGenerator::FactorTest(size_t depth) throw()					// 因子
+{
+	PrintFunctionFrame("FactorTest()", depth);
+
+	// 语法检查：标识符的情况【变量、常变量、数组、函数调用】
+	if(Token::IDENTIFIER == token_.type_)
+	{
+#ifdef SYNTAXDEBUG
+	generating_process_buffer_ << generating_format_string_ << "  " << token_.toString() << std::endl;
+#endif
+		lexical_analyzer_.GetNextToken(token_);
+		// 数组元素
+		if(Token::LEFT_BRACKET == token_.type_)
+		{
+			// 语法：读入作为下标的表达式
+			lexical_analyzer_.GetNextToken(token_);
+			if(!ExpressionTest(depth + 1))
+			{
+				return false;
+			}
+			// 语法出错，返回false
+			if(token_.type_ != Token::RIGHT_BRACKET)
+			{
+				return false;
+			}
+			// 读入右中括号的下一个单词 <bug fixed by mxf at 21:28 1.29 2016>
+			lexical_analyzer_.GetNextToken(token_);
+		}
+		else if(Token::LEFT_PAREN == token_.type_)	// 左括号，函数调用
+		{
+			ProcFuncCallStatementTest(depth + 1);			
+		}
+	}
+	else if(Token::LEFT_PAREN == token_.type_)	// 括号括起来的表达式
+	{
+		// bug fixed by mxf at 0:42 1/31 2016【读表达式之前没有读取括号后的第一个单词】
+		// 读表达式的第一个单词
+		lexical_analyzer_.GetNextToken(token_);
+		// 再读取表达式
+		if(!ExpressionTest(depth + 1))	// 记录类型
+		{
+			return false;
+		}
+		if(token_.type_ != Token::RIGHT_PAREN)
+		{
+			return false;
+		}
+		lexical_analyzer_.GetNextToken(token_);
+	}
+	else if(Token::CONST_INTEGER == token_.type_)	// 整型字面常量
+	{
+#ifdef SYNTAXDEBUG
+	generating_process_buffer_ << generating_format_string_ << "  " << token_.toString() << std::endl;
+#endif
+		lexical_analyzer_.GetNextToken(token_);
+	}
+	else if(Token::CONST_CHAR == token_.type_)	// 字符型字面常量
+	{
+#ifdef SYNTAXDEBUG
+	generating_process_buffer_ << generating_format_string_ << "  " << token_.toString() << std::endl;
+#endif
+		lexical_analyzer_.GetNextToken(token_);
+	}
+	else
+	{
+		// 语法出错，返回false
+		return false;
+	}
+	return true;
+}
+
+// <过程/函数调用语句> ::= '('[<实在参数表>]')'
+bool MidCodeGenerator::ProcFuncCallStatementTest(size_t depth)	// 过程调用语句
+{
+	PrintFunctionFrame("ProcFuncCallStatement()", depth);
+	// 语法检查
+	if(Token::LEFT_PAREN != token_.type_)
+	{
+		return false;
+	}
+	// 语法：读入右括号或参数表的第一个单词
+	lexical_analyzer_.GetNextToken(token_);
+	// 语法：读参数
+	if(Token::RIGHT_PAREN != token_.type_)
+	{
+		if(!ArgumentListTest(depth + 1))
+		{
+			return false;
+		}
+		// 语法检查
+		if(Token::RIGHT_PAREN != token_.type_)
+		{
+			return false;
+		}
+	}
+	lexical_analyzer_.GetNextToken(token_);
+	return true;
+}
+
+// <实在参数表> ::= <表达式>{,<表达式>}
+bool MidCodeGenerator::ArgumentListTest(size_t depth) throw()			// 实参表
+{
+	PrintFunctionFrame("ArgumentList()", depth);
+
+	if(!ExpressionTest(depth + 1))
+	{
+		return false;
+	}
+	while(Token::COMMA == token_.type_)
+	{
+		lexical_analyzer_.GetNextToken(token_);
+		if(!ExpressionTest(depth + 1))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+//// <条件> ::= <表达式><关系运算符><表达式>
+//// 由if或for语句中传递下来label参数，标识if语句块或for循环体的结束
+//// 用于在处理condition时设置跳转语句
+//void MidCodeGenerator::Condition(int endlabel, size_t depth) throw()				// 条件
+//{
+//	PrintFunctionFrame("Condition()", depth);
+//
+//	ExpressionAttribute left_attribute = Expression(depth + 1);
+//	// 化简数组元素为临时变量
+//	SimplifyArrayOperand(left_attribute);
+//		
+//	bool isonlyexpression = false;
+//	// 生成有条件的跳转语句
+//	// 不符合条件时才会跳转，所以这里的操作符与读到的token要反一下
+//	Quaternary q_jmp_condition;
+//	switch(token_.type_)	// 这个单词可能是关系运算符，但也有可能是THEN（当条件中仅有一个表达式时）
+//	{
+//	case Token::LT:
+//		q_jmp_condition.op_ = Quaternary::JNL;
+//		break;
+//	case Token::LEQ:
+//		q_jmp_condition.op_ = Quaternary::JG;
+//		break;
+//	case Token::GT:
+//		q_jmp_condition.op_ = Quaternary::JNG;
+//		break;
+//	case Token::GEQ:
+//		q_jmp_condition.op_ = Quaternary::JL;
+//		break;
+//	case Token::EQU:
+//		q_jmp_condition.op_ = Quaternary::JNE;
+//		break;
+//	case Token::NEQ:
+//		q_jmp_condition.op_ = Quaternary::JE;
+//		break;
+//	case Token::THEN:
+//		q_jmp_condition.op_ = Quaternary::JE;
+//		isonlyexpression = true;
+//		break;
+//	default:
+//		assert(false);
+//		break;
+//	}
+//	ExpressionAttribute right_attribute;
+//	if(!isonlyexpression)	// 如果还有下一个表达式，再继续读取
+//	{
+//		lexical_analyzer_.GetNextToken(token_);
+//		right_attribute = Expression(depth + 1);
+//		// 化简数组为临时变量
+//		SimplifyArrayOperand(right_attribute);
+//	}
+//	else
+//	{
+//		right_attribute.addressingmethod_ = Quaternary::IMMEDIATE_ADDRESSING;
+//		right_attribute.value_ = 0;
+//		right_attribute.offset_addressingmethod_ = Quaternary::IMMEDIATE_ADDRESSING;
+//		right_attribute.offset_ = 0;
+//		right_attribute.decoratetype_ = TokenTableItem::VOID;
+//	}
+//	// 操作数
+//	q_jmp_condition.method1_ = left_attribute.addressingmethod_;
+//	q_jmp_condition.src1_ = left_attribute.value_;
+//	q_jmp_condition.method2_ = right_attribute.addressingmethod_;
+//	q_jmp_condition.src2_ = right_attribute.value_;
+//	q_jmp_condition.method3_ = Quaternary::IMMEDIATE_ADDRESSING;
+//	q_jmp_condition.dst_ = endlabel;
+//	// 保存四元式
+//	quaternarytable_.push_back(q_jmp_condition);
+//	// 回收临时变量
+//	if(Quaternary::TEMPORARY_ADDRESSING == left_attribute.addressingmethod_)
+//	{
+//		--tempvar_index_;
+//	}
+//	if(Quaternary::TEMPORARY_ADDRESSING == right_attribute.addressingmethod_)
+//	{
+//		--tempvar_index_;
+//	}
+//}
 
 // <情况语句> ::= case <表达式> of <情况表元素>{; <情况表元素>}end
 void MidCodeGenerator::CaseStatement(size_t depth) throw()			// 情况语句
@@ -1506,22 +2030,34 @@ void MidCodeGenerator::WhileLoopStatement(size_t depth) throw()			// while循环语
 
 	// 申请条件语句前面的label<check>和结束时的label<end>
 	int checklabel = label_index_++;
-	int endlabel = label_index_++;
+	int label_begindo = label_index_++;
+	int label_enddo = label_index_++;
 	// 更新continue_label_栈与break_label_栈
 	continue_label_.push(checklabel);
-	break_label_.push(endlabel);
+	break_label_.push(label_enddo);
 	// 放下label<check>
 	Quaternary q_checklabel(Quaternary::LABEL,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::IMMEDIATE_ADDRESSING, checklabel);
 	quaternarytable_.push_back(q_checklabel);
-	
 	// 读取下一个单词，并进入条件语句
 	lexical_analyzer_.GetNextToken(token_);
-	Condition(endlabel, depth + 1);	// 条件语句中会执行动作@JZLabel<end>
+	Condition(label_begindo, label_enddo, depth + 1);	// 条件语句中会执行动作@JZLabel<end>
 	// 语法检查
 	assert(Token::DO == token_.type_);
+	// 插入跳转到label_endo的语句
+	Quaternary q_jmp_enddo(Quaternary::JMP,
+		Quaternary::NIL_ADDRESSING, 0,
+		Quaternary::NIL_ADDRESSING, 0,
+		Quaternary::IMMEDIATE_ADDRESSING, label_enddo);
+	quaternarytable_.push_back(q_jmp_enddo);
+	// 插入label_begindo的标签
+	Quaternary q_label_begindo(Quaternary::LABEL,
+		Quaternary::NIL_ADDRESSING, 0,
+		Quaternary::NIL_ADDRESSING, 0,
+		Quaternary::IMMEDIATE_ADDRESSING, label_begindo);
+	quaternarytable_.push_back(q_label_begindo);
 	// 读入循环体的第一个单词
 	lexical_analyzer_.GetNextToken(token_);
 	// 读入循环体
@@ -1536,11 +2072,11 @@ void MidCodeGenerator::WhileLoopStatement(size_t depth) throw()			// while循环语
 		Quaternary::IMMEDIATE_ADDRESSING, checklabel);
 	quaternarytable_.push_back(q_jmp);
 	// 放下结束的label
-	Quaternary q_endlabel(Quaternary::LABEL,
+	Quaternary q_label_enddo(Quaternary::LABEL,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::NIL_ADDRESSING, 0,
-		Quaternary::IMMEDIATE_ADDRESSING, endlabel);
-	quaternarytable_.push_back(q_endlabel);
+		Quaternary::IMMEDIATE_ADDRESSING, label_enddo);
+	quaternarytable_.push_back(q_label_enddo);
 }
 
 // <for循环语句> ::= for <标识符> := <表达式> （downto | to） <表达式> do <语句>

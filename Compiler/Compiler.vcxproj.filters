@@ -75,16 +75,10 @@
     <ClInclude Include="SyntaxAnalyzer.h">
       <Filter>Header Files\Syntax</Filter>
     </ClInclude>
-    <ClInclude Include="SyntaxException.h">
-      <Filter>Header Files\Syntax</Filter>
-    </ClInclude>
     <ClInclude Include="EscapeSequence.h">
       <Filter>Header Files\Lexical</Filter>
     </ClInclude>
     <ClInclude Include="SemanticsAnalyzer.h">
-      <Filter>Header Files\Semantics</Filter>
-    </ClInclude>
-    <ClInclude Include="TokenTableException.h">
       <Filter>Header Files\Semantics</Filter>
     </ClInclude>
     <ClInclude Include="TokenTable.h">

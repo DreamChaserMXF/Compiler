@@ -11,32 +11,21 @@ Parse()
 |   |   |   |   |   |   |   |   |   |   Expression()
 |   |   |   |   |   |   |   |   |   |   |   Term()
 |   |   |   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  2
 |   |   |   |   |   |   |   |   |   |   Expression()
 |   |   |   |   |   |   |   |   |   |   |   Term()
 |   |   |   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  1
 |   |   |   |   |   |   |   |   |   BoolFactor()
 |   |   |   |   |   |   |   |   |   |   Expression()
 |   |   |   |   |   |   |   |   |   |   |   Term()
 |   |   |   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  3
 |   |   |   |   |   |   |   |   |   |   Expression()
 |   |   |   |   |   |   |   |   |   |   |   Term()
 |   |   |   |   |   |   |   |   |   |   |   |   Factor()
-|   |   |   |   |   |   |   |   |   |   |   |     CONST_INTEGER  2
 |   |   |   |   |   |   Statement()
 |   |   |   |   |   |   |   WriteStatement()
-|   |   |   |   |   |   |     WRITE
-|   |   |   |   |   |   |     CONST_STRING  1
 |   |   |   |   |   |   Statement()
 |   |   |   |   |   |   |   WriteStatement()
-|   |   |   |   |   |   |     WRITE
-|   |   |   |   |   |   |     CONST_STRING  bug
 |   |   |   |   Statement()
 |   |   |   |   |   WriteStatement()
-|   |   |   |   |     WRITE
-|   |   |   |   |     CONST_STRING  
-
 |   |   |   |   Statement()
 

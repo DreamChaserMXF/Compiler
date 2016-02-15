@@ -1,5 +1,4 @@
 #include "SyntaxAnalyzer.h"
-#include "SyntaxException.h"
 #include <assert.h>
 #include <sstream>
 
@@ -852,14 +851,13 @@ void SyntaxAnalyzer::BoolFactor(size_t depth) throw()		// 布尔因子
 		case Token::LOGICOR:
 		case Token::LOGICAND:
 			break;
-		// 因为之前已经检查过了，所以正常情况下不可能有default
 		default:
 			ErrorHandle(LACKLOGICOPERATOR);
 			return;
 			break;
 		}
 		if(Token::RIGHT_PAREN != token_.type_
-			&&Token::THEN != token_.type_
+			&& Token::THEN != token_.type_
 			&& Token::LOGICOR != token_.type_
 			&& Token::LOGICAND != token_.type_)	// 如果还有下一个表达式，再继续读取
 		{

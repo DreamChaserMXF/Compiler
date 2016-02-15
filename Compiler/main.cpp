@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 	//freopen("TestCase\\testinput.txt", "r", stdin);
 	for(int i = 0; i < 12; ++i)
 	{
-		//if(i > 0) break;
+		if(i > 0) break;
 		//if(i != 6 && i != 7) continue;
 		cout <<"i = " <<  i << endl;
 		// 输入重定向
@@ -149,7 +149,8 @@ int main(int argc, char *argv[])
 			continue;
 		}
 
-		continue;
+		// 不进行汇编
+		//continue;
 
 		// 汇编过程
 		// 先确定不带后缀的汇编文件名

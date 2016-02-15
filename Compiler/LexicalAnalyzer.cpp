@@ -463,6 +463,7 @@ void LexicalAnalyzer::CharHandle(Token &token, char &ch) throw(LexException)				
 		}
 	}
 }
+
 void LexicalAnalyzer::LogicOrHandle(Token &token, char &ch) throw(LexException)	// ´¦ÀíÂß¼­»ò
 {
 	token.value_.identifier.clear();
@@ -473,6 +474,7 @@ void LexicalAnalyzer::LogicOrHandle(Token &token, char &ch) throw(LexException)	
 	{
 		token.value_.identifier.push_back('|');
 		token.type_ = Token::LOGICOR;
+		ch = getNextChar();
 	}
 	else
 	{

@@ -138,3 +138,21 @@ EAX, EDX用作计算，EBP用作基指针，EBX用作计算外层的EBP。ECX用作计算数组下标的偏移
 
 
 语义分析中，出错后，仍然应该正常读取所有的语法成分，但不产生动作。而不能一直读到分号再去处理。否则会破坏正常的语法分析层次。
+
+24. 条件语句中，复合条件的处理
+类似表达式，将复合条件分为：布尔表达式、布尔项与布尔因子，逐级处理。
+该文法的问题在于，在布尔因子中，需要读入表达式(Expression)，或者由括号括起来的布尔表达式(BoolExpression)。当布尔因子的第一个单词是左括号时，无法区分到底该进行哪个分支。
+故在语法分析时写出几个测试函数，遇到左括号时，先测试是否为算术表达式。如果是，就按照算术表达式来分析；否则按照布尔表达式来分析。
+在语义分析和中间代码生成时，测试函数可以照搬语法分析的测试函数，因为单从语法结构上就可判定是算术表达式还是布尔表达式。
+语义分析中，布尔表达式、布尔项与布尔因子，由于不需要处理标识符和符号表，故这三个函数和语法分析中的也是一样的。
+
+在中间代码生成的过程优化中，优化的地点为：
+1. 当BoolFactor中只是一个简单的条件判断，而非复杂的布尔表达式时，可在BoolTerm中分析完BoolFactor后，取消一个Label的设置（该Label专门为当BooLFactor为布尔表达式时设定）；
+2. 当BoolTerm中只有一个Factor，且Factor为简单条件时，可在BoolTerm中取消最后一个向积极标识跳转的语句，并更改BoolFactor中唯一一个跳转语句，将其由“否定则跳转至消极标志”改为“肯定则跳转至积极标志”
+3. 当BoolTerm中只有一个Factor，且Factor为简单条件时，可在BoolExpression中取消一个Label的设置（该Label专门为当BooLTerm中有多个BoolFactor，或仅有一个BoolFactor但其为布尔表达式时设定）。此时还须更改BoolTerm中唯一一个跳转语句的指令。
+4. 当BoolExpression中只有一个简单的BoolTerm时，可取消BoolExpression中最后一个向消极标识跳转的语句，并更改BoolTerm中唯一一个跳转语句，将其由“肯定则跳转至积极标志”改为“否定则跳转至消极标志”
+5. 对BoolTerm中最后一个BoolFactor，以及BoolExpression中最后一个BoolTerm的优化：
+	因为BoolTerm中最后一个BoolFactor可能有跳转至label_negative的跳转语句，然而最后一个BoolFactor的label_negative之后紧跟着的就是JMP语句，故将最后一个BoolFactor中的跳转至label_negative的跳转语句的跳转地址改为label_negative之后紧跟着的JMP语句的跳转地址
+	BoolExpression中同理
+6. IfStatement中，打下label_beginthen的前一句可能就是BoolExpression中的JMP<label_positive>语句，故可同时去掉这两句
+至此，完成所有优化

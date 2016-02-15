@@ -54,7 +54,17 @@ private:
 	ExpressionAttribute Factor(size_t depth) throw();		// 因子
 
 	void IfStatement(size_t depth) throw();			// 条件语句
-	void Condition(int endlabel, size_t depth) throw();// 条件
+	bool Condition(int label_positive, int label_negative, size_t depth) throw();// 条件
+	//void Condition(size_t depth) throw();		// 条件
+	bool BoolExpression(int label_positive, int label_negative, size_t depth) throw();	// 布尔表达式
+	bool BoolTerm(int label_positive, int label_negative, size_t depth) throw();		// 布尔项
+	bool BoolFactor(int label_positive, int label_negative, size_t depth) throw();		// 布尔因子
+	bool IsExpression(size_t depth) throw();	// 测试是否为表达式（保持词法分析器现场）
+	bool ExpressionTest(size_t depth) throw();	// 测试是否为表达式
+	bool TermTest(size_t depth) throw();		// 测试是否为项
+	bool FactorTest(size_t depth) throw();		// 测试是否为因子
+	bool ProcFuncCallStatementTest(size_t depth) throw();	// 测试是否为过程/函数调用语句
+	bool ArgumentListTest(size_t depth) throw();// 测试是否为实参表
 
 	void CaseStatement(size_t depth) throw();			// 情况语句
 	vector<int> CaseElement(int caselabel, int endlabel, size_t depth) throw();	// 情况表元素

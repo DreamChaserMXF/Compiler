@@ -1,5 +1,4 @@
 #include "TokenTable.h"
-#include "TokenTableException.h"
 #include "ExpressionAttribute.h"
 #include <assert.h>
 #include <sstream>

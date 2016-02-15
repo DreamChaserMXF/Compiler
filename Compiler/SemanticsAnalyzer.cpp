@@ -1,9 +1,7 @@
 #include "SemanticsAnalyzer.h"
 
 #include "SemanticsAnalyzer.h"
-#include "SyntaxException.h"
 #include "TokenTableItem.h"
-#include "TokenTableException.h"
 #include <assert.h>
 #include <sstream>
 #include <algorithm>
@@ -758,38 +756,312 @@ void SemanticsAnalyzer::IfStatement(size_t depth) throw()				// 条件语句
 		Statement(depth + 1);
 	}
 }
+//
+//// <条件> ::= <表达式><关系运算符><表达式>
+//// 由if或for语句中传递下来label参数，标识if语句块或for循环体的结束
+//// 用于在处理condition时设置跳转语句
+//void SemanticsAnalyzer::Condition(size_t depth) throw()				// 条件
+//{
+//	PrintFunctionFrame("Condition()", depth);
+//
+//	Expression(depth + 1);
+//		
+//	// 生成有条件的跳转语句
+//	// 不符合条件时才会跳转，所以这里的操作符与读到的token要反一下
+//	Quaternary q_jmp_condition;
+//	switch(token_.type_)	// 这个单词可能是关系运算符，但也有可能是THEN（当条件中仅有一个表达式时）
+//	{
+//	case Token::LT:
+//	case Token::LEQ:
+//	case Token::GT:
+//	case Token::GEQ:
+//	case Token::EQU:
+//	case Token::NEQ:
+//	case Token::THEN:
+//		break;
+//	default:
+//		assert(false);
+//		break;
+//	}
+//	if(Token::THEN != token_.type_)	// 如果还有下一个表达式，再继续读取
+//	{
+//		lexical_analyzer_.GetNextToken(token_);
+//		Expression(depth + 1);
+//	}
+//}
 
-// <条件> ::= <表达式><关系运算符><表达式>
-// 由if或for语句中传递下来label参数，标识if语句块或for循环体的结束
-// 用于在处理condition时设置跳转语句
+// <条件> ::= <布尔表达式>
 void SemanticsAnalyzer::Condition(size_t depth) throw()				// 条件
 {
 	PrintFunctionFrame("Condition()", depth);
+	BoolExpression(depth + 1);
+}
 
-	Expression(depth + 1);
-		
-	// 生成有条件的跳转语句
-	// 不符合条件时才会跳转，所以这里的操作符与读到的token要反一下
-	Quaternary q_jmp_condition;
-	switch(token_.type_)	// 这个单词可能是关系运算符，但也有可能是THEN（当条件中仅有一个表达式时）
+// <布尔表达式> ::= <布尔项> [ <逻辑或> <布尔项>]
+void SemanticsAnalyzer::BoolExpression(size_t depth) throw()	// 布尔表达式
+{
+	PrintFunctionFrame("BoolExpression()", depth);
+	bool isfirst = true;
+	do
 	{
-	case Token::LT:
-	case Token::LEQ:
-	case Token::GT:
-	case Token::GEQ:
-	case Token::EQU:
-	case Token::NEQ:
-	case Token::THEN:
-		break;
-	default:
-		assert(false);
-		break;
+		if(!isfirst)
+		{
+			lexical_analyzer_.GetNextToken(token_);
+		}
+		else
+		{
+			isfirst = false;
+		}
+		BoolTerm(depth + 1);
+	}while(Token::LOGICOR == token_.type_);
+}
+
+// <布尔项> ::= <布尔因子> [<逻辑与><布尔因子>]
+void SemanticsAnalyzer::BoolTerm(size_t depth) throw()			// 布尔项
+{
+	PrintFunctionFrame("BoolTerm()", depth);
+	bool isfirst = true;
+	do
+	{
+		if(!isfirst)
+		{
+			lexical_analyzer_.GetNextToken(token_);
+		}
+		else
+		{
+			isfirst = false;
+		}
+		BoolFactor(depth + 1);
+	}while(Token::LOGICAND == token_.type_);
+}
+
+// <布尔因子> ::= <表达式>[<关系运算符><表达式>] | ‘(‘<布尔表达式>’)’
+void SemanticsAnalyzer::BoolFactor(size_t depth) throw()		// 布尔因子
+{
+	PrintFunctionFrame("BoolFactor()", depth);
+	// 先考虑非左括号的情况
+	if(Token::LEFT_PAREN != token_.type_ || IsExpression(depth + 1))
+	{
+		Expression(depth + 1);
+		switch(token_.type_)	// 这个单词可能是关系运算符，但也有可能是右括号或THEN或OR或AND（当条件中仅有一个表达式时）
+		{
+		case Token::LT:
+		case Token::LEQ:
+		case Token::GT:
+		case Token::GEQ:
+		case Token::EQU:
+		case Token::NEQ:
+		case Token::RIGHT_PAREN:
+		case Token::THEN:
+		case Token::LOGICOR:
+		case Token::LOGICAND:
+			break;
+		// 因为语法分析时已经检查过了，所以正常情况下不可能有default
+		default:
+			assert(false);
+			return;
+		}
+		if(Token::RIGHT_PAREN != token_.type_
+			&&Token::THEN != token_.type_
+			&& Token::LOGICOR != token_.type_
+			&& Token::LOGICAND != token_.type_)	// 如果还有下一个表达式，再继续读取
+		{
+			lexical_analyzer_.GetNextToken(token_);	// 读取关系运算符的下一个单词
+			Expression(depth + 1);
+		}
 	}
-	if(Token::THEN != token_.type_)	// 如果还有下一个表达式，再继续读取
+	else	// 第一个是左括号，且不能识别为表达式的情况
+	{
+		lexical_analyzer_.GetNextToken(token_);	// 读左括号的下一个单词
+		BoolExpression(depth + 1);
+		lexical_analyzer_.GetNextToken(token_);	// 读右括号的下一个单词
+	}
+}
+
+// <表达式> ::= [+|-]<项>{<加法运算符><项>}
+bool SemanticsAnalyzer::IsExpression(size_t depth) throw()
+{
+	PrintFunctionFrame("IsExpression()", depth);
+	vector<Token>::const_iterator iter = lexical_analyzer_.GetTokenPosition();
+	Token tmp = token_;
+	bool result = ExpressionTest(depth + 1);
+	token_ = tmp;
+	lexical_analyzer_.SetTokenPosition(iter);
+	return result;
+}
+
+
+// <表达式> ::= [+|-]<项>{<加法运算符><项>}
+bool SemanticsAnalyzer::ExpressionTest(size_t depth) throw()
+{
+	PrintFunctionFrame("ExpressionTest()", depth);
+
+	if(	Token::PLUS == token_.type_
+		|| Token::MINUS == token_.type_)
 	{
 		lexical_analyzer_.GetNextToken(token_);
-		Expression(depth + 1);
 	}
+	if(!TermTest(depth + 1))
+	{
+		return false;
+	}
+
+	while(	Token::PLUS == token_.type_
+		||	Token::MINUS == token_.type_)
+	{
+		// 读取下一项
+		lexical_analyzer_.GetNextToken(token_);
+		if(!TermTest(depth + 1))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+// <项> ::= <因子>{<乘法运算符><因子>}
+bool SemanticsAnalyzer::TermTest(size_t depth) throw()						// 项
+{
+	PrintFunctionFrame("TermTest()", depth);
+
+	if(!FactorTest(depth + 1))
+	{
+		return false;
+	}
+
+	while(	token_.type_ == Token::MUL
+		||	token_.type_ == Token::DIV)
+	{
+		lexical_analyzer_.GetNextToken(token_);
+		if(!FactorTest(depth + 1))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+// <因子> ::= <标识符>(['['<表达式>']'] | [<函数调用语句>])
+//          | '('<表达式>')' 
+//          | <无符号整数> 
+//          | <字符>
+bool SemanticsAnalyzer::FactorTest(size_t depth) throw()					// 因子
+{
+	PrintFunctionFrame("FactorTest()", depth);
+
+	// 语法检查：标识符的情况【变量、常变量、数组、函数调用】
+	if(Token::IDENTIFIER == token_.type_)
+	{
+#ifdef SYNTAXDEBUG
+	semantics_process_buffer_ << semantics_format_string_ << "  " << token_.toString() << std::endl;
+#endif
+		lexical_analyzer_.GetNextToken(token_);
+		// 数组元素
+		if(Token::LEFT_BRACKET == token_.type_)
+		{
+			// 语法：读入作为下标的表达式
+			lexical_analyzer_.GetNextToken(token_);
+			if(!ExpressionTest(depth + 1))
+			{
+				return false;
+			}
+			// 语法出错，返回false
+			if(token_.type_ != Token::RIGHT_BRACKET)
+			{
+				return false;
+			}
+			// 读入右中括号的下一个单词 <bug fixed by mxf at 21:28 1.29 2016>
+			lexical_analyzer_.GetNextToken(token_);
+		}
+		else if(Token::LEFT_PAREN == token_.type_)	// 左括号，函数调用
+		{
+			ProcFuncCallStatementTest(depth + 1);			
+		}
+	}
+	else if(Token::LEFT_PAREN == token_.type_)	// 括号括起来的表达式
+	{
+		// bug fixed by mxf at 0:42 1/31 2016【读表达式之前没有读取括号后的第一个单词】
+		// 读表达式的第一个单词
+		lexical_analyzer_.GetNextToken(token_);
+		// 再读取表达式
+		if(!ExpressionTest(depth + 1))	// 记录类型
+		{
+			return false;
+		}
+		if(token_.type_ != Token::RIGHT_PAREN)
+		{
+			return false;
+		}
+		lexical_analyzer_.GetNextToken(token_);
+	}
+	else if(Token::CONST_INTEGER == token_.type_)	// 整型字面常量
+	{
+#ifdef SYNTAXDEBUG
+	semantics_process_buffer_ << semantics_format_string_ << "  " << token_.toString() << std::endl;
+#endif
+		lexical_analyzer_.GetNextToken(token_);
+	}
+	else if(Token::CONST_CHAR == token_.type_)	// 字符型字面常量
+	{
+#ifdef SYNTAXDEBUG
+	semantics_process_buffer_ << semantics_format_string_ << "  " << token_.toString() << std::endl;
+#endif
+		lexical_analyzer_.GetNextToken(token_);
+	}
+	else
+	{
+		// 语法出错，返回false
+		return false;
+	}
+	return true;
+}
+
+// <过程/函数调用语句> ::= '('[<实在参数表>]')'
+bool SemanticsAnalyzer::ProcFuncCallStatementTest(size_t depth)	// 过程调用语句
+{
+	PrintFunctionFrame("ProcFuncCallStatement()", depth);
+	// 语法检查
+	if(Token::LEFT_PAREN != token_.type_)
+	{
+		return false;
+	}
+	// 语法：读入右括号或参数表的第一个单词
+	lexical_analyzer_.GetNextToken(token_);
+	// 语法：读参数
+	if(Token::RIGHT_PAREN != token_.type_)
+	{
+		if(!ArgumentListTest(depth + 1))
+		{
+			return false;
+		}
+		// 语法检查
+		if(Token::RIGHT_PAREN != token_.type_)
+		{
+			return false;
+		}
+	}
+	lexical_analyzer_.GetNextToken(token_);
+	return true;
+}
+
+// <实在参数表> ::= <表达式>{,<表达式>}
+bool SemanticsAnalyzer::ArgumentListTest(size_t depth) throw()			// 实参表
+{
+	PrintFunctionFrame("ArgumentList()", depth);
+
+	if(!ExpressionTest(depth + 1))
+	{
+		return false;
+	}
+	while(Token::COMMA == token_.type_)
+	{
+		lexical_analyzer_.GetNextToken(token_);
+		if(!ExpressionTest(depth + 1))
+		{
+			return false;
+		}
+	}
+	return true;
 }
 
 // <情况语句> ::= case <表达式> of <情况表元素>{; <情况表元素>}end
