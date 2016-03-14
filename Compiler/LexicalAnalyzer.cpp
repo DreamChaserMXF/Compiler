@@ -334,6 +334,9 @@ void LexicalAnalyzer::ParseCurrentToken(Token &token, char &ch) throw(LexExcepti
 		case '=':
 			token.type_ = Token::EQU;
 			break;
+		case '!':
+			token.type_ = Token::LOGICNOT;
+			break;
 		default:
 			throw LexException("unkown character", ch, currentline_);
 			break;

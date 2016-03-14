@@ -54,6 +54,7 @@ private:
 	ExpressionAttribute Factor(size_t depth) throw();		// 因子
 
 	void IfStatement(size_t depth) throw();			// 条件语句
+	Quaternary::OPCode ConvertFromToken(const Token::TokenType &token_type, bool inverse) const throw();
 	bool Condition(int label_positive, int label_negative, size_t depth) throw();// 条件
 	//void Condition(size_t depth) throw();		// 条件
 	bool BoolExpression(int label_positive, int label_negative, size_t depth) throw();	// 布尔表达式

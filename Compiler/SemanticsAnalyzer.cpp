@@ -840,6 +840,12 @@ void SemanticsAnalyzer::BoolTerm(size_t depth) throw()			// 布尔项
 void SemanticsAnalyzer::BoolFactor(size_t depth) throw()		// 布尔因子
 {
 	PrintFunctionFrame("BoolFactor()", depth);
+
+	if(Token::LOGICNOT == token_.type_)
+	{
+		lexical_analyzer_.GetNextToken(token_);
+	}
+
 	// 先考虑非左括号的情况
 	if(Token::LEFT_PAREN != token_.type_ || IsExpression(depth + 1))
 	{

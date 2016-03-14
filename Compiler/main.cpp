@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 	for(int i = 0; i < 12; ++i)
 	{
 		//if(i > 4) break;
-		//if(i != 6 && i != 7) continue;
+		//if(i != 4) continue;
 		cout <<"\ni = " <<  i << endl;
 		Sleep(1000);
 		// 输入重定向

@@ -6,12 +6,27 @@ sum : integer;
 sequence : array[100] of integer;
 
 begin
+	write("\ncompound condition");
 	if (1 < 1 && 1 < 2 && 1 < 3
-	|| 2 > 1 && (2 = 2 || 2 = 1) && 2 < 3 && (5 > 1)
+	|| (2 > 1 && (2 = 2 || 2 = 1) && 2 < 3 && (5 > 1))
 	|| 3 = 1 && (3 > 2) && 3 = 3)
-	then write("\ntrue")
-	else write("\nfalse");
+	then write(" true")
+	else write(" false");
+	
+	i := 1;
+	j := 1;
+	if (!(i + j) && 1 || 0)
+	then write("\n'not' test false")
+	else write("\n'not' test true");
 
+	if i + j
+	then write("\narithmetic true")
+	else write("\narithmetic false");
+	
+	if i - j
+	then write("\narithmetic false")
+	else write("\narithmetic true");
+	
 	sequence[0] := 1;
 	sequence[1] := 2;
 	sequence[2] := 3;

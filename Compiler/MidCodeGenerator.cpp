@@ -1226,6 +1226,69 @@ void MidCodeGenerator::IfStatement(size_t depth) throw()				// 条件语句
 	}
 }
 
+Quaternary::OPCode MidCodeGenerator::ConvertFromToken(const Token::TokenType &token_type, bool inverse) const throw()
+{
+	Quaternary::OPCode ret_op = Quaternary::NIL_OP;
+	if(inverse)
+	{
+		switch(token_type)	// 这个单词可能是关系运算符，但也有可能是右括号或THEN或OR或AND（当条件中仅有一个表达式时）
+		{
+		case Token::LT:
+			ret_op = Quaternary::JNL;
+			break;
+		case Token::LEQ:
+			ret_op = Quaternary::JG;
+			break;
+		case Token::GT:
+			ret_op = Quaternary::JNG;
+			break;
+		case Token::GEQ:
+			ret_op = Quaternary::JL;
+			break;
+		case Token::EQU:
+			ret_op = Quaternary::JNE;
+			break;
+		case Token::NEQ:
+			ret_op = Quaternary::JE;
+			break;
+		default:
+			assert(Token::RIGHT_PAREN	== token_.type_
+				|| Token::THEN			== token_.type_
+				|| Token::LOGICOR		== token_.type_
+				|| Token::LOGICAND		== token_.type_);
+			ret_op = Quaternary::JE;
+			break;
+		}
+	}
+	else
+	{
+		switch(token_type)
+		{
+		case Token::LT:
+			ret_op = Quaternary::JL;
+			break;
+		case Token::LEQ:
+			ret_op = Quaternary::JNG;
+			break;
+		case Token::GT:
+			ret_op = Quaternary::JG;
+			break;
+		case Token::GEQ:
+			ret_op = Quaternary::JNL;
+			break;
+		case Token::EQU:
+			ret_op = Quaternary::JE;
+			break;
+		case Token::NEQ:
+			ret_op = Quaternary::JNE;
+			break;
+		default:
+			break;
+		}
+	}
+	return ret_op;
+}
+
 // <条件> ::= <布尔表达式>
 // 若Condition中只有一个跳转语句，则返回false，否则返回true
 bool MidCodeGenerator::Condition(int label_positive, int label_negative, size_t depth) throw()				// 条件
@@ -1458,11 +1521,19 @@ bool MidCodeGenerator::BoolTerm(int label_positive, int label_negative, size_t d
 // <布尔因子> ::= <表达式>@JE<Label_negative>
 // <布尔因子> ::= <表达式><关系运算符><表达式>@JZ<Label_negative>
 // <布尔因子> ::= '('<布尔表达式>')'
-// 返回值表示factor中是否为布尔表达式
+// 返回值表示factor中是否为一个简单的布尔表达式
 bool MidCodeGenerator::BoolFactor(int label_positive, int label_negative, size_t depth) throw()		// 布尔因子
 {
 	PrintFunctionFrame("BoolFactor()", depth);
 	bool multi_jmp = false;
+	bool inverse_prefix = false;
+
+	if(Token::LOGICNOT == token_.type_)
+	{
+		inverse_prefix = true;
+		lexical_analyzer_.GetNextToken(token_);
+	}
+
 	// 先考虑非左括号的情况
 	if(Token::LEFT_PAREN != token_.type_ || IsExpression(depth + 1))
 	{
@@ -1476,22 +1547,12 @@ bool MidCodeGenerator::BoolFactor(int label_positive, int label_negative, size_t
 		switch(token_.type_)	// 这个单词可能是关系运算符，但也有可能是右括号或THEN或OR或AND（当条件中仅有一个表达式时）
 		{
 		case Token::LT:
-			q_jmp_condition.op_ = Quaternary::JNL;
-			break;
 		case Token::LEQ:
-			q_jmp_condition.op_ = Quaternary::JG;
-			break;
 		case Token::GT:
-			q_jmp_condition.op_ = Quaternary::JNG;
-			break;
 		case Token::GEQ:
-			q_jmp_condition.op_ = Quaternary::JL;
-			break;
 		case Token::EQU:
-			q_jmp_condition.op_ = Quaternary::JNE;
-			break;
 		case Token::NEQ:
-			q_jmp_condition.op_ = Quaternary::JE;
+			q_jmp_condition.op_ = ConvertFromToken(token_.type_, !inverse_prefix);
 			break;
 		default:
 			assert(Token::RIGHT_PAREN	== token_.type_
@@ -1499,6 +1560,10 @@ bool MidCodeGenerator::BoolFactor(int label_positive, int label_negative, size_t
 				|| Token::LOGICOR		== token_.type_
 				|| Token::LOGICAND		== token_.type_);
 			q_jmp_condition.op_ = Quaternary::JE;
+			if(inverse_prefix)
+			{
+				q_jmp_condition.op_ = Quaternary::JNE;
+			}
 			break;
 		}
 		ExpressionAttribute right_attribute;
@@ -1527,6 +1592,7 @@ bool MidCodeGenerator::BoolFactor(int label_positive, int label_negative, size_t
 		q_jmp_condition.src2_ = right_attribute.value_;
 		q_jmp_condition.method3_ = Quaternary::IMMEDIATE_ADDRESSING;
 		q_jmp_condition.dst_ = label_negative;
+		
 		// 保存四元式
 		quaternarytable_.push_back(q_jmp_condition);
 		// 回收临时变量
@@ -1542,7 +1608,15 @@ bool MidCodeGenerator::BoolFactor(int label_positive, int label_negative, size_t
 	else	// 第一个是左括号，且不能识别为表达式的情况
 	{
 		lexical_analyzer_.GetNextToken(token_);	// 读左括号的下一个单词
-		multi_jmp = BoolExpression(label_positive, label_negative, depth + 1);
+		if(inverse_prefix)
+		{
+			BoolExpression(label_negative, label_positive, depth + 1);
+			multi_jmp = true;	// 前面有取反的符号，则一定不是一个简单的布尔表达式
+		}
+		else
+		{
+			multi_jmp = BoolExpression(label_positive, label_negative, depth + 1);
+		}
 		lexical_analyzer_.GetNextToken(token_);	// 读右括号的下一个单词
 	}
 	return multi_jmp;

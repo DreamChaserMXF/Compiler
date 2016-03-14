@@ -835,6 +835,13 @@ void SyntaxAnalyzer::BoolTerm(size_t depth) throw()			// 布尔项
 void SyntaxAnalyzer::BoolFactor(size_t depth) throw()		// 布尔因子
 {
 	PrintFunctionFrame("BoolFactor()", depth);
+
+	// 取反符号
+	if(Token::LOGICNOT == token_.type_)
+	{
+		lexical_analyzer_.GetNextToken(token_);
+	}
+
 	// 先考虑非左括号的情况
 	if(Token::LEFT_PAREN != token_.type_ || IsExpression(depth + 1))
 	{
