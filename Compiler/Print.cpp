@@ -46,19 +46,19 @@ void PrintQuaternaryVector(const vector<Quaternary> &quaternarytable, const Toke
 	for(vector<Quaternary>::const_iterator iter = quaternarytable.begin();
 		iter != quaternarytable.end(); ++iter)
 	{
-		// Êä³öĞòºÅ
+		// è¾“å‡ºåºå·
 		out.width(3);
 		out.setf(ios::right);
 		out << distance(quaternarytable.begin(), iter) << '\t';
-		// Êä³ö²Ù×÷·û
+		// è¾“å‡ºæ“ä½œç¬¦
 		out.width(9);
 		out.setf(ios::right);
 		out << Quaternary::OPCodeString[iter->op_];
-		// Êä³ö²Ù×÷Êı
+		// è¾“å‡ºæ“ä½œæ•°
 		PrintOperand(iter->method1_, iter->src1_, tokentable, out);
 		PrintOperand(iter->method2_, iter->src2_, tokentable, out);
 		PrintOperand(iter->method3_, iter->dst_, tokentable, out);
-		// Êä³ö»»ĞĞ
+		// è¾“å‡ºæ¢è¡Œ
 		out << '\n';
 	}
 	out.flush();
@@ -78,17 +78,17 @@ bool PrintQuaternaryVector(const vector<Quaternary> &quaternarytable, const Toke
 
 void PrintQuaternaryComment(const vector<Quaternary> &quaternarytable, const TokenTable &tokentable, const vector<Quaternary>::const_iterator &c_iter, ostream &out) throw()
 {
-	// ÏÈÒÔ×¢ÊÍĞÎÊ½Êä³ö´ı·­ÒëµÄËÄÔªÊ½
+	// å…ˆä»¥æ³¨é‡Šå½¢å¼è¾“å‡ºå¾…ç¿»è¯‘çš„å››å…ƒå¼
 	out << "\n    ;";
-	// Êä³öĞòºÅ
+	// è¾“å‡ºåºå·
 	out.width(3);
 	out.setf(ios::right);
 	out << distance(quaternarytable.begin(), c_iter) << "  ";
-	// Êä³ö²Ù×÷·û
+	// è¾“å‡ºæ“ä½œç¬¦
 	out.width(9);
 	out.setf(ios::right);
 	out << Quaternary::OPCodeString[c_iter->op_] << " ";
-	// Êä³ö²Ù×÷Êı
+	// è¾“å‡ºæ“ä½œæ•°
 	PrintOperand(c_iter->method1_, c_iter->src1_, tokentable, out);
 	PrintOperand(c_iter->method2_, c_iter->src2_, tokentable, out);
 	PrintOperand(c_iter->method3_, c_iter->dst_, tokentable, out);

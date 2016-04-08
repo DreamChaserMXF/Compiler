@@ -4,15 +4,15 @@
 #include "TokenTableItem.h"
 #include <vector>
 
-// ËÄÔªÊ½Àà
+// å››å…ƒå¼ç±»
 // op src1 src2 dst
-// ÆäÖÐsrc1 src2 dst¾ùÓÐ±ð³Æ
-// type1 type2 type3·Ö±ðÎªsrc1, src2, dstµÄÐÞÊÎÀàÐÍ
-// typeÈ¡Öµ										²Ù×÷ÊýÈ¡ÖµµÄÒâÒå
-// IMMEDIATE_ADDRESSING							Á¢¼´ÊýµÄÖµ
-// CONSTANT_ADDRESSING							³£ÊýÔÚ·ûºÅ±íÖÐµÄÏÂ±ê£¨ÒÔ0ÆðÊ¼£©
-// VARIABLE_ADDRESSING, REFERENCE_ADDRESSING	±äÁ¿ÔÚ·ûºÅ±íÖÐµÄÏÂ±ê£¨ÒÔ0ÆðÊ¼£©
-// TEMPORARY_ADDRESSING							±äÁ¿ÔÚÁÙÊ±±äÁ¿±íÖÐµÄÐòºÅ£¨ÒÔ0ÆðÊ¼£©
+// å…¶ä¸­src1 src2 dstå‡æœ‰åˆ«ç§°
+// type1 type2 type3åˆ†åˆ«ä¸ºsrc1, src2, dstçš„ä¿®é¥°ç±»åž‹
+// typeå–å€¼										æ“ä½œæ•°å–å€¼çš„æ„ä¹‰
+// IMMEDIATE_ADDRESSING							ç«‹å³æ•°çš„å€¼
+// CONSTANT_ADDRESSING							å¸¸æ•°åœ¨ç¬¦å·è¡¨ä¸­çš„ä¸‹æ ‡ï¼ˆä»¥0èµ·å§‹ï¼‰
+// VARIABLE_ADDRESSING, REFERENCE_ADDRESSING	å˜é‡åœ¨ç¬¦å·è¡¨ä¸­çš„ä¸‹æ ‡ï¼ˆä»¥0èµ·å§‹ï¼‰
+// TEMPORARY_ADDRESSING							å˜é‡åœ¨ä¸´æ—¶å˜é‡è¡¨ä¸­çš„åºå·ï¼ˆä»¥0èµ·å§‹ï¼‰
 // 
 class Quaternary
 {
@@ -22,7 +22,7 @@ public:
 				JMP, JE, JNE, JG, JNG, JL, JNL,
 				FUNC_CALL, PROC_CALL, READ, WRITE, SETP, SETREFP, RET,
 				BEGIN, END, LABEL,};
-	// È¥µôÁË³£±äÁ¿²Ù×÷ÊýCONSTANT_ADDRESSING by mxf at 15:24 1/30/2016
+	// åŽ»æŽ‰äº†å¸¸å˜é‡æ“ä½œæ•°CONSTANT_ADDRESSING by mxf at 15:24 1/30/2016
 	enum AddressingMethod{NIL_ADDRESSING = 0, IMMEDIATE_ADDRESSING, STRING_ADDRESSING, VARIABLE_ADDRESSING, ARRAY_ADDRESSING, 
 		TEMPORARY_ADDRESSING, REFERENCE_ADDRESSING,};
 	

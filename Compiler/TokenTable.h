@@ -13,8 +13,8 @@
 using std::vector;
 using std::stack;
 
-// ÒÉÎÊ£ºÕâ¸öÀà¶¨Òåconstº¯ÊıÓĞÓÃÂğ£¿±Ï¾¹²»»á³öÏÖ¸ÃÀàµÄconst¶ÔÏóÑ½
-// ´ğ£º»á³öÏÖconst¶ÔÏó£¬ÀıÈçÔÚAssemblyMakerÀàÖĞ¾ÍÓĞconstÒıÓÃ
+// ç–‘é—®ï¼šè¿™ä¸ªç±»å®šä¹‰constå‡½æ•°æœ‰ç”¨å—ï¼Ÿæ¯•ç«Ÿä¸ä¼šå‡ºç°è¯¥ç±»çš„constå¯¹è±¡å‘€
+// ç­”ï¼šä¼šå‡ºç°constå¯¹è±¡ï¼Œä¾‹å¦‚åœ¨AssemblyMakerç±»ä¸­å°±æœ‰constå¼•ç”¨
 class TokenTable
 {
 public:
@@ -25,14 +25,14 @@ public:
 
 	TokenTable();
 	TokenTableItem at(int index) const throw(std::out_of_range);
-	// ¶¨Î»ÓëÖØ¶¨Î»
+	// å®šä½ä¸é‡å®šä½
 	void Locate();
 	void Relocate();
 
 	//bool isConst(const Token &token) const;
-	bool SearchDefinitionInCurrentLevel(const string &name) throw();		// ²éÕÒÔÚµ±Ç°×Ó³ÌĞòÖĞÊÇ·ñ´æÔÚ¶¨Òå£¨ÓÃÓÚ³£/±äÁ¿¶¨ÒåÓï¾ä£©
+	bool SearchDefinitionInCurrentLevel(const string &name) throw();		// æŸ¥æ‰¾åœ¨å½“å‰å­ç¨‹åºä¸­æ˜¯å¦å­˜åœ¨å®šä¹‰ï¼ˆç”¨äºå¸¸/å˜é‡å®šä¹‰è¯­å¥ï¼‰
 	
-	iterator SearchDefinition(const Token &token) throw();					// ²éÕÒ¶¨Òå´¦
+	iterator SearchDefinition(const Token &token) throw();					// æŸ¥æ‰¾å®šä¹‰å¤„
 	const_iterator begin() const throw();
 	const_iterator end() const throw();
 	//const TokenTableItem& back() const throw();
@@ -48,23 +48,23 @@ public:
 	void SetFunctionReturnType(const string &func_name, TokenTableItem::DecorateType decoratetype_) throw();
 	void AddParameterItem(Token parameterIdentifier, TokenTableItem::DecorateType decoratetype_, bool isref, int level) throw();
 
-	// »ã±à¹ı³ÌÖĞĞèÒª
+	// æ±‡ç¼–è¿‡ç¨‹ä¸­éœ€è¦
 	int GetVariableSpace(TokenTable::const_iterator c_iter) const throw();
 	int GetParameterNum(int var_index) const throw();
 	
 	string toString() const throw();
-	void Print(const string &fileName) const throw();	// Êä³öµ½ÎÄ¼ş
-	void Print(std::ostream &output) const throw();		// Êä³öµ½Á÷
+	void Print(const string &fileName) const throw();	// è¾“å‡ºåˆ°æ–‡ä»¶
+	void Print(std::ostream &output) const throw();		// è¾“å‡ºåˆ°æµ
 
 
 private:
-	TokenTable(const TokenTable&) throw();	// ½ûÓÃ¸´ÖÆ¹¹Ôìº¯Êı
-	const_iterator SearchDefinition(const Token &token) const throw();	// ²éÕÒ¶¨Òå´¦
+	TokenTable(const TokenTable&) throw();	// ç¦ç”¨å¤åˆ¶æ„é€ å‡½æ•°
+	const_iterator SearchDefinition(const Token &token) const throw();	// æŸ¥æ‰¾å®šä¹‰å¤„
 
-	vector<TokenTableItem> rows_;	// ·ûºÅ±íµÄÃ¿Ò»ĞĞ
-	stack<int> subroutine_tokentableindex_stack_;		// ·ûºÅ±íÖĞ·Ö³ÌĞòµÄÈë¿ÚÏÂ±êÕ»
+	vector<TokenTableItem> rows_;	// ç¬¦å·è¡¨çš„æ¯ä¸€è¡Œ
+	stack<int> subroutine_tokentableindex_stack_;		// ç¬¦å·è¡¨ä¸­åˆ†ç¨‹åºçš„å…¥å£ä¸‹æ ‡æ ˆ
 	int addr_;
-	stack<int> subroutine_tokentableaddr_stack_;		// ·ûºÅ±íÖĞ·Ö³ÌĞòµÄÈë¿ÚµØÖ·Õ»
+	stack<int> subroutine_tokentableaddr_stack_;		// ç¬¦å·è¡¨ä¸­åˆ†ç¨‹åºçš„å…¥å£åœ°å€æ ˆ
 };
 
 #endif

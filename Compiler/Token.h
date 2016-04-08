@@ -6,39 +6,39 @@
 using std::string;
 using std::map;
 
-// µ¥´ÊÀà
+// å•è¯ç±»
 class Token
 {
 public:
-	// µ¥´ÊÀàµÄÀàĞÍµÄÃ¶¾Ù
+	// å•è¯ç±»çš„ç±»å‹çš„æšä¸¾
 	enum TokenType{
 		/*Special Type*/		NIL = 0, COMMENT,
 		/*Reserved Words(23)*/	CONST, VAR, ARRAY, RW_INTEGER, RW_CHAR, PROCEDURE, FUNCTION, IF, THEN, ELSE, CASE, OF, WHILE, FOR, DOWNTO, TO, DO, CONTINUE, BREAK, BEGIN, END, READ, WRITE, 
 		/*Identifier(1)*/		IDENTIFIER,
-		/*Constant(2)*/			CONST_INTEGER, CONST_CHAR, CONST_STRING,
+		/*Constant(3)*/			CONST_INTEGER, CONST_CHAR, CONST_STRING,
 		/*Operator(21)*/		PERIOD, COMMA, SEMICOLON, SINGLE_QUOTATION, DOUBLE_QUOTATION, COLON, ASSIGN, LEFT_BRACKET, RIGHT_BRACKET, LEFT_PAREN, RIGHT_PAREN, PLUS, MINUS, MUL, DIV, LT, LEQ, GT, GEQ, EQU, NEQ
 	};
-	// µ¥´ÊÀà
+	// å•è¯ç±»
 	struct TokenValue{
 		int integer;
 		char character;
 		string identifier;
 	};
-	// ¹¹Ôìº¯Êı
+	// æ„é€ å‡½æ•°
 	Token() throw();
-	// ¸ñÊ½»¯º¯Êı
+	// æ ¼å¼åŒ–å‡½æ•°
 	string toTableString() const throw();
 	string toString() const throw();
 
-	// µ¥´ÊÀàĞÍ¡¢ÖµºÍ³öÏÖµÄĞĞºÅ
+	// å•è¯ç±»å‹ã€å€¼å’Œå‡ºç°çš„è¡Œå·
 	TokenType type_;
 	TokenValue value_;
 	int lineNumber_;
 
-	static map<TokenType, string> sTokenTypeToString;						// ½«enum<TokenType>ÀàĞÍÓ³Éäµ½string(ÓÃÓÚÊä³ötoken)
-	static map<string, TokenType> sReserveWordToTokenType;					// ½«ÊôÓÚreserve wordµÄstringÓ³Éäµ½TokenType(ÓÃÓÚÊ¶±ğreserve word)
-	static map<TokenType, string> InitTokenTypeToStringMap() throw();		// ³õÊ¼»¯sTokenTypeToString
-	static map<string, TokenType> InitReserveWordToTokenTypeMap() throw();	// ³õÊ¼»¯sReserveWordToTokenType
+	static map<TokenType, string> sTokenTypeToString;						// å°†enum<TokenType>ç±»å‹æ˜ å°„åˆ°string(ç”¨äºè¾“å‡ºtoken)
+	static map<string, TokenType> sReserveWordToTokenType;					// å°†å±äºreserve wordçš„stringæ˜ å°„åˆ°TokenType(ç”¨äºè¯†åˆ«reserve word)
+	static map<TokenType, string> InitTokenTypeToStringMap() throw();		// åˆå§‹åŒ–sTokenTypeToString
+	static map<string, TokenType> InitReserveWordToTokenTypeMap() throw();	// åˆå§‹åŒ–sReserveWordToTokenType
 };
 
 #endif

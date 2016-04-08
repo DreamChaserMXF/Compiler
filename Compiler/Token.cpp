@@ -1,10 +1,10 @@
 #include "Token.h"
 
-// ¹¹Ôìº¯Êı
+// æ„é€ å‡½æ•°
 Token::Token(): type_(Token::NIL), value_()
 {}
 
-// ¸ñÊ½»¯º¯Êı
+// æ ¼å¼åŒ–å‡½æ•°
 string Token::toTableString() const throw()
 {
 	std::ostringstream buf;
@@ -30,7 +30,7 @@ string Token::toTableString() const throw()
 	return buf.str();
 }
 
-// ¸ñÊ½»¯º¯Êı
+// æ ¼å¼åŒ–å‡½æ•°
 string Token::toString() const throw()
 {
 	std::ostringstream buf;
@@ -54,8 +54,8 @@ string Token::toString() const throw()
 	return buf.str();
 }
 
-// ÓÃÓÚ²éÕÒenumÖµ¶ÔÓ¦µÄ×Ö·û´®
-map<Token::TokenType, string> Token::sTokenTypeToString = InitTokenTypeToStringMap(); // sTokenTypeToString±ØĞëÒªÔÚÀàÍâ³õÊ¼»¯
+// ç”¨äºæŸ¥æ‰¾enumå€¼å¯¹åº”çš„å­—ç¬¦ä¸²
+map<Token::TokenType, string> Token::sTokenTypeToString = InitTokenTypeToStringMap(); // sTokenTypeToStringå¿…é¡»è¦åœ¨ç±»å¤–åˆå§‹åŒ–
 map<Token::TokenType, string> Token::InitTokenTypeToStringMap() throw()
 {
 	map<TokenType, string> tsMap;
@@ -110,7 +110,7 @@ map<Token::TokenType, string> Token::InitTokenTypeToStringMap() throw()
 	tsMap.insert(map<TokenType,string>::value_type(NEQ,					"NEQ"					));
 	return tsMap;
 }
-// ÓÃÓÚ²éÕÒ×Ö·û´®ÊÇ·ñÓĞ¶ÔÓ¦µÄ±£Áô×ÖµÄenumÖµ
+// ç”¨äºæŸ¥æ‰¾å­—ç¬¦ä¸²æ˜¯å¦æœ‰å¯¹åº”çš„ä¿ç•™å­—çš„enumå€¼
 map<string, Token::TokenType> Token::sReserveWordToTokenType = InitReserveWordToTokenTypeMap();
 map<string, Token::TokenType> Token::InitReserveWordToTokenTypeMap() throw()
 {

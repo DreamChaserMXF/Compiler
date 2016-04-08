@@ -19,41 +19,41 @@ using std::ostream;
 using std::ifstream;
 using std::set;
 
-// ´Ê·¨·ÖÎöÀà
-// ×îÈİÒ×³öÏÖµÄBUGÊÇwhileÑ­»·ÖĞ£¬Èôch='\0'£¬»á²»»áÎŞÏŞÑ­»·
+// è¯æ³•åˆ†æç±»
+// æœ€å®¹æ˜“å‡ºç°çš„BUGæ˜¯whileå¾ªç¯ä¸­ï¼Œè‹¥ch='\0'ï¼Œä¼šä¸ä¼šæ— é™å¾ªç¯
 class LexicalAnalyzer
 {
 public:
 	LexicalAnalyzer(const string &srcFileName) throw();
-	bool IsBound() const throw();						// ÊÇ·ñ°ó¶¨ÁËÔ´ÎÄ¼ş
-	bool Parse() throw();								// ½øĞĞ´Ê·¨·ÖÎö
-	bool Print(string fileName) const throw();			// Êä³öµ½ÎÄ¼ş
-	void Print(ostream &output) const throw();			// Êä³öµ½Á÷
-	void ResetTokenPos() throw();						// ÖØÖÃ·ûºÅvectorµÄµü´úÆ÷token_vector_µÄÎ»ÖÃ
-	bool GetNextToken(Token &token) throw();			// »ñÈ¡ÏÂÒ»·ûºÅ£¬³É¹¦Ôò·µ»Øtrue£¬¶Áµ½·ûºÅÎ²Ôò·µ»Øfalse
-	vector<string> getStringTable() const throw();		// »ñµÃ³£Á¿×Ö·û´®±í
+	bool IsBound() const throw();						// æ˜¯å¦ç»‘å®šäº†æºæ–‡ä»¶
+	bool Parse() throw();								// è¿›è¡Œè¯æ³•åˆ†æ
+	bool Print(string fileName) const throw();			// è¾“å‡ºåˆ°æ–‡ä»¶
+	void Print(ostream &output) const throw();			// è¾“å‡ºåˆ°æµ
+	void ResetTokenPos() throw();						// é‡ç½®ç¬¦å·vectorçš„è¿­ä»£å™¨token_vector_çš„ä½ç½®
+	bool GetNextToken(Token &token) throw();			// è·å–ä¸‹ä¸€ç¬¦å·ï¼ŒæˆåŠŸåˆ™è¿”å›trueï¼Œè¯»åˆ°ç¬¦å·å°¾åˆ™è¿”å›false
+	vector<string> getStringTable() const throw();		// è·å¾—å¸¸é‡å­—ç¬¦ä¸²è¡¨
 private:
-	LexicalAnalyzer(const LexicalAnalyzer&) throw();	// ÉùÃ÷privateµÄ¸´ÖÆ¹¹Ôìº¯Êı£¬µ«²¢²»ÊµÏÖ==>½ûÓÃ¸´ÖÆ
-	char getNextChar(bool skipSpace = false) throw();	// µÃµ½ÏÂÒ»¸ö×Ö·û£¬²ÎÊı±íÊ¾ÊÇ·ñÌø¹ı¿Õ×Ö·û
-	void ParseCurrentToken(Token &token, char &ch) throw(LexException);			// ¸ù¾İÒÑ¶Áµ½µÄµ±Ç°×Ö·û£¬·ÖÎöÍêÕû¸ötoken£¬²¢¶ÁÈëÏÂÒ»¸ö×Ö·û
-	// ÏÂÃæµÄ¼¸¸öhandleº¯Êı£¬ÔÚÈ·¶¨ÁËtokenÖ®ºó£¬¾ùÒª¶ÁÈëÏÂÒ»¸ö×Ö·û
-	void SingleLineCommentHandle(Token &token, char &ch) throw();				// µ¥ĞĞ×¢ÊÍ
-	void BlockCommentHandle		(Token &token, char &ch) throw(LexException);	// ¶àĞĞ×¢ÊÍ
-	void DigitHandle			(Token &token, char &ch) throw(LexException);	// ´¦ÀíÎŞ·ûºÅÕûÊı³£Á¿
-	void LetterHandle			(Token &token, char &ch) throw();				// ´¦Àí×ÖÄ¸
-	void StringHandle			(Token &token, char &ch) throw(LexException);	// ´¦Àí×Ö·û´®³£Á¿
-	void CharHandle				(Token &token, char &ch) throw(LexException);	// ´¦Àí×Ö·û³£Á¿
-	void ColonHandle			(Token &token, char &ch) throw();				// ´¦ÀíÃ°ºÅ
-	void LessthanHandle			(Token &token, char &ch) throw();				// ´¦ÀíĞ¡ÓÚºÅ
-	void GreaterthanHandle		(Token &token, char &ch) throw();				// ´¦Àí´óÓÚºÅ
-	void PlusHandle				(Token &token, char &ch) throw(LexException);	// ´¦Àí¼ÓºÅ(µ¥²Ù×÷·û»òË«²Ù×÷·û)£¬×¢Òâ£¬ÕâÀïµÄtokenÒª´æ´¢ÉÏÒ»¸öÊ¶±ğ³öµÄµ¥´Ê
-	void MinusHandle			(Token &token, char &ch) throw(LexException);	// ´¦Àí¼õºÅ(µ¥²Ù×÷·û»òË«²Ù×÷·û)£¬×¢Òâ£¬ÕâÀïµÄtokenÒª´æ´¢ÉÏÒ»¸öÊ¶±ğ³öµÄµ¥´Ê
+	LexicalAnalyzer(const LexicalAnalyzer&) throw();	// å£°æ˜privateçš„å¤åˆ¶æ„é€ å‡½æ•°ï¼Œä½†å¹¶ä¸å®ç°==>ç¦ç”¨å¤åˆ¶
+	char getNextChar(bool skipSpace = false) throw();	// å¾—åˆ°ä¸‹ä¸€ä¸ªå­—ç¬¦ï¼Œå‚æ•°è¡¨ç¤ºæ˜¯å¦è·³è¿‡ç©ºå­—ç¬¦
+	void ParseCurrentToken(Token &token, char &ch) throw(LexException);			// æ ¹æ®å·²è¯»åˆ°çš„å½“å‰å­—ç¬¦ï¼Œåˆ†æå®Œæ•´ä¸ªtokenï¼Œå¹¶è¯»å…¥ä¸‹ä¸€ä¸ªå­—ç¬¦
+	// ä¸‹é¢çš„å‡ ä¸ªhandleå‡½æ•°ï¼Œåœ¨ç¡®å®šäº†tokenä¹‹åï¼Œå‡è¦è¯»å…¥ä¸‹ä¸€ä¸ªå­—ç¬¦
+	void SingleLineCommentHandle(Token &token, char &ch) throw();				// å•è¡Œæ³¨é‡Š
+	void BlockCommentHandle		(Token &token, char &ch) throw(LexException);	// å¤šè¡Œæ³¨é‡Š
+	void DigitHandle			(Token &token, char &ch) throw(LexException);	// å¤„ç†æ— ç¬¦å·æ•´æ•°å¸¸é‡
+	void LetterHandle			(Token &token, char &ch) throw();				// å¤„ç†å­—æ¯
+	void StringHandle			(Token &token, char &ch) throw(LexException);	// å¤„ç†å­—ç¬¦ä¸²å¸¸é‡
+	void CharHandle				(Token &token, char &ch) throw(LexException);	// å¤„ç†å­—ç¬¦å¸¸é‡
+	void ColonHandle			(Token &token, char &ch) throw();				// å¤„ç†å†’å·
+	void LessthanHandle			(Token &token, char &ch) throw();				// å¤„ç†å°äºå·
+	void GreaterthanHandle		(Token &token, char &ch) throw();				// å¤„ç†å¤§äºå·
+	void PlusHandle				(Token &token, char &ch) throw(LexException);	// å¤„ç†åŠ å·(å•æ“ä½œç¬¦æˆ–åŒæ“ä½œç¬¦)ï¼Œæ³¨æ„ï¼Œè¿™é‡Œçš„tokenè¦å­˜å‚¨ä¸Šä¸€ä¸ªè¯†åˆ«å‡ºçš„å•è¯
+	void MinusHandle			(Token &token, char &ch) throw(LexException);	// å¤„ç†å‡å·(å•æ“ä½œç¬¦æˆ–åŒæ“ä½œç¬¦)ï¼Œæ³¨æ„ï¼Œè¿™é‡Œçš„tokenè¦å­˜å‚¨ä¸Šä¸€ä¸ªè¯†åˆ«å‡ºçš„å•è¯
 
-	ifstream srcfile_;							// ÊäÈëµÄÎÄ¼şÁ÷
-	int currentline_;							// µ±Ç°´¦ÀíµÄĞĞºÅ£¨´Ó1¿ªÊ¼¼ÆÊı£©
-	vector<Token> token_vector_;				// ´æ·ÅTokenµÄÊı×é
-	vector<Token>::const_iterator token_iter_;	// ±éÀútoken_vector_µÄµü´úÆ÷
-	set<string> string_set;						// ³£Á¿×Ö·û´®±í
+	ifstream srcfile_;							// è¾“å…¥çš„æ–‡ä»¶æµ
+	int currentline_;							// å½“å‰å¤„ç†çš„è¡Œå·ï¼ˆä»1å¼€å§‹è®¡æ•°ï¼‰
+	vector<Token> token_vector_;				// å­˜æ”¾Tokençš„æ•°ç»„
+	vector<Token>::const_iterator token_iter_;	// éå†token_vector_çš„è¿­ä»£å™¨
+	set<string> string_set;						// å¸¸é‡å­—ç¬¦ä¸²è¡¨
 
 	static const char escape_sequence[];
 };

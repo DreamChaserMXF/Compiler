@@ -14,21 +14,21 @@ class TokenTableItem
 {
 public:
 	enum ItemType{CONST, VARIABLE, ARRAY, PROCEDURE, FUNCTION, PARAMETER};
-	// Ò»°ã±äÁ¿µÄĞŞÊÎÀàĞÍÎªINTEGER»òCHAR£¬¹ı³ÌµÄĞŞÊÎÀàĞÍÎªVOID£¬×ÖÃæ³£Á¿µÄĞŞÊÎÀàĞÍÎªVOID
-	// ÕâÀïµÄÅÅ²¼Ë³ĞòÊÇ°´ÕÕÀàĞÍ×ª»»ÑÏ¸ñË³ĞòµİÔöµÄ£¬³ÌĞòµÄÂß¼­ÅĞ¶ÏÒ²ÒÀÀµÁËÕâÒ»µã
+	// ä¸€èˆ¬å˜é‡çš„ä¿®é¥°ç±»å‹ä¸ºINTEGERæˆ–CHARï¼Œè¿‡ç¨‹çš„ä¿®é¥°ç±»å‹ä¸ºVOIDï¼Œå­—é¢å¸¸é‡çš„ä¿®é¥°ç±»å‹ä¸ºVOID
+	// è¿™é‡Œçš„æ’å¸ƒé¡ºåºæ˜¯æŒ‰ç…§ç±»å‹è½¬æ¢ä¸¥æ ¼é¡ºåºé€’å¢çš„ï¼Œç¨‹åºçš„é€»è¾‘åˆ¤æ–­ä¹Ÿä¾èµ–äº†è¿™ä¸€ç‚¹
 	enum DecorateType{VOID = 0, CHAR = 1, INTEGER = 2};	
 
 	TokenTableItem(string name, ItemType item_type, DecorateType decorate_type, bool isref, int value, int level, int defineline, int addr) throw();
 	void AddUsedLine(int line_number) throw();
 	string toString() const throw();
 
-// ÕâÀï¸Ğ¾õ»¹ÊÇÉèÎªpublicÎªºÃ
-// ÒòÎª±Ï¾¹ÊÇ·ûºÅ±í£¬»á¾­³£·ÃÎÊ
+// è¿™é‡Œæ„Ÿè§‰è¿˜æ˜¯è®¾ä¸ºpublicä¸ºå¥½
+// å› ä¸ºæ¯•ç«Ÿæ˜¯ç¬¦å·è¡¨ï¼Œä¼šç»å¸¸è®¿é—®
 	bool			valid_;
 	string			name_;
 	ItemType		itemtype_;
 	DecorateType	decoratetype_;
-	bool			isref_;	// ÊÇ·ñÎªÒıÓÃ²ÎÊı
+	bool			isref_;	// æ˜¯å¦ä¸ºå¼•ç”¨å‚æ•°
 	int				value_;
 	int				level_;
 	int				defineline_;
