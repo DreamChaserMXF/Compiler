@@ -19,7 +19,7 @@ SyntaxAnalyzer::SyntaxAnalyzer(LexicalAnalyzer &lexical_analyzer,
 	token_(), level_(1), tempvar_index_(0), label_index_(0), continue_label_(), break_label_(), 
 	is_successful_(true), syntax_info_buffer_(), syntax_assist_buffer_(), tokenbuffer_()
 {
-	//// ²åÈëÖ÷º¯ÊıµÄBEGIN
+	//// æ’å…¥ä¸»å‡½æ•°çš„BEGIN
 	//Quaternary q_mainbegin(
 	//	Quaternary::BEGIN,
 	//	Quaternary::NIL_ADDRESSING, 0,
@@ -63,7 +63,7 @@ void SyntaxAnalyzer::Print(std::ostream &output) const throw()
 	output << syntax_info_buffer_.str() << std::endl;
 }
 
-static string syntax_assist_buffer_;	// ×¢£º²»ÊÇÏß³Ì°²È«µÄ
+static string syntax_assist_buffer_;	// æ³¨ï¼šä¸æ˜¯çº¿ç¨‹å®‰å…¨çš„
 void SyntaxAnalyzer::PrintFunctionFrame(const char *func_name, size_t depth) throw()
 {
 	
@@ -74,7 +74,7 @@ void SyntaxAnalyzer::PrintFunctionFrame(const char *func_name, size_t depth) thr
 	else if(depth * 4 > (int)syntax_assist_buffer_.size())
 	{
 		syntax_assist_buffer_.append("|");
-		syntax_assist_buffer_.append(depth * 4 - syntax_assist_buffer_.size(), ' ');	// ÕâÀï²»ÄÜ¼õ1
+		syntax_assist_buffer_.append(depth * 4 - syntax_assist_buffer_.size(), ' ');	// è¿™é‡Œä¸èƒ½å‡1
 		syntax_info_buffer_ << syntax_assist_buffer_ << func_name << '\n';
 	}
 	else // depth * 4 < syntax_assist_buffer_.size()
@@ -83,11 +83,11 @@ void SyntaxAnalyzer::PrintFunctionFrame(const char *func_name, size_t depth) thr
 		syntax_info_buffer_ << syntax_assist_buffer_ << func_name << '\n';
 	}
 }
-// <³ÌĞò> ::= <·Ö³ÌĞò>.
+// <ç¨‹åº> ::= <åˆ†ç¨‹åº>.
 void SyntaxAnalyzer::Routine(size_t depth) throw()
 {
 	PrintFunctionFrame("Routine()", depth);
-	// ²åÈëÖ÷º¯ÊıµÄBEGIN
+	// æ’å…¥ä¸»å‡½æ•°çš„BEGIN
 	Quaternary q_mainbegin(
 		Quaternary::BEGIN,
 		Quaternary::NIL_ADDRESSING, 0,
@@ -95,15 +95,15 @@ void SyntaxAnalyzer::Routine(size_t depth) throw()
 		Quaternary::IMMEDIATE_ADDRESSING, -1
 	);
 	quaternarytable_.push_back(q_mainbegin);
-	// ½âÎö·Ö³ÌĞò
+	// è§£æåˆ†ç¨‹åº
 	SubRoutine(depth + 1);
-	// ÅĞ¶Ï½áÊø·ûºÅ
+	// åˆ¤æ–­ç»“æŸç¬¦å·
 	if(token_.type_ != Token::PERIOD)
 	{
 		std::cout << "line " << token_.lineNumber_ << ": " << token_.toString() << '\t' << "should be '.' at the end of Routine\n";
 		is_successful_ = false;
 	}
-	// ²åÈëÖ÷º¯ÊıµÄEND
+	// æ’å…¥ä¸»å‡½æ•°çš„END
 	Quaternary q_mainend(
 		Quaternary::END,
 		Quaternary::NIL_ADDRESSING, 0,
@@ -111,17 +111,17 @@ void SyntaxAnalyzer::Routine(size_t depth) throw()
 		Quaternary::IMMEDIATE_ADDRESSING, -1
 	);
 	quaternarytable_.push_back(q_mainend);
-	// ¸üĞÂ¹ı³Ì/º¯ÊıµÄBEGINÓï¾äÖĞµÄÁÙÊ±±äÁ¿¸öÊı
+	// æ›´æ–°è¿‡ç¨‹/å‡½æ•°çš„BEGINè¯­å¥ä¸­çš„ä¸´æ—¶å˜é‡ä¸ªæ•°
 	Quaternary::UpdateTempVarSpace(quaternarytable_);
 }
 
-// <·Ö³ÌĞò> ::= [<³£Á¿ËµÃ÷²¿·Ö>][<±äÁ¿ËµÃ÷²¿·Ö>]{[<¹ı³ÌËµÃ÷²¿·Ö>]| [<º¯ÊıËµÃ÷²¿·Ö>]}<¸´ºÏÓï¾ä>
+// <åˆ†ç¨‹åº> ::= [<å¸¸é‡è¯´æ˜éƒ¨åˆ†>][<å˜é‡è¯´æ˜éƒ¨åˆ†>]{[<è¿‡ç¨‹è¯´æ˜éƒ¨åˆ†>]| [<å‡½æ•°è¯´æ˜éƒ¨åˆ†>]}<å¤åˆè¯­å¥>
 void SyntaxAnalyzer::SubRoutine(size_t depth) throw()
 {
 	PrintFunctionFrame("SubRoutine()", depth);
 
 	//
-	// ËÄ¸ö¿ÉÑ¡·ÖÖ§
+	// å››ä¸ªå¯é€‰åˆ†æ”¯
 	if(token_.type_ == Token::CONST)
 	{
 		ConstantPart(depth + 1);
@@ -138,7 +138,7 @@ void SyntaxAnalyzer::SubRoutine(size_t depth) throw()
 	{
 		FunctionPart(depth + 1);
 	}
-	// Ò»¸ö±ØÑ¡·ÖÖ§
+	// ä¸€ä¸ªå¿…é€‰åˆ†æ”¯
 	if(token_.type_ == Token::BEGIN)
 	{
 		StatementBlockPart(depth + 1);
@@ -150,14 +150,14 @@ void SyntaxAnalyzer::SubRoutine(size_t depth) throw()
 	}
 }
 
-// <³£Á¿ËµÃ÷²¿·Ö> ::= const<³£Á¿¶¨Òå>{,<³£Á¿¶¨Òå>};
+// <å¸¸é‡è¯´æ˜éƒ¨åˆ†> ::= const<å¸¸é‡å®šä¹‰>{,<å¸¸é‡å®šä¹‰>};
 void SyntaxAnalyzer::ConstantPart(size_t depth) throw()
 {
 	PrintFunctionFrame("ConstantPart()", depth);
 
 	assert(Token::CONST == token_.type_);
 
-	// ³£Á¿¶¨Òå
+	// å¸¸é‡å®šä¹‰
 	do
 	{
 		lexical_analyzer_.GetNextToken(token_);
@@ -169,13 +169,13 @@ void SyntaxAnalyzer::ConstantPart(size_t depth) throw()
 		/*while(lexical_analyzer_.GetNextToken(token_) && token_.type_ != Token::SEMICOLON)
 		{ }*/
 		is_successful_ = false;
-		if(Token::VAR == token_.type_ || Token::PROCEDURE == token_.type_ || Token::FUNCTION == token_.type_ || Token::BEGIN == token_.type_)//	ÕâÀï¿ÉÄÜÊÇÍü¼Ç¼Ó·ÖºÅÁË£¬ËùÒÔÖ±½Ó·µ»Ø¶ø²»¶ÁÈ¡ÏÂÒ»¸öµ¥´Ê
+		if(Token::VAR == token_.type_ || Token::PROCEDURE == token_.type_ || Token::FUNCTION == token_.type_ || Token::BEGIN == token_.type_)//	è¿™é‡Œå¯èƒ½æ˜¯å¿˜è®°åŠ åˆ†å·äº†ï¼Œæ‰€ä»¥ç›´æ¥è¿”å›è€Œä¸è¯»å–ä¸‹ä¸€ä¸ªå•è¯
 		{
 			return;	
 		}
 		else
 		{
-			while(token_.type_ != Token::NIL  && token_.type_ != Token::SEMICOLON)	// ÈôÊÇÆäËûµ¥´Ê£¬±íÊ¾³£Á¿ËµÃ÷²¿·Ö»¹Î´½áÊø£¬¹ÊÒª¶Áµ½ÏÂÒ»¸ö·ÖºÅ
+			while(token_.type_ != Token::NIL  && token_.type_ != Token::SEMICOLON)	// è‹¥æ˜¯å…¶ä»–å•è¯ï¼Œè¡¨ç¤ºå¸¸é‡è¯´æ˜éƒ¨åˆ†è¿˜æœªç»“æŸï¼Œæ•…è¦è¯»åˆ°ä¸‹ä¸€ä¸ªåˆ†å·
 			{
 				lexical_analyzer_.GetNextToken(token_);
 			};
@@ -186,7 +186,7 @@ void SyntaxAnalyzer::ConstantPart(size_t depth) throw()
 	lexical_analyzer_.GetNextToken(token_);
 }
 
-// <³£Á¿¶¨Òå> ::= <±êÊ¶·û>£½<³£Á¿>
+// <å¸¸é‡å®šä¹‰> ::= <æ ‡è¯†ç¬¦>ï¼<å¸¸é‡>
 void SyntaxAnalyzer::constantDefination(size_t depth) throw()
 {
 	PrintFunctionFrame("constantDefination()", depth);
@@ -195,7 +195,7 @@ void SyntaxAnalyzer::constantDefination(size_t depth) throw()
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be identifier at the beginning of constant definition\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::COMMA && token_.type_ != Token::SEMICOLON)	// ¶Áµ½ÏÂÒ»¸ö¶ººÅ»ò·ÖºÅ
+		while(token_.type_ != Token::NIL && token_.type_ != Token::COMMA && token_.type_ != Token::SEMICOLON)	// è¯»åˆ°ä¸‹ä¸€ä¸ªé€—å·æˆ–åˆ†å·
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -204,14 +204,14 @@ void SyntaxAnalyzer::constantDefination(size_t depth) throw()
 #ifdef SYNTAXDEBUG
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
-	// ¼ÇÂ¼token_ÒÔ²åÈë·ûºÅ±í
+	// è®°å½•token_ä»¥æ’å…¥ç¬¦å·è¡¨
 	Token constIdentifier = token_;
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::EQU)
 	{
 		std::cout << "line " << token_.lineNumber_ << ": " << token_.toString() << "  should be '=' after identifier\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::COMMA && token_.type_ != Token::SEMICOLON)	// ¶Áµ½ÏÂÒ»¸ö¶ººÅ»ò·ÖºÅ
+		while(token_.type_ != Token::NIL && token_.type_ != Token::COMMA && token_.type_ != Token::SEMICOLON)	// è¯»åˆ°ä¸‹ä¸€ä¸ªé€—å·æˆ–åˆ†å·
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -223,13 +223,13 @@ void SyntaxAnalyzer::constantDefination(size_t depth) throw()
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be constant integer or character after '='\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::COMMA && token_.type_ != Token::SEMICOLON)	// ¶Áµ½ÏÂÒ»¸ö¶ººÅ»ò·ÖºÅ
+		while(token_.type_ != Token::NIL && token_.type_ != Token::COMMA && token_.type_ != Token::SEMICOLON)	// è¯»åˆ°ä¸‹ä¸€ä¸ªé€—å·æˆ–åˆ†å·
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
 		return;
 	}
-	// ³£Á¿¶¨Òå£¬²åÈë·ûºÅ±í
+	// å¸¸é‡å®šä¹‰ï¼Œæ’å…¥ç¬¦å·è¡¨
 	if(tokentable_.SearchDefinitionInCurrentLevel(constIdentifier.value_.identifier))
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  redifinition\n";
@@ -249,7 +249,7 @@ void SyntaxAnalyzer::constantDefination(size_t depth) throw()
 	lexical_analyzer_.GetNextToken(token_);
 }
 
-// <±äÁ¿ËµÃ÷²¿·Ö> ::= var <±äÁ¿¶¨Òå>;{<±äÁ¿¶¨Òå>;}
+// <å˜é‡è¯´æ˜éƒ¨åˆ†> ::= var <å˜é‡å®šä¹‰>;{<å˜é‡å®šä¹‰>;}
 void SyntaxAnalyzer::VariablePart(size_t depth) throw()
 {
 	PrintFunctionFrame("VariablePart()", depth);
@@ -264,13 +264,13 @@ void SyntaxAnalyzer::VariablePart(size_t depth) throw()
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ';' after variable definition\n";
 			is_successful_ = false;
-			if(Token::IDENTIFIER == token_.type_)	// Íü¼Ç¼Ó·ÖºÅ£¬ºóÃæ»¹ÓĞ±äÁ¿¶¨Òå
+			if(Token::IDENTIFIER == token_.type_)	// å¿˜è®°åŠ åˆ†å·ï¼Œåé¢è¿˜æœ‰å˜é‡å®šä¹‰
 			{
 				continue;
 			}
 			else
 			{
-				// Íü¼Ç¼Ó·ÖºÅÁË£¬ºóÃæÓÖÎŞ·¨¼ÌĞø½ÓÉÏ±äÁ¿¶¨Òå£¬Ö»ÄÜÌø×ªµ½ÏÂÒ»²¿·Ö
+				// å¿˜è®°åŠ åˆ†å·äº†ï¼Œåé¢åˆæ— æ³•ç»§ç»­æ¥ä¸Šå˜é‡å®šä¹‰ï¼Œåªèƒ½è·³è½¬åˆ°ä¸‹ä¸€éƒ¨åˆ†
 				while(Token::NIL != token_.type_ && Token::SEMICOLON != token_.type_ && Token::PROCEDURE != token_.type_ && Token::FUNCTION != token_.type_ && Token::BEGIN == token_.type_)
 				{
 					lexical_analyzer_.GetNextToken(token_);
@@ -286,7 +286,7 @@ void SyntaxAnalyzer::VariablePart(size_t depth) throw()
 	}while(token_.type_ == Token::IDENTIFIER);
 }
 
-// <±äÁ¿¶¨Òå> ::= <±êÊ¶·û>{,<±êÊ¶·û>}:<ÀàĞÍ>
+// <å˜é‡å®šä¹‰> ::= <æ ‡è¯†ç¬¦>{,<æ ‡è¯†ç¬¦>}:<ç±»å‹>
 void SyntaxAnalyzer::VariableDefinition(size_t depth) throw()
 {
 	PrintFunctionFrame("VariableDefinition()", depth);
@@ -295,15 +295,15 @@ void SyntaxAnalyzer::VariableDefinition(size_t depth) throw()
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be identifier at the beginning of variable definition\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::IDENTIFIER&& token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢ÏÂÒ»¸ö±êÊ¶·û»òPROCEDURE FUNCTION BEGIN
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::IDENTIFIER&& token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€ä¸‹ä¸€ä¸ªæ ‡è¯†ç¬¦æˆ–PROCEDURE FUNCTION BEGIN
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		if(token_.type_ != Token::IDENTIFIER)	// Èô¶Áµ½µÄ²»ÊÇ±êÊ¶·û£¬Ôò·µ»ØÉÏÒ»²ã´¦Àí
+		if(token_.type_ != Token::IDENTIFIER)	// è‹¥è¯»åˆ°çš„ä¸æ˜¯æ ‡è¯†ç¬¦ï¼Œåˆ™è¿”å›ä¸Šä¸€å±‚å¤„ç†
 		{
 			return;
 		}
-		// ¶Áµ½ÁË±êÊ¶·û£¬Ôò¼ÌĞøÖ´ĞĞ
+		// è¯»åˆ°äº†æ ‡è¯†ç¬¦ï¼Œåˆ™ç»§ç»­æ‰§è¡Œ
 	}
 	tokenbuffer_.clear();
 	tokenbuffer_.push_back(token_);
@@ -318,15 +318,15 @@ void SyntaxAnalyzer::VariableDefinition(size_t depth) throw()
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be identifier at the beginning of variable definition\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::IDENTIFIER && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢ÏÂÒ»¸ö±êÊ¶·û»òPROCEDURE FUNCTION BEGIN
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::IDENTIFIER && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€ä¸‹ä¸€ä¸ªæ ‡è¯†ç¬¦æˆ–PROCEDURE FUNCTION BEGIN
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
-			if(token_.type_ != Token::IDENTIFIER)	// Èô¶Áµ½µÄ²»ÊÇ±êÊ¶·û£¬Ôò·µ»ØÉÏÒ»²ã´¦Àí
+			if(token_.type_ != Token::IDENTIFIER)	// è‹¥è¯»åˆ°çš„ä¸æ˜¯æ ‡è¯†ç¬¦ï¼Œåˆ™è¿”å›ä¸Šä¸€å±‚å¤„ç†
 			{
 				return;
 			}
-			// ¶Áµ½ÁË±êÊ¶·û£¬Ôò¼ÌĞøÖ´ĞĞ
+			// è¯»åˆ°äº†æ ‡è¯†ç¬¦ï¼Œåˆ™ç»§ç»­æ‰§è¡Œ
 		}
 		tokenbuffer_.push_back(token_);
 #ifdef SYNTAXDEBUG
@@ -338,11 +338,11 @@ void SyntaxAnalyzer::VariableDefinition(size_t depth) throw()
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ':' after identifier to specify the type\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::RW_INTEGER && token_.type_ != Token::RW_CHAR && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢ÀàĞÍËµÃ÷·û¡¢·ÖºÅ¡¢PROCEDURE FUNCTION BEGIN
+		while(token_.type_ != Token::NIL && token_.type_ != Token::RW_INTEGER && token_.type_ != Token::RW_CHAR && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€ç±»å‹è¯´æ˜ç¬¦ã€åˆ†å·ã€PROCEDURE FUNCTION BEGIN
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		if(Token::RW_INTEGER == token_.type_ || Token::RW_CHAR == token_.type_)	// Èô¶Áµ½ÁËÀàĞÍËµÃ÷·û
+		if(Token::RW_INTEGER == token_.type_ || Token::RW_CHAR == token_.type_)	// è‹¥è¯»åˆ°äº†ç±»å‹è¯´æ˜ç¬¦
 		{
 			TypeSpecification(depth + 1);
 		}
@@ -351,7 +351,7 @@ void SyntaxAnalyzer::VariableDefinition(size_t depth) throw()
 	lexical_analyzer_.GetNextToken(token_);
 	TypeSpecification(depth + 1);
 }
-// <ÀàĞÍ> ::= [array'['<ÎŞ·ûºÅÕûÊı>']'of]<»ù±¾ÀàĞÍ>
+// <ç±»å‹> ::= [array'['<æ— ç¬¦å·æ•´æ•°>']'of]<åŸºæœ¬ç±»å‹>
 void SyntaxAnalyzer::TypeSpecification(size_t depth) throw()
 {
 	PrintFunctionFrame("TypeSpecification()", depth);
@@ -369,18 +369,18 @@ void SyntaxAnalyzer::TypeSpecification(size_t depth) throw()
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be '[' after \"array\"\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢PROCEDURE FUNCTION BEGIN
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€PROCEDURE FUNCTION BEGIN
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
-			return;	// Êı×éÕâÀïµÄ³ö´í´¦ÀíÌ«¹ıÂé·³£¬¹ÊÖ±½ÓÌø¹ıÕâ¾ä£¬·µ»Ø½á¹û¡£
+			return;	// æ•°ç»„è¿™é‡Œçš„å‡ºé”™å¤„ç†å¤ªè¿‡éº»çƒ¦ï¼Œæ•…ç›´æ¥è·³è¿‡è¿™å¥ï¼Œè¿”å›ç»“æœã€‚
 		}
 		lexical_analyzer_.GetNextToken(token_);
 		if(token_.type_ != Token::CONST_INTEGER)
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be a constant integer after '['\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢PROCEDURE FUNCTION BEGIN
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€PROCEDURE FUNCTION BEGIN
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
@@ -395,7 +395,7 @@ void SyntaxAnalyzer::TypeSpecification(size_t depth) throw()
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ']' to match '['\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢PROCEDURE FUNCTION BEGIN
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€PROCEDURE FUNCTION BEGIN
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
@@ -406,7 +406,7 @@ void SyntaxAnalyzer::TypeSpecification(size_t depth) throw()
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"of\" after []\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢PROCEDURE FUNCTION BEGIN
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€PROCEDURE FUNCTION BEGIN
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
@@ -416,23 +416,23 @@ void SyntaxAnalyzer::TypeSpecification(size_t depth) throw()
 	}
 
 	if(token_.type_ != Token::RW_INTEGER
-		&& token_.type_ != Token::RW_CHAR)	// ÈôÃ»ÓĞÀàĞÍËµÃ÷
+		&& token_.type_ != Token::RW_CHAR)	// è‹¥æ²¡æœ‰ç±»å‹è¯´æ˜
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"integer\" or \"char\" for type specification\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢PROCEDURE FUNCTION BEGIN
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€PROCEDURE FUNCTION BEGIN
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
 		return;
 	}
-	// ²åÈë·ûºÅ±í
-	TokenTableItem::DecorateType decoratetype_ = (token_.type_ == Token::RW_INTEGER) ? TokenTableItem::INTEGER : TokenTableItem::CHAR;// ĞŞÊÎ·ûÀàĞÍ
-	if(TokenTableItem::ARRAY == itemtype_)	// ÈôÊÇÊı×é
+	// æ’å…¥ç¬¦å·è¡¨
+	TokenTableItem::DecorateType decoratetype_ = (token_.type_ == Token::RW_INTEGER) ? TokenTableItem::INTEGER : TokenTableItem::CHAR;// ä¿®é¥°ç¬¦ç±»å‹
+	if(TokenTableItem::ARRAY == itemtype_)	// è‹¥æ˜¯æ•°ç»„
 	{
 		for(vector<Token>::const_iterator iter = tokenbuffer_.begin(); iter != tokenbuffer_.end(); ++iter)
 		{
-			if(tokentable_.SearchDefinitionInCurrentLevel(iter->value_.identifier))	// ÖØ¶¨Òåºó£¬ÈÔÈ»²åÈëµ±Ç°¶¨Òå£¨Ò²¿É²»²åÈë£©
+			if(tokentable_.SearchDefinitionInCurrentLevel(iter->value_.identifier))	// é‡å®šä¹‰åï¼Œä»ç„¶æ’å…¥å½“å‰å®šä¹‰ï¼ˆä¹Ÿå¯ä¸æ’å…¥ï¼‰
 			{
 				std::cout << "line " << iter->lineNumber_ << ":  " << iter->toString() << "  redifinition\n";
 				is_successful_ = false;
@@ -440,7 +440,7 @@ void SyntaxAnalyzer::TypeSpecification(size_t depth) throw()
 			tokentable_.AddArrayItem(*iter, decoratetype_, arrayLength, level_);
 		}
 	}
-	else									// ÈôÊÇÒ»°ã±äÁ¿
+	else									// è‹¥æ˜¯ä¸€èˆ¬å˜é‡
 	{
 		for(vector<Token>::const_iterator iter = tokenbuffer_.begin(); iter != tokenbuffer_.end(); ++iter)
 		{
@@ -458,7 +458,7 @@ void SyntaxAnalyzer::TypeSpecification(size_t depth) throw()
 	lexical_analyzer_.GetNextToken(token_);
 }
 
-// <¹ı³ÌËµÃ÷²¿·Ö> ::= <¹ı³ÌÊ×²¿><·Ö³ÌĞò>;{<¹ı³ÌÊ×²¿><·Ö³ÌĞò>;}
+// <è¿‡ç¨‹è¯´æ˜éƒ¨åˆ†> ::= <è¿‡ç¨‹é¦–éƒ¨><åˆ†ç¨‹åº>;{<è¿‡ç¨‹é¦–éƒ¨><åˆ†ç¨‹åº>;}
 void SyntaxAnalyzer::ProcedurePart(size_t depth) throw()
 {
 	PrintFunctionFrame("ProcedurePart()", depth);
@@ -467,11 +467,11 @@ void SyntaxAnalyzer::ProcedurePart(size_t depth) throw()
 	{
 		int proc_index = ProcedureHead(depth + 1);
 		SubRoutine(depth + 1);
-		// Éú³É¹ı³ÌµÄENDËÄÔªÊ½
+		// ç”Ÿæˆè¿‡ç¨‹çš„ENDå››å…ƒå¼
 		quaternarytable_.push_back(Quaternary(Quaternary::END, Quaternary::NIL_ADDRESSING, 0, Quaternary::NIL_ADDRESSING, 0, Quaternary::IMMEDIATE_ADDRESSING, proc_index));
-		// TODO ĞŞ¸ÄÉÏÒ»¸öBEGINËÄÔªÊ½ÖĞµÄÁÙÊ±±äÁ¿ÊıÁ¿
+		// TODO ä¿®æ”¹ä¸Šä¸€ä¸ªBEGINå››å…ƒå¼ä¸­çš„ä¸´æ—¶å˜é‡æ•°é‡
 //		SetTempVarCount(proc_index, max_local_temp_count_);
-//		max_local_temp_count_ = 0;	// ³õÊ¼»¯º¯ÊıµÄÁÙÊ±±äÁ¿×î´óÊıÁ¿
+//		max_local_temp_count_ = 0;	// åˆå§‹åŒ–å‡½æ•°çš„ä¸´æ—¶å˜é‡æœ€å¤§æ•°é‡
 		tokentable_.Relocate();
 		--level_;
 		if(Token::SEMICOLON != token_.type_)
@@ -479,30 +479,30 @@ void SyntaxAnalyzer::ProcedurePart(size_t depth) throw()
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ';' at the end of procedure\n";
 			is_successful_ = false;
 		}
-		lexical_analyzer_.GetNextToken(token_);	// ·Ö³ÌĞò½áÊøºóÓ¦¶ÁÈë·ÖºÅ
+		lexical_analyzer_.GetNextToken(token_);	// åˆ†ç¨‹åºç»“æŸååº”è¯»å…¥åˆ†å·
 	}while(Token::PROCEDURE == token_.type_);
 }
 
-// <¹ı³ÌÊ×²¿> ::= procedure<¹ı³Ì±êÊ¶·û>'('[<ĞÎÊ½²ÎÊı±í>]')';
+// <è¿‡ç¨‹é¦–éƒ¨> ::= procedure<è¿‡ç¨‹æ ‡è¯†ç¬¦>'('[<å½¢å¼å‚æ•°è¡¨>]')';
 int SyntaxAnalyzer::ProcedureHead(size_t depth) throw()
 {
 	PrintFunctionFrame("ProcedureHead()", depth);
 
 	assert(Token::PROCEDURE == token_.type_);
 
-	int proc_index = -1;	// ¹ı³ÌÃûÔÚ·ûºÅ±íÖĞµÄÎ»ÖÃ£¨ÏÂ±ê£©
+	int proc_index = -1;	// è¿‡ç¨‹ååœ¨ç¬¦å·è¡¨ä¸­çš„ä½ç½®ï¼ˆä¸‹æ ‡ï¼‰
 
 	lexical_analyzer_.GetNextToken(token_);
-	if(token_.type_ != Token::IDENTIFIER)	// Î´ÕÒµ½¹ı³ÌÃû
+	if(token_.type_ != Token::IDENTIFIER)	// æœªæ‰¾åˆ°è¿‡ç¨‹å
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be a procedure name after \"procedure\"\n";
 		is_successful_ = false;
-		tokentable_.Locate();	// ÕâÀï½øĞĞ¶¨Î»£¬ÊÇÎªÁËµÖÏûProcedurePartÖĞµÄÖØ¶¨Î»
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢PROCEDURE FUNCTION BEGIN
+		tokentable_.Locate();	// è¿™é‡Œè¿›è¡Œå®šä½ï¼Œæ˜¯ä¸ºäº†æŠµæ¶ˆProcedurePartä¸­çš„é‡å®šä½
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€PROCEDURE FUNCTION BEGIN
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		if(Token::SEMICOLON == token_.type_)	// ·ÖºÅºóÔÙ¶ÁÒ»¸öµ¥´Ê£¬¿ÉÄÜ»á½øÈë·Ö³ÌĞò
+		if(Token::SEMICOLON == token_.type_)	// åˆ†å·åå†è¯»ä¸€ä¸ªå•è¯ï¼Œå¯èƒ½ä¼šè¿›å…¥åˆ†ç¨‹åº
 		{
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -511,32 +511,32 @@ int SyntaxAnalyzer::ProcedureHead(size_t depth) throw()
 #ifdef SYNTAXDEBUG
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
-	// ²åÈë¹ı³ÌÃûµ½·ûºÅ±í
+	// æ’å…¥è¿‡ç¨‹ååˆ°ç¬¦å·è¡¨
 	string proc_name = token_.value_.identifier;
-	if(tokentable_.SearchDefinitionInCurrentLevel(token_.value_.identifier))	// ÖØ¶¨ÒåÊ±£¬ÈÔÈ»²åÈëÖØ¶¨ÒåµÄ¹ı³Ì¶¨Òå£¨ÒòÎªÈÔÈ»²åÈëºóÓ°Ïì²»´ó£¬¶ø²»²åÈëµÄ»°£¬»áÓ°Ïì¸Ã´ÎµÄ¹ı³Ì·Ö³ÌĞòµÄÓï·¨ÓïÒå·ÖÎö£©
+	if(tokentable_.SearchDefinitionInCurrentLevel(token_.value_.identifier))	// é‡å®šä¹‰æ—¶ï¼Œä»ç„¶æ’å…¥é‡å®šä¹‰çš„è¿‡ç¨‹å®šä¹‰ï¼ˆå› ä¸ºä»ç„¶æ’å…¥åå½±å“ä¸å¤§ï¼Œè€Œä¸æ’å…¥çš„è¯ï¼Œä¼šå½±å“è¯¥æ¬¡çš„è¿‡ç¨‹åˆ†ç¨‹åºçš„è¯­æ³•è¯­ä¹‰åˆ†æï¼‰
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  redifinition\n";
 		is_successful_ = false;
 	}
-	proc_index = tokentable_.AddProcedureItem(token_, level_++);// ¹ı³ÌÃûÖ®ºóleveÒª+1
-	// Éú³É¹ı³ÌµÄBEGINËÄÔªÊ½
+	proc_index = tokentable_.AddProcedureItem(token_, level_++);// è¿‡ç¨‹åä¹‹åleveè¦+1
+	// ç”Ÿæˆè¿‡ç¨‹çš„BEGINå››å…ƒå¼
 	quaternarytable_.push_back(Quaternary(Quaternary::BEGIN, 
 		Quaternary::NIL_ADDRESSING, 0, 
-		Quaternary::IMMEDIATE_ADDRESSING, 0,	// ÕâÀïµÄ²Ù×÷ÊıÓ¦¸ÃÊÇ¸Ã¹ı³ÌÒªÓÃµ½µÄÁÙÊ±±äÁ¿µÄÊıÁ¿£¬µÈ¹ı³Ì·ÖÎöÍêºó²¹Æë
+		Quaternary::IMMEDIATE_ADDRESSING, 0,	// è¿™é‡Œçš„æ“ä½œæ•°åº”è¯¥æ˜¯è¯¥è¿‡ç¨‹è¦ç”¨åˆ°çš„ä¸´æ—¶å˜é‡çš„æ•°é‡ï¼Œç­‰è¿‡ç¨‹åˆ†æå®Œåè¡¥é½
 		Quaternary::IMMEDIATE_ADDRESSING, proc_index));
-	// ¶¨Î»£¨½«¹ı³ÌÃûºó½ôÁÚµÄÎ»ÖÃÉèÎª¾Ö²¿×÷ÓÃÓòµÄÆğÊ¼µã£©
+	// å®šä½ï¼ˆå°†è¿‡ç¨‹ååç´§é‚»çš„ä½ç½®è®¾ä¸ºå±€éƒ¨ä½œç”¨åŸŸçš„èµ·å§‹ç‚¹ï¼‰
 	tokentable_.Locate();	
-	// ¼ÌĞø¶ÁÈ¡µ¥´Ê
+	// ç»§ç»­è¯»å–å•è¯
 	lexical_analyzer_.GetNextToken(token_);
-	if(token_.type_ != Token::LEFT_PAREN)	// Ã»ÓĞ¶Áµ½×óÀ¨ºÅ£¬ÊÓ×÷Ã»ÓĞ²ÎÊı
+	if(token_.type_ != Token::LEFT_PAREN)	// æ²¡æœ‰è¯»åˆ°å·¦æ‹¬å·ï¼Œè§†ä½œæ²¡æœ‰å‚æ•°
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  redifinition\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢PROCEDURE FUNCTION BEGIN
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€PROCEDURE FUNCTION BEGIN
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		if(Token::SEMICOLON == token_.type_)	// ·ÖºÅºóÔÙ¶ÁÒ»¸öµ¥´Ê£¬¿ÉÄÜ»á½øÈë·Ö³ÌĞò
+		if(Token::SEMICOLON == token_.type_)	// åˆ†å·åå†è¯»ä¸€ä¸ªå•è¯ï¼Œå¯èƒ½ä¼šè¿›å…¥åˆ†ç¨‹åº
 		{
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -553,11 +553,11 @@ int SyntaxAnalyzer::ProcedureHead(size_t depth) throw()
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  need ')' to match '('\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢PROCEDURE FUNCTION BEGIN
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€PROCEDURE FUNCTION BEGIN
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		if(Token::SEMICOLON == token_.type_)	// ·ÖºÅºóÔÙ¶ÁÒ»¸öµ¥´Ê£¬¿ÉÄÜ»á½øÈë·Ö³ÌĞò
+		if(Token::SEMICOLON == token_.type_)	// åˆ†å·åå†è¯»ä¸€ä¸ªå•è¯ï¼Œå¯èƒ½ä¼šè¿›å…¥åˆ†ç¨‹åº
 		{
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -568,7 +568,7 @@ int SyntaxAnalyzer::ProcedureHead(size_t depth) throw()
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ';' at the end of procedure declaration\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢PROCEDURE FUNCTION BEGIN
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€PROCEDURE FUNCTION BEGIN
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -582,47 +582,47 @@ int SyntaxAnalyzer::ProcedureHead(size_t depth) throw()
 	return proc_index;
 }
 
-// <º¯ÊıËµÃ÷²¿·Ö> ::= <º¯ÊıÊ×²¿><·Ö³ÌĞò>;{<º¯ÊıÊ×²¿><·Ö³ÌĞò>;}
+// <å‡½æ•°è¯´æ˜éƒ¨åˆ†> ::= <å‡½æ•°é¦–éƒ¨><åˆ†ç¨‹åº>;{<å‡½æ•°é¦–éƒ¨><åˆ†ç¨‹åº>;}
 void SyntaxAnalyzer::FunctionPart(size_t depth) throw()
 {
 	PrintFunctionFrame("FunctionPart()", depth);
 
 	do
 	{
-		int func_index = FunctionHead(depth + 1);	// ½øĞĞº¯ÊıÍ··ÖÎö£¬²¢µÃµ½º¯ÊıÃûÔÚ·ûºÅ±íÖĞµÄÎ»ÖÃ
+		int func_index = FunctionHead(depth + 1);	// è¿›è¡Œå‡½æ•°å¤´åˆ†æï¼Œå¹¶å¾—åˆ°å‡½æ•°ååœ¨ç¬¦å·è¡¨ä¸­çš„ä½ç½®
 		SubRoutine(depth + 1);
-		// Éú³Éº¯ÊıµÄENDËÄÔªÊ½
+		// ç”Ÿæˆå‡½æ•°çš„ENDå››å…ƒå¼
 		quaternarytable_.push_back(Quaternary(Quaternary::END, Quaternary::NIL_ADDRESSING, 0, Quaternary::NIL_ADDRESSING, 0, Quaternary::IMMEDIATE_ADDRESSING, func_index));
-		// TODO ĞŞ¸ÄÉÏÒ»¸öBEGINËÄÔªÊ½ÖĞµÄÁÙÊ±±äÁ¿ÊıÁ¿
+		// TODO ä¿®æ”¹ä¸Šä¸€ä¸ªBEGINå››å…ƒå¼ä¸­çš„ä¸´æ—¶å˜é‡æ•°é‡
 //		SetTempVarCount(func_index, max_local_temp_count_);
-//		max_local_temp_count_ = 0;	// ³õÊ¼»¯º¯ÊıµÄÁÙÊ±±äÁ¿×î´óÏÂ±ê
+//		max_local_temp_count_ = 0;	// åˆå§‹åŒ–å‡½æ•°çš„ä¸´æ—¶å˜é‡æœ€å¤§ä¸‹æ ‡
 		tokentable_.Relocate();
 		--level_;
-		if(Token::SEMICOLON != token_.type_)	// ·Ö³ÌĞò½áÊøºóÓ¦¶ÁÈë·ÖºÅ
+		if(Token::SEMICOLON != token_.type_)	// åˆ†ç¨‹åºç»“æŸååº”è¯»å…¥åˆ†å·
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ';' at the end of function\n";
 			is_successful_ = false;
 		}
-		lexical_analyzer_.GetNextToken(token_);	// ¶ÁÈë½áÎ²µÄ·ÖºÅ
+		lexical_analyzer_.GetNextToken(token_);	// è¯»å…¥ç»“å°¾çš„åˆ†å·
 	}while(Token::FUNCTION == token_.type_);
 }
 
-// <º¯ÊıÊ×²¿> ::= function <º¯Êı±êÊ¶·û>'('[<ĞÎÊ½²ÎÊı±í>]')':<»ù±¾ÀàĞÍ>;
+// <å‡½æ•°é¦–éƒ¨> ::= function <å‡½æ•°æ ‡è¯†ç¬¦>'('[<å½¢å¼å‚æ•°è¡¨>]')':<åŸºæœ¬ç±»å‹>;
 int SyntaxAnalyzer::FunctionHead(size_t depth) throw()
 {
 	PrintFunctionFrame("FunctionHead()", depth);
 
 	assert(Token::FUNCTION == token_.type_);
 
-	int func_index = -1;	// º¯ÊıÃûÔÚ·ûºÅ±íÖĞµÄÎ»ÖÃ
+	int func_index = -1;	// å‡½æ•°ååœ¨ç¬¦å·è¡¨ä¸­çš„ä½ç½®
 
 	lexical_analyzer_.GetNextToken(token_);
-	if(token_.type_ != Token::IDENTIFIER)	// Î´ÕÒµ½º¯ÊıÃû
+	if(token_.type_ != Token::IDENTIFIER)	// æœªæ‰¾åˆ°å‡½æ•°å
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be a function name after \"function\"\n";
 		is_successful_ = false;
-		tokentable_.Locate();	// ÕâÀï½øĞĞ¶¨Î»£¬ÊÇÎªÁËµÖÏûFunctionPartÖĞµÄÖØ¶¨Î»
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢BEGIN
+		tokentable_.Locate();	// è¿™é‡Œè¿›è¡Œå®šä½ï¼Œæ˜¯ä¸ºäº†æŠµæ¶ˆFunctionPartä¸­çš„é‡å®šä½
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€BEGIN
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -635,31 +635,31 @@ int SyntaxAnalyzer::FunctionHead(size_t depth) throw()
 #ifdef SYNTAXDEBUG
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
-	// ²åÈëº¯ÊıÃûµ½·ûºÅ±í
+	// æ’å…¥å‡½æ•°ååˆ°ç¬¦å·è¡¨
 	string func_name = token_.value_.identifier;
-	if(tokentable_.SearchDefinitionInCurrentLevel(token_.value_.identifier))	// ÖØ¶¨ÒåÊ±£¬ÈÔÈ»²åÈëÖØ¶¨ÒåµÄ¹ı³Ì¶¨Òå£¨ÒòÎªÈÔÈ»²åÈëºóÓ°Ïì²»´ó£¬¶ø²»²åÈëµÄ»°£¬»áÓ°Ïì¸Ã´ÎµÄº¯Êı·Ö³ÌĞòµÄÓï·¨ÓïÒå·ÖÎö£©
+	if(tokentable_.SearchDefinitionInCurrentLevel(token_.value_.identifier))	// é‡å®šä¹‰æ—¶ï¼Œä»ç„¶æ’å…¥é‡å®šä¹‰çš„è¿‡ç¨‹å®šä¹‰ï¼ˆå› ä¸ºä»ç„¶æ’å…¥åå½±å“ä¸å¤§ï¼Œè€Œä¸æ’å…¥çš„è¯ï¼Œä¼šå½±å“è¯¥æ¬¡çš„å‡½æ•°åˆ†ç¨‹åºçš„è¯­æ³•è¯­ä¹‰åˆ†æï¼‰
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  redifinition\n";
 		is_successful_ = false;
 	}
-	func_index = tokentable_.AddFunctionItem(token_, level_++);// ¹ı³ÌÃûÖ®ºóleveÒª+1
-	// Éú³Éº¯ÊıµÄBEGINËÄÔªÊ½
+	func_index = tokentable_.AddFunctionItem(token_, level_++);// è¿‡ç¨‹åä¹‹åleveè¦+1
+	// ç”Ÿæˆå‡½æ•°çš„BEGINå››å…ƒå¼
 	quaternarytable_.push_back(Quaternary(Quaternary::BEGIN, 
 		Quaternary::NIL_ADDRESSING, 0, 
-		Quaternary::IMMEDIATE_ADDRESSING, 0, // ÕâÀïµÄ²Ù×÷ÊıÓ¦¸ÃÊÇ¸Ãº¯ÊıÒªÓÃµ½µÄÁÙÊ±±äÁ¿µÄÊıÁ¿£¬µÈº¯Êı·ÖÎöÍêºó²¹Æë
+		Quaternary::IMMEDIATE_ADDRESSING, 0, // è¿™é‡Œçš„æ“ä½œæ•°åº”è¯¥æ˜¯è¯¥å‡½æ•°è¦ç”¨åˆ°çš„ä¸´æ—¶å˜é‡çš„æ•°é‡ï¼Œç­‰å‡½æ•°åˆ†æå®Œåè¡¥é½
 		Quaternary::IMMEDIATE_ADDRESSING, func_index));
-	// ¶¨Î»
+	// å®šä½
 	tokentable_.Locate();
 	lexical_analyzer_.GetNextToken(token_);
 	if(token_.type_ != Token::LEFT_PAREN)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  redifinition\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢FUNCTION BEGIN
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€FUNCTION BEGIN
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		if(Token::SEMICOLON == token_.type_)	// ·ÖºÅºóÔÙ¶ÁÒ»¸öµ¥´Ê£¬¿ÉÄÜ»á½øÈë·Ö³ÌĞò
+		if(Token::SEMICOLON == token_.type_)	// åˆ†å·åå†è¯»ä¸€ä¸ªå•è¯ï¼Œå¯èƒ½ä¼šè¿›å…¥åˆ†ç¨‹åº
 		{
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -676,18 +676,18 @@ int SyntaxAnalyzer::FunctionHead(size_t depth) throw()
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  need ')' to match '('\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢FUNCTION BEGIN
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€FUNCTION BEGIN
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		if(Token::SEMICOLON == token_.type_)	// ·ÖºÅºóÔÙ¶ÁÒ»¸öµ¥´Ê£¬¿ÉÄÜ»á½øÈë·Ö³ÌĞò
+		if(Token::SEMICOLON == token_.type_)	// åˆ†å·åå†è¯»ä¸€ä¸ªå•è¯ï¼Œå¯èƒ½ä¼šè¿›å…¥åˆ†ç¨‹åº
 		{
 			lexical_analyzer_.GetNextToken(token_);
 		}
 		return func_index;
 	}
 	lexical_analyzer_.GetNextToken(token_);
-	if(token_.type_ != Token::COLON)	// ¼ÙÉèÊÇÍü¼ÇÃ°ºÅ
+	if(token_.type_ != Token::COLON)	// å‡è®¾æ˜¯å¿˜è®°å†’å·
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ':' after Parameter Statement\n";
 		is_successful_ = false;
@@ -698,11 +698,11 @@ int SyntaxAnalyzer::FunctionHead(size_t depth) throw()
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"integer\" or \"char\" after ':' to specify the return type\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢FUNCTION BEGIN
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€FUNCTION BEGIN
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		if(Token::SEMICOLON == token_.type_)	// ·ÖºÅºóÔÙ¶ÁÒ»¸öµ¥´Ê£¬¿ÉÄÜ»á½øÈë·Ö³ÌĞò
+		if(Token::SEMICOLON == token_.type_)	// åˆ†å·åå†è¯»ä¸€ä¸ªå•è¯ï¼Œå¯èƒ½ä¼šè¿›å…¥åˆ†ç¨‹åº
 		{
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -714,7 +714,7 @@ int SyntaxAnalyzer::FunctionHead(size_t depth) throw()
 	TokenTableItem::DecorateType decoratetype_ = (token_.type_ == Token::RW_INTEGER) ? TokenTableItem::INTEGER : TokenTableItem::CHAR;
 	tokentable_.SetFunctionReturnType(func_name, decoratetype_);
 	lexical_analyzer_.GetNextToken(token_);
-	if(token_.type_ != Token::SEMICOLON)	// ÕâÀïÓĞ¿ÉÄÜÊÇÂäÁË·ÖºÅ£¬ËùÒÔ²»ÔÙ¼ÌĞø¶Á
+	if(token_.type_ != Token::SEMICOLON)	// è¿™é‡Œæœ‰å¯èƒ½æ˜¯è½äº†åˆ†å·ï¼Œæ‰€ä»¥ä¸å†ç»§ç»­è¯»
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ';' at the end of function head\n";
 		is_successful_ = false;
@@ -724,9 +724,9 @@ int SyntaxAnalyzer::FunctionHead(size_t depth) throw()
 	return func_index;
 }
 
-// <ĞÎÊ½²ÎÊı±í> ::= <ĞÎÊ½²ÎÊı¶Î>{;<ĞÎÊ½²ÎÊı¶Î>}
-// ·µ»ØĞÎ²ÎÊıÁ¿
-int SyntaxAnalyzer::ParameterList(size_t depth) throw()		// ĞÎ²Î±í
+// <å½¢å¼å‚æ•°è¡¨> ::= <å½¢å¼å‚æ•°æ®µ>{;<å½¢å¼å‚æ•°æ®µ>}
+// è¿”å›å½¢å‚æ•°é‡
+int SyntaxAnalyzer::ParameterList(size_t depth) throw()		// å½¢å‚è¡¨
 {
 	PrintFunctionFrame("ParameterList()", depth);
 
@@ -739,12 +739,12 @@ int SyntaxAnalyzer::ParameterList(size_t depth) throw()		// ĞÎ²Î±í
 	return sum;
 }
 
-// <ĞÎÊ½²ÎÊı¶Î> ::= [var]<±êÊ¶·û>{,<±êÊ¶·û>}:<»ù±¾ÀàĞÍ>
-// ·µ»Ø¸ÃĞÎ²Î¶ÎµÄĞÎ²ÎÊıÁ¿
+// <å½¢å¼å‚æ•°æ®µ> ::= [var]<æ ‡è¯†ç¬¦>{,<æ ‡è¯†ç¬¦>}:<åŸºæœ¬ç±»å‹>
+// è¿”å›è¯¥å½¢å‚æ®µçš„å½¢å‚æ•°é‡
 int SyntaxAnalyzer::ParameterTerm(size_t depth) throw()		
 {
 	PrintFunctionFrame("ParameterTerm()", depth);
-	bool isref = false;	// ÊÇ·ñÎªÒıÓÃ´«²Î
+	bool isref = false;	// æ˜¯å¦ä¸ºå¼•ç”¨ä¼ å‚
 	if(Token::VAR == token_.type_)
 	{
 		isref = true;
@@ -754,7 +754,7 @@ int SyntaxAnalyzer::ParameterTerm(size_t depth) throw()
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be parameter name surrounded by parentheses\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::COMMA  && token_.type_ != Token::SEMICOLON)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢BEGIN
+		while(token_.type_ != Token::NIL && token_.type_ != Token::COMMA  && token_.type_ != Token::SEMICOLON)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€BEGIN
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -766,7 +766,7 @@ int SyntaxAnalyzer::ParameterTerm(size_t depth) throw()
 #ifdef SYNTAXDEBUG
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
-	// ²ÎÊıÃûÑ¹Õ»×¼±¸½ø·ûºÅ±í
+	// å‚æ•°åå‹æ ˆå‡†å¤‡è¿›ç¬¦å·è¡¨
 	tokenbuffer_.clear();
 	tokenbuffer_.push_back(token_);
 	lexical_analyzer_.GetNextToken(token_);
@@ -778,7 +778,7 @@ int SyntaxAnalyzer::ParameterTerm(size_t depth) throw()
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be parameter name after ','\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::IDENTIFIER)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢BEGIN
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON  && token_.type_ != Token::IDENTIFIER)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€BEGIN
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
@@ -798,7 +798,7 @@ int SyntaxAnalyzer::ParameterTerm(size_t depth) throw()
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  lost ':' to specify the type after parameter name\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢PROCEDURE FUNCTION BEGIN
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€PROCEDURE FUNCTION BEGIN
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -810,7 +810,7 @@ int SyntaxAnalyzer::ParameterTerm(size_t depth) throw()
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"integer\" or \"char\" after ':' to specify the parameter type\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// ¶Áµ½½áÎ²¡¢·ÖºÅ¡¢PROCEDURE FUNCTION BEGIN
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::PROCEDURE && token_.type_ != Token::FUNCTION && token_.type_ != Token::BEGIN)	// è¯»åˆ°ç»“å°¾ã€åˆ†å·ã€PROCEDURE FUNCTION BEGIN
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -819,7 +819,7 @@ int SyntaxAnalyzer::ParameterTerm(size_t depth) throw()
 #ifdef SYNTAXDEBUG
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
-	// ²ÎÊı´æ·ûºÅ±í
+	// å‚æ•°å­˜ç¬¦å·è¡¨
 	TokenTableItem::DecorateType decoratetype = (token_.type_ == Token::RW_INTEGER) ? TokenTableItem::INTEGER : TokenTableItem::CHAR;
 	for(vector<Token>::const_iterator iter = tokenbuffer_.begin(); iter != tokenbuffer_.end(); ++iter)
 	{
@@ -829,37 +829,37 @@ int SyntaxAnalyzer::ParameterTerm(size_t depth) throw()
 			is_successful_ = false;
 		}
 		tokentable_.AddParameterItem(*iter, decoratetype, isref, level_);
-	} // end ´æ·ûºÅ±í
+	} // end å­˜ç¬¦å·è¡¨
 
 	lexical_analyzer_.GetNextToken(token_);
 	return sum;
 }
 
-// <ÊµÔÚ²ÎÊı±í> ::= <±í´ïÊ½>{,<±í´ïÊ½>}
-vector<ExpressionAttribute> SyntaxAnalyzer::ArgumentList(const vector<ExpressionAttribute> &parameter_attributes, size_t depth) throw()			// Êµ²Î±í
+// <å®åœ¨å‚æ•°è¡¨> ::= <è¡¨è¾¾å¼>{,<è¡¨è¾¾å¼>}
+vector<ExpressionAttribute> SyntaxAnalyzer::ArgumentList(const vector<ExpressionAttribute> &parameter_attributes, size_t depth) throw()			// å®å‚è¡¨
 {
 	PrintFunctionFrame("ArgumentList()", depth);
 
 	vector<ExpressionAttribute> attribute_buffer;
 	ExpressionAttribute argument_attribute = Expression(depth + 1);
 	attribute_buffer.push_back(argument_attribute);
-	// Éú³ÉÉèÖÃ²ÎÊıµÄËÄÔªÊ½
+	// ç”Ÿæˆè®¾ç½®å‚æ•°çš„å››å…ƒå¼
 	Quaternary q_addpara(Quaternary::SETP,
 		Quaternary::NIL_ADDRESSING, 0, 
 		argument_attribute.offset_addressingmethod_, argument_attribute.offset_, 
 		argument_attribute.addressingmethod_, argument_attribute.value_);
-	// ²ÎÊıµÄ´«µİ·½Ê½
+	// å‚æ•°çš„ä¼ é€’æ–¹å¼
 	if(Quaternary::REFERENCE_ADDRESSING == parameter_attributes[0].addressingmethod_
 		&& Quaternary::REFERENCE_ADDRESSING != argument_attribute.addressingmethod_)
 	{
 		q_addpara.op_ = Quaternary::SETREFP;
-		// ÒıÓÃ´«²ÎÒªÇó²ÎÊıÊÇ×óÖµ
+		// å¼•ç”¨ä¼ å‚è¦æ±‚å‚æ•°æ˜¯å·¦å€¼
 		if(Quaternary::VARIABLE_ADDRESSING != argument_attribute.addressingmethod_
 			&& Quaternary::ARRAY_ADDRESSING != argument_attribute.addressingmethod_)
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be left value to fit the reference parameter\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::RIGHT_PAREN && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+			while(token_.type_ != Token::NIL && token_.type_ != Token::RIGHT_PAREN && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
@@ -867,9 +867,9 @@ vector<ExpressionAttribute> SyntaxAnalyzer::ArgumentList(const vector<Expression
 		}
 	}
 	quaternarytable_.push_back(q_addpara);
-	// »ØÊÕÁÙÊ±±äÁ¿
+	// å›æ”¶ä¸´æ—¶å˜é‡
 	if(Quaternary::TEMPORARY_ADDRESSING == argument_attribute.addressingmethod_
-		|| Quaternary::TEMPORARY_ADDRESSING == argument_attribute.offset_addressingmethod_)	// Á½Õß²»¿ÉÄÜÍ¬Ê±³ÉÁ¢£¬¹ÊĞ´ÔÚÒ»Æğ
+		|| Quaternary::TEMPORARY_ADDRESSING == argument_attribute.offset_addressingmethod_)	// ä¸¤è€…ä¸å¯èƒ½åŒæ—¶æˆç«‹ï¼Œæ•…å†™åœ¨ä¸€èµ·
 	{
 		--tempvar_index_;
 	}
@@ -880,15 +880,15 @@ vector<ExpressionAttribute> SyntaxAnalyzer::ArgumentList(const vector<Expression
 		lexical_analyzer_.GetNextToken(token_);
 		argument_attribute = Expression(depth + 1);
 		attribute_buffer.push_back(argument_attribute);
-		// Ô½½ç¼ì²é
+		// è¶Šç•Œæ£€æŸ¥
 		if(parameter_attributes.size() <= para_index)
 		{
-			// Êµ¼Ê²ÎÊı¹ı¶à
+			// å®é™…å‚æ•°è¿‡å¤š
 			continue;
 		}
-		// Éú³ÉÉèÖÃ²ÎÊıµÄËÄÔªÊ½
-		// ²ÎÊıÒªÇóÊÇÒıÓÃ£¬ÇÒ±í´ïÊ½Îª·ÇÒıÓÃ£¬²ÅÓÃSETREFP
-		// ÖØµãÔÚÓÚ£¬Èô±í´ïÊ½Ò²ÎªÒıÓÃ£¬ÔòÖ»ÓÃSETP£¬¼´¿É´«ÈëµØÖ·
+		// ç”Ÿæˆè®¾ç½®å‚æ•°çš„å››å…ƒå¼
+		// å‚æ•°è¦æ±‚æ˜¯å¼•ç”¨ï¼Œä¸”è¡¨è¾¾å¼ä¸ºéå¼•ç”¨ï¼Œæ‰ç”¨SETREFP
+		// é‡ç‚¹åœ¨äºï¼Œè‹¥è¡¨è¾¾å¼ä¹Ÿä¸ºå¼•ç”¨ï¼Œåˆ™åªç”¨SETPï¼Œå³å¯ä¼ å…¥åœ°å€
 		if(Quaternary::REFERENCE_ADDRESSING == parameter_attributes[para_index].addressingmethod_
 		&& Quaternary::REFERENCE_ADDRESSING != argument_attribute.addressingmethod_)
 		{
@@ -903,9 +903,9 @@ vector<ExpressionAttribute> SyntaxAnalyzer::ArgumentList(const vector<Expression
 		q_addpara.method3_ = argument_attribute.addressingmethod_;
 		q_addpara.dst_ = argument_attribute.value_;
 		quaternarytable_.push_back(q_addpara);
-		// »ØÊÕÁÙÊ±±äÁ¿
+		// å›æ”¶ä¸´æ—¶å˜é‡
 		if(Quaternary::TEMPORARY_ADDRESSING == argument_attribute.addressingmethod_
-		|| Quaternary::TEMPORARY_ADDRESSING == argument_attribute.offset_addressingmethod_)	// Á½Õß²»¿ÉÄÜÍ¬Ê±³ÉÁ¢£¬¹ÊĞ´ÔÚÒ»Æğ
+		|| Quaternary::TEMPORARY_ADDRESSING == argument_attribute.offset_addressingmethod_)	// ä¸¤è€…ä¸å¯èƒ½åŒæ—¶æˆç«‹ï¼Œæ•…å†™åœ¨ä¸€èµ·
 		{
 			--tempvar_index_;
 		}
@@ -913,8 +913,8 @@ vector<ExpressionAttribute> SyntaxAnalyzer::ArgumentList(const vector<Expression
 	return attribute_buffer;
 }
 
-// <¸´ºÏÓï¾ä> ::= begin <Óï¾ä>{;<Óï¾ä>} end
-void SyntaxAnalyzer::StatementBlockPart(size_t depth) throw()	// ¸´ºÏÓï¾ä
+// <å¤åˆè¯­å¥> ::= begin <è¯­å¥>{;<è¯­å¥>} end
+void SyntaxAnalyzer::StatementBlockPart(size_t depth) throw()	// å¤åˆè¯­å¥
 {
 	PrintFunctionFrame("StatementBlockPart()", depth);
 
@@ -928,7 +928,7 @@ void SyntaxAnalyzer::StatementBlockPart(size_t depth) throw()	// ¸´ºÏÓï¾ä
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"end\" at the end of Statement Block\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -941,13 +941,13 @@ void SyntaxAnalyzer::StatementBlockPart(size_t depth) throw()	// ¸´ºÏÓï¾ä
 	lexical_analyzer_.GetNextToken(token_);
 }
 
-// <Óï¾ä> ::= <±êÊ¶·û>(<¸³ÖµÓï¾ä>|<¹ı³Ìµ÷ÓÃÓï¾ä>)|<Ìõ¼şÓï¾ä>|<Çé¿öÓï¾ä>|<¸´ºÏÓï¾ä>
-// |<¶ÁÓï¾ä>|<Ğ´Óï¾ä>|<whileÑ­»·Óï¾ä>|<forÑ­»·Óï¾ä>|<Ñ­»·¼ÌĞøÓï¾ä>|<Ñ­»·ÍË³öÓï¾ä>|<¿Õ>
+// <è¯­å¥> ::= <æ ‡è¯†ç¬¦>(<èµ‹å€¼è¯­å¥>|<è¿‡ç¨‹è°ƒç”¨è¯­å¥>)|<æ¡ä»¶è¯­å¥>|<æƒ…å†µè¯­å¥>|<å¤åˆè¯­å¥>
+// |<è¯»è¯­å¥>|<å†™è¯­å¥>|<whileå¾ªç¯è¯­å¥>|<forå¾ªç¯è¯­å¥>|<å¾ªç¯ç»§ç»­è¯­å¥>|<å¾ªç¯é€€å‡ºè¯­å¥>|<ç©º>
 void SyntaxAnalyzer::Statement(size_t depth) throw()
 {
 	PrintFunctionFrame("Statement()", depth);
 
-	Token idToken = token_;	// ¸Ãtoken_¿ÉÄÜÊÇ¹ı³ÌÃû£¬ÏÈ¼ÇÏÂ£¬´ıÓÃ
+	Token idToken = token_;	// è¯¥token_å¯èƒ½æ˜¯è¿‡ç¨‹åï¼Œå…ˆè®°ä¸‹ï¼Œå¾…ç”¨
 	TokenTable::iterator iter;
 	switch(token_.type_)
 	{
@@ -955,27 +955,27 @@ void SyntaxAnalyzer::Statement(size_t depth) throw()
 #ifdef SYNTAXDEBUG
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
-		iter = tokentable_.SearchDefinition(token_);	// ²éÕÒ·ûºÅ±íÖĞµÄ¶¨Òå
+		iter = tokentable_.SearchDefinition(token_);	// æŸ¥æ‰¾ç¬¦å·è¡¨ä¸­çš„å®šä¹‰
 		if(iter == tokentable_.end())
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  undeclared identifier\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
 			return;
 		}
-		iter->AddUsedLine(token_.lineNumber_);		// ÔÚ·ûºÅ±íÖĞ²åÈëÒıÓÃĞĞ¼ÇÂ¼
+		iter->AddUsedLine(token_.lineNumber_);		// åœ¨ç¬¦å·è¡¨ä¸­æ’å…¥å¼•ç”¨è¡Œè®°å½•
 		lexical_analyzer_.GetNextToken(token_);
-		if(Token::LEFT_PAREN == token_.type_)	// ¹ı³Ì»òº¯Êıµ÷ÓÃ
+		if(Token::LEFT_PAREN == token_.type_)	// è¿‡ç¨‹æˆ–å‡½æ•°è°ƒç”¨
 		{
 			if(iter->itemtype_ != TokenTableItem::PROCEDURE
-				&& iter->itemtype_ != TokenTableItem::FUNCTION)	// ¼ì²éÆäÊôĞÔÊÇ·ñÎª¹ı³Ì»òº¯Êı
+				&& iter->itemtype_ != TokenTableItem::FUNCTION)	// æ£€æŸ¥å…¶å±æ€§æ˜¯å¦ä¸ºè¿‡ç¨‹æˆ–å‡½æ•°
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  not declared as a procedure\n";
 				is_successful_ = false;
-				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 				{ 
 					lexical_analyzer_.GetNextToken(token_);
 				}
@@ -983,11 +983,11 @@ void SyntaxAnalyzer::Statement(size_t depth) throw()
 			}
 			vector<ExpressionAttribute> proc_func_attributes = tokentable_.GetProcFuncParameterAttributes(iter);
 			
-			// ÔÚProcedureCallStatementÖĞÉèÖÃ²ÎÊı
+			// åœ¨ProcedureCallStatementä¸­è®¾ç½®å‚æ•°
 			//ProcedureCallStatement(idToken, decorate_types, depth + 1);
-			// ÔÚProcFuncCallStatementÖĞÉèÖÃ²ÎÊı
+			// åœ¨ProcFuncCallStatementä¸­è®¾ç½®å‚æ•°
 			ProcFuncCallStatement(idToken, proc_func_attributes, depth + 1);
-			// Éú³Éµ÷ÓÃËÄÔªÊ½
+			// ç”Ÿæˆè°ƒç”¨å››å…ƒå¼
 			Quaternary q_procedurecall((iter->itemtype_ == TokenTableItem::PROCEDURE) ? Quaternary::PROC_CALL : Quaternary::FUNC_CALL, 
 				Quaternary::NIL_ADDRESSING, 0, 
 				Quaternary::NIL_ADDRESSING, 0, 
@@ -999,11 +999,11 @@ void SyntaxAnalyzer::Statement(size_t depth) throw()
 		{
 			AssigningStatement(idToken, iter, depth + 1);		
 		}
-		else if(Token::COLON == token_.type_)	// ´Ë·ÖÖ§×¨ÃÅÎªÁË¼ì²é¸³ÖµºÅĞ´´íµÄÇé¿ö
+		else if(Token::COLON == token_.type_)	// æ­¤åˆ†æ”¯ä¸“é—¨ä¸ºäº†æ£€æŸ¥èµ‹å€¼å·å†™é”™çš„æƒ…å†µ
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  please check the spelling of the assigning operator\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
@@ -1013,7 +1013,7 @@ void SyntaxAnalyzer::Statement(size_t depth) throw()
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  syntax error after identifier\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
@@ -1047,15 +1047,15 @@ void SyntaxAnalyzer::Statement(size_t depth) throw()
 	case Token::BREAK:
 		BreakStatement(depth + 1);
 		break;
-		// ¼ì²â¿ÕÓï¾äÊÇ·ñºÏ·¨£¨Ó¦¸ÃºÏ·¨£©
-	case Token::SEMICOLON:	// ¿ÕÓï¾ä
-	case Token::END:		// ¿ÕÓï¾ä
+		// æ£€æµ‹ç©ºè¯­å¥æ˜¯å¦åˆæ³•ï¼ˆåº”è¯¥åˆæ³•ï¼‰
+	case Token::SEMICOLON:	// ç©ºè¯­å¥
+	case Token::END:		// ç©ºè¯­å¥
 	default:
 		break;
 	//default:
 	//	std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  syntax error at the beginning of Statement\n";
 	//	is_successful_ = false;
-	//	while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+	//	while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 	//	{ 
 	//		lexical_analyzer_.GetNextToken(token_);
 	//	}
@@ -1063,43 +1063,43 @@ void SyntaxAnalyzer::Statement(size_t depth) throw()
 	}
 }
 
-// <¸³ÖµÓï¾ä> ::= ['['<±í´ïÊ½>']']:=<±í´ïÊ½>
-// idTokenÊÇ¸³ÖµÓï¾äÖ®Ç°±êÊ¶·ûµÄtoken£¬iterÊÇÆäÔÚ·ûºÅ±íÖĞµÄµü´úÆ÷
-void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterator &iter, size_t depth)			// ¸³ÖµÓï¾ä
+// <èµ‹å€¼è¯­å¥> ::= ['['<è¡¨è¾¾å¼>']']:=<è¡¨è¾¾å¼>
+// idTokenæ˜¯èµ‹å€¼è¯­å¥ä¹‹å‰æ ‡è¯†ç¬¦çš„tokenï¼Œiteræ˜¯å…¶åœ¨ç¬¦å·è¡¨ä¸­çš„è¿­ä»£å™¨
+void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterator &iter, size_t depth)			// èµ‹å€¼è¯­å¥
 {
 	PrintFunctionFrame("AssigningStatement()", depth);
 
-	// ÎªËÄÔªÊ½Éú³É¶ø¶¨ÒåµÄ±äÁ¿
-	bool assign2array= false;	// ÊÇ·ñÎª¶ÔÊı×éµÄ¸³Öµ²Ù×÷
+	// ä¸ºå››å…ƒå¼ç”Ÿæˆè€Œå®šä¹‰çš„å˜é‡
+	bool assign2array= false;	// æ˜¯å¦ä¸ºå¯¹æ•°ç»„çš„èµ‹å€¼æ“ä½œ
 	
-	ExpressionAttribute offset_attribute;	// µ±¶ÔÊı×éÔªËØ¸³ÖµÊ±£¬´æ´¢Æ«ÒÆÁ¿£¨Êı×éÏÂ±ê£©µÄÊôĞÔ
+	ExpressionAttribute offset_attribute;	// å½“å¯¹æ•°ç»„å…ƒç´ èµ‹å€¼æ—¶ï¼Œå­˜å‚¨åç§»é‡ï¼ˆæ•°ç»„ä¸‹æ ‡ï¼‰çš„å±æ€§
 
-	if(Token::LEFT_BRACKET == token_.type_)	// ¶ÔÊı×éÔªËØ¸³Öµ
+	if(Token::LEFT_BRACKET == token_.type_)	// å¯¹æ•°ç»„å…ƒç´ èµ‹å€¼
 	{
 		assign2array = true;
-		// ÓïÒå¼ì²é
-		if(iter->itemtype_ != TokenTableItem::ARRAY)	// ¼ì²éÊÇ·ñÎªÊı×éÃû
+		// è¯­ä¹‰æ£€æŸ¥
+		if(iter->itemtype_ != TokenTableItem::ARRAY)	// æ£€æŸ¥æ˜¯å¦ä¸ºæ•°ç»„å
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  subscript requires array or pointer type\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
 			return;
 		}
-		// ¶ÁÈë±íÊ¾ÏÂ±êµÄ±í´ïÊ½
+		// è¯»å…¥è¡¨ç¤ºä¸‹æ ‡çš„è¡¨è¾¾å¼
 		lexical_analyzer_.GetNextToken(token_);
 		offset_attribute = Expression(depth + 1);
-		// ÈôÊı×éÏÂ±êÈÔÊÇÊı×éÔªËØ
-		// Ôò²åÈëËÄÔªÊ½£¬½«Êı×éÏÂ±êÖµ¸³¸øÒ»¸öÁÙÊ±±äÁ¿
+		// è‹¥æ•°ç»„ä¸‹æ ‡ä»æ˜¯æ•°ç»„å…ƒç´ 
+		// åˆ™æ’å…¥å››å…ƒå¼ï¼Œå°†æ•°ç»„ä¸‹æ ‡å€¼èµ‹ç»™ä¸€ä¸ªä¸´æ—¶å˜é‡
 		SimplifyArrayOperand(offset_attribute);
-		// Óï·¨¼ì²é
+		// è¯­æ³•æ£€æŸ¥
 		if(token_.type_ != Token::RIGHT_BRACKET)
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ']' to match '['\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
@@ -1107,53 +1107,53 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 		}
 		lexical_analyzer_.GetNextToken(token_);
 	}
-	// ÓïÒå¼ì²é£ºÊ£ÏÂÖ»ÓĞÈıÖÖÇé¿ö£º±äÁ¿¡¢²ÎÊı»òÊÇº¯Êı·µ»ØÖµ
+	// è¯­ä¹‰æ£€æŸ¥ï¼šå‰©ä¸‹åªæœ‰ä¸‰ç§æƒ…å†µï¼šå˜é‡ã€å‚æ•°æˆ–æ˜¯å‡½æ•°è¿”å›å€¼
 	else if(iter->itemtype_ != TokenTableItem::VARIABLE
 		&& iter->itemtype_ != TokenTableItem::PARAMETER
 		&& iter->itemtype_ != TokenTableItem::FUNCTION)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot be assigned\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
 		return;
 	}
-	// Óï·¨¼ì²é
+	// è¯­æ³•æ£€æŸ¥
 	if(token_.type_ != Token::ASSIGN)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  \":=\" doesn't occur in the Assigning Statement\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
 		return;
 	}
-	// ÒÔÏÂÈıĞĞÎªÅ×³öÒì³£×ö×¼±¸£¬·ÅÔÚGetNextTokenÇ°ÊÇÎªÁË×¼È·¼ÇÂ¼¸³ÖµºÅµÄĞĞºÅ
+	// ä»¥ä¸‹ä¸‰è¡Œä¸ºæŠ›å‡ºå¼‚å¸¸åšå‡†å¤‡ï¼Œæ”¾åœ¨GetNextTokenå‰æ˜¯ä¸ºäº†å‡†ç¡®è®°å½•èµ‹å€¼å·çš„è¡Œå·
 	static Token errToken;
 	errToken.type_ = Token::ASSIGN;
 	errToken.lineNumber_ = token_.lineNumber_;
 
-	// ¶ÁÈë¸³ÖµºÅÓÒ±ßµÄ±í´ïÊ½
+	// è¯»å…¥èµ‹å€¼å·å³è¾¹çš„è¡¨è¾¾å¼
 	lexical_analyzer_.GetNextToken(token_);
 	ExpressionAttribute right_attribute = Expression(depth + 1);
 
-	// ÓïÒå¼ì²é£ºÀàĞÍ×ª»»
-	if(iter->decoratetype_ < right_attribute.decoratetype_)	// Ğ¡ÓÚ±íÊ¾²»ÄÜ´ÓÓÒÖÁ×óµÄ×ª»»
+	// è¯­ä¹‰æ£€æŸ¥ï¼šç±»å‹è½¬æ¢
+	if(iter->decoratetype_ < right_attribute.decoratetype_)	// å°äºè¡¨ç¤ºä¸èƒ½ä»å³è‡³å·¦çš„è½¬æ¢
 	{
 		std::cout << "warning: line " << idToken.lineNumber_ << ":  " << idToken.toString() 
 			<< " convert from " << TokenTableItem::DecorateTypeString[right_attribute.decoratetype_] 
 			<< " to " << TokenTableItem::DecorateTypeString[iter->decoratetype_] << "\n";
 	}
 
-	// ÖĞ¼ä´úÂëÉú³É
-	if(assign2array)	// ¶ÔÊı×éÔªËØ¸³Öµ
+	// ä¸­é—´ä»£ç ç”Ÿæˆ
+	if(assign2array)	// å¯¹æ•°ç»„å…ƒç´ èµ‹å€¼
 	{
-		// Èç¹ûright_attributeÊÇÊı×éÔªËØµÄ»°£¬Òª½«Æä¸³Öµ¸øÁÙÊ±±äÁ¿
+		// å¦‚æœright_attributeæ˜¯æ•°ç»„å…ƒç´ çš„è¯ï¼Œè¦å°†å…¶èµ‹å€¼ç»™ä¸´æ—¶å˜é‡
 		SimplifyArrayOperand(right_attribute);
-		// ½øĞĞÊı×é¸³Öµ
+		// è¿›è¡Œæ•°ç»„èµ‹å€¼
 		Quaternary q_asg;
 		q_asg.op_ = Quaternary::AASG;
 		q_asg.method1_ = right_attribute.addressingmethod_;
@@ -1164,27 +1164,27 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 		q_asg.dst_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
 		quaternarytable_.push_back(q_asg);
 
-		// Èç¹ûÓÒ²Ù×÷ÊıÊÇÁÙÊ±±äÁ¿£¬¿É»ØÊÕ
+		// å¦‚æœå³æ“ä½œæ•°æ˜¯ä¸´æ—¶å˜é‡ï¼Œå¯å›æ”¶
 		if(Quaternary::TEMPORARY_ADDRESSING == right_attribute.addressingmethod_)
 		{
 			--tempvar_index_;
 		}
-		// Èç¹û±»¸³ÖµµÄÊı×éÏÂ±êÒ²ÊÇÁÙÊ±±äÁ¿£¬¿É»ØÊÕ
+		// å¦‚æœè¢«èµ‹å€¼çš„æ•°ç»„ä¸‹æ ‡ä¹Ÿæ˜¯ä¸´æ—¶å˜é‡ï¼Œå¯å›æ”¶
 		if(Quaternary::TEMPORARY_ADDRESSING == offset_attribute.addressingmethod_)
 		{
 			--tempvar_index_;
 		}
 	}
 	else if(TokenTableItem::PARAMETER == iter->itemtype_
-			|| TokenTableItem::VARIABLE == iter->itemtype_)	// ÆÕÍ¨±äÁ¿/²ÎÊıµÄ¸³Öµ
+			|| TokenTableItem::VARIABLE == iter->itemtype_)	// æ™®é€šå˜é‡/å‚æ•°çš„èµ‹å€¼
 	{
-		// Èç¹û¸³ÖµºÅÓÒ±ßµÄ±í´ïÊ½ÊÇÁÙÊ±±äÁ¿£¬Ôò¿ÉÓÅ»¯µôµ±Ç°µÄ¸³ÖµÓï¾ä¡£
-		// Ïê¼û¡¶Appendix1 Éè¼Æ±¸×¢¡· - chapter 4
+		// å¦‚æœèµ‹å€¼å·å³è¾¹çš„è¡¨è¾¾å¼æ˜¯ä¸´æ—¶å˜é‡ï¼Œåˆ™å¯ä¼˜åŒ–æ‰å½“å‰çš„èµ‹å€¼è¯­å¥ã€‚
+		// è¯¦è§ã€ŠAppendix1 è®¾è®¡å¤‡æ³¨ã€‹ - chapter 4
 		if(Quaternary::TEMPORARY_ADDRESSING == right_attribute.addressingmethod_)
 		{
 			quaternarytable_.back().method3_ = iter->isref_ ? Quaternary::REFERENCE_ADDRESSING : Quaternary::VARIABLE_ADDRESSING;
 			quaternarytable_.back().dst_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
-			// »ØÊÕÓÒ²Ù×÷ÊıµÄÁÙÊ±±äÁ¿
+			// å›æ”¶å³æ“ä½œæ•°çš„ä¸´æ—¶å˜é‡
 			--tempvar_index_;
 		}
 		else
@@ -1198,17 +1198,17 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 			q_asg.method3_ = iter->isref_ ? Quaternary::REFERENCE_ADDRESSING : Quaternary::VARIABLE_ADDRESSING;
 			q_asg.dst_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
 			quaternarytable_.push_back(q_asg);
-			// Èç¹û¸³ÖµºÅÓÒ±ßµÄ±í´ïÊ½ÊÇÊı×é£¬ÇÒÆäÊı×éÏÂ±êÊÇÁÙÊ±±äÁ¿£¬¿É»ØÊÕ
+			// å¦‚æœèµ‹å€¼å·å³è¾¹çš„è¡¨è¾¾å¼æ˜¯æ•°ç»„ï¼Œä¸”å…¶æ•°ç»„ä¸‹æ ‡æ˜¯ä¸´æ—¶å˜é‡ï¼Œå¯å›æ”¶
 			if(Quaternary::TEMPORARY_ADDRESSING == offset_attribute.offset_addressingmethod_)
 			{
-				// ÕâÀïÓĞÒ»¸ö³ÌĞòÂ³°ôĞÔµÄ¼Ù¶¨£¬¼´ÔÚÕâ¸öifÓï¾ä¿éÄÚ£¬Èç¹ûaddressingmethod_²»ÊÇARRAYµÄ»°£¬ÄÇÃ´addressingmethod_Ò»¶¨ÊÇNIL_ADDRESSING
-				// ËùÒÔÓÃÏÂÃæµÄassert¼ì²âÒ»ÏÂ³ÌĞòÂß¼­ÓĞÎŞÎÊÌâ
+				// è¿™é‡Œæœ‰ä¸€ä¸ªç¨‹åºé²æ£’æ€§çš„å‡å®šï¼Œå³åœ¨è¿™ä¸ªifè¯­å¥å—å†…ï¼Œå¦‚æœaddressingmethod_ä¸æ˜¯ARRAYçš„è¯ï¼Œé‚£ä¹ˆaddressingmethod_ä¸€å®šæ˜¯NIL_ADDRESSING
+				// æ‰€ä»¥ç”¨ä¸‹é¢çš„assertæ£€æµ‹ä¸€ä¸‹ç¨‹åºé€»è¾‘æœ‰æ— é—®é¢˜
 				assert(Quaternary::ARRAY_ADDRESSING == offset_attribute.addressingmethod_);
 				--tempvar_index_;
 			}
 		}
 	}
-	else	// º¯Êı·µ»ØÖµ
+	else	// å‡½æ•°è¿”å›å€¼
 	{
 		Quaternary q_ret;
 		q_ret.op_ = Quaternary::RET;
@@ -1217,32 +1217,32 @@ void SyntaxAnalyzer::AssigningStatement(const Token &idToken, TokenTable::iterat
 		q_ret.method3_ = right_attribute.addressingmethod_;
 		q_ret.dst_ = right_attribute.value_;
 		quaternarytable_.push_back(q_ret);
-		// Èç¹û¸³ÖµºÅÓÒ±ßµÄ±í´ïÊ½ÊÇÁÙÊ±±äÁ¿£¬¿É»ØÊÕ
+		// å¦‚æœèµ‹å€¼å·å³è¾¹çš„è¡¨è¾¾å¼æ˜¯ä¸´æ—¶å˜é‡ï¼Œå¯å›æ”¶
 		if(Quaternary::TEMPORARY_ADDRESSING == right_attribute.addressingmethod_)
 		{
 			--tempvar_index_;
 		}
-		// Èç¹û¸³ÖµºÅÓÒ±ßµÄ±í´ïÊ½ÊÇÊı×é£¬ÇÒÆäÊı×éÏÂ±êÊÇÁÙÊ±±äÁ¿£¬¿É»ØÊÕ
+		// å¦‚æœèµ‹å€¼å·å³è¾¹çš„è¡¨è¾¾å¼æ˜¯æ•°ç»„ï¼Œä¸”å…¶æ•°ç»„ä¸‹æ ‡æ˜¯ä¸´æ—¶å˜é‡ï¼Œå¯å›æ”¶
 		else if(Quaternary::TEMPORARY_ADDRESSING == offset_attribute.offset_addressingmethod_)
 		{
-			// ÕâÀïÓĞÒ»¸ö³ÌĞòÂ³°ôĞÔµÄ¼Ù¶¨£¬¼´Èç¹ûaddressingmethod_²»ÊÇARRAYµÄ»°£¬ÄÇÃ´addressingmethod_Ò»¶¨ÊÇNIL_ADDRESSING
-			// ËùÒÔÓÃÏÂÃæµÄassert¼ì²âÒ»ÏÂ³ÌĞòÂß¼­ÓĞÎŞÎÊÌâ
+			// è¿™é‡Œæœ‰ä¸€ä¸ªç¨‹åºé²æ£’æ€§çš„å‡å®šï¼Œå³å¦‚æœaddressingmethod_ä¸æ˜¯ARRAYçš„è¯ï¼Œé‚£ä¹ˆaddressingmethod_ä¸€å®šæ˜¯NIL_ADDRESSING
+			// æ‰€ä»¥ç”¨ä¸‹é¢çš„assertæ£€æµ‹ä¸€ä¸‹ç¨‹åºé€»è¾‘æœ‰æ— é—®é¢˜
 			assert(Quaternary::ARRAY_ADDRESSING == offset_attribute.addressingmethod_);
 			--tempvar_index_;
 		}
 	}
 }
 
-// <±í´ïÊ½> ::= [+|-]<Ïî>{<¼Ó·¨ÔËËã·û><Ïî>}
-ExpressionAttribute SyntaxAnalyzer::Expression(size_t depth) throw()				// ±í´ïÊ½
+// <è¡¨è¾¾å¼> ::= [+|-]<é¡¹>{<åŠ æ³•è¿ç®—ç¬¦><é¡¹>}
+ExpressionAttribute SyntaxAnalyzer::Expression(size_t depth) throw()				// è¡¨è¾¾å¼
 {
 	PrintFunctionFrame("Expression()", depth);
 	
-	Quaternary q_neg;	// ¿ÉÄÜÉú³ÉµÄNEGËÄÔªÊ½
+	Quaternary q_neg;	// å¯èƒ½ç”Ÿæˆçš„NEGå››å…ƒå¼
 	if(	Token::PLUS == token_.type_
 		|| Token::MINUS == token_.type_)
 	{
-		if(Token::MINUS == token_.type_)	// Èç¹ûÊÇ¼õºÅ£¬¾Í¿ÉÄÜ»áÉú³ÉÒ»ÏîËÄÔªÊ½
+		if(Token::MINUS == token_.type_)	// å¦‚æœæ˜¯å‡å·ï¼Œå°±å¯èƒ½ä¼šç”Ÿæˆä¸€é¡¹å››å…ƒå¼
 		{
 			q_neg.op_ = Quaternary::NEG;
 		}
@@ -1251,16 +1251,16 @@ ExpressionAttribute SyntaxAnalyzer::Expression(size_t depth) throw()				// ±í´ïÊ
 
 	ExpressionAttribute first_term = Term(depth + 1);
 	//bool isref = first_term.isref_;
-	if(Quaternary::NEG == q_neg.op_)	// Èç¹ûÖ®Ç°¶Áµ½ÁËÒ»¸ö¼õºÅ
+	if(Quaternary::NEG == q_neg.op_)	// å¦‚æœä¹‹å‰è¯»åˆ°äº†ä¸€ä¸ªå‡å·
 	{
-		//// Ö»ÒªÓĞ¹ı²Ù×÷£¬¼´±äÎª·ÇÒıÓÃ
+		//// åªè¦æœ‰è¿‡æ“ä½œï¼Œå³å˜ä¸ºéå¼•ç”¨
 		//isref = false;
-		// ³£ÊıÈ¡·´µÄÓÅ»¯
+		// å¸¸æ•°å–åçš„ä¼˜åŒ–
 		if(Quaternary::IMMEDIATE_ADDRESSING == first_term.addressingmethod_)
 		{
 			first_term.value_ = -first_term.value_;
 		}
-		else	// Éú³ÉNEGµÄËÄÔªÊ½
+		else	// ç”ŸæˆNEGçš„å››å…ƒå¼
 		{
 			q_neg.method1_ = first_term.addressingmethod_;
 			q_neg.src1_ = first_term.value_;
@@ -1276,7 +1276,7 @@ ExpressionAttribute SyntaxAnalyzer::Expression(size_t depth) throw()				// ±í´ïÊ
 				q_neg.dst_ = tempvar_index_++;
 			}
 			quaternarytable_.push_back(q_neg);
-			// ĞŞ¸Äfirst_termµÄÊôĞÔ(NEG²Ù×÷²»Ó°Ïìdecoratetype)
+			// ä¿®æ”¹first_termçš„å±æ€§(NEGæ“ä½œä¸å½±å“decoratetype)
 			first_term.addressingmethod_ = Quaternary::TEMPORARY_ADDRESSING;
 			first_term.value_ = q_neg.dst_;
 			first_term.offset_addressingmethod_ = Quaternary::NIL_ADDRESSING;
@@ -1290,37 +1290,37 @@ ExpressionAttribute SyntaxAnalyzer::Expression(size_t depth) throw()				// ±í´ïÊ
 	while(	Token::PLUS == token_.type_
 		||	Token::MINUS == token_.type_)
 	{
-		//// Ö»ÒªÓĞ¹ı²Ù×÷£¬¼´±äÎª·ÇÒıÓÃ
+		//// åªè¦æœ‰è¿‡æ“ä½œï¼Œå³å˜ä¸ºéå¼•ç”¨
 		//isref = false;
 
-		// µÚÒ»´ÎÊ±£¬Èç¹ûnew_termÊÇÊı×éÔªËØ£¬ÔòÒª½«Æä¸³Öµ¸øÁÙÊ±±äÁ¿
+		// ç¬¬ä¸€æ¬¡æ—¶ï¼Œå¦‚æœnew_termæ˜¯æ•°ç»„å…ƒç´ ï¼Œåˆ™è¦å°†å…¶èµ‹å€¼ç»™ä¸´æ—¶å˜é‡
 		if(is_first_operator)
 		{
 			SimplifyArrayOperand(first_term);
 		}
 
-		// È·¶¨ËÄÔªÊ½µÄ²Ù×÷·û
+		// ç¡®å®šå››å…ƒå¼çš„æ“ä½œç¬¦
 		q_term.op_ = Token::PLUS == token_.type_ ? Quaternary::ADD : Quaternary::SUB;
 		
-		// ¶ÁÈ¡ÏÂÒ»Ïî
+		// è¯»å–ä¸‹ä¸€é¡¹
 		lexical_analyzer_.GetNextToken(token_);
 		TokenTableItem::DecorateType last_term_decoratetype = is_first_operator ? first_term.decoratetype_ : new_term.decoratetype_;
 		new_term = Term(depth + 1);
 
-		// ÓïÒå·ÖÎö£ºÖ´ĞĞÀàĞÍ×ª»»
+		// è¯­ä¹‰åˆ†æï¼šæ‰§è¡Œç±»å‹è½¬æ¢
 		new_term.decoratetype_ = TokenTableItem::TypeConversionMatrix[last_term_decoratetype][new_term.decoratetype_];
 
-		// Èç¹û¶Áµ½µÄnew_term»¹ÊÇÊı×éÔªËØ£¬ÄÇÃ´ÈÔÈ»ĞèÒªÒ»´Î×ª»»
-		// ½«Êı×éÔªËØµÄÖµ¸³¸øÁÙÊ±±äÁ¿
+		// å¦‚æœè¯»åˆ°çš„new_termè¿˜æ˜¯æ•°ç»„å…ƒç´ ï¼Œé‚£ä¹ˆä»ç„¶éœ€è¦ä¸€æ¬¡è½¬æ¢
+		// å°†æ•°ç»„å…ƒç´ çš„å€¼èµ‹ç»™ä¸´æ—¶å˜é‡
 		SimplifyArrayOperand(new_term);
 
-		// È·¶¨ËÄÔªÊ½µÄ²Ù×÷Êı
-		// src1µÄÈ·¶¨£º
-		// µÚÒ»´Î¼Ó/¼õÊ±£¬src1¾ÍÊÇwhileÖ®Ç°¶ÁÈëµÄÄÇ¸öterm
-		// Ö®ºó¼Ó/¼õÊ±£¬src1¾ÍÊÇÉÏÒ»¸öËÄÔªÊ½µÄ½á¹û
+		// ç¡®å®šå››å…ƒå¼çš„æ“ä½œæ•°
+		// src1çš„ç¡®å®šï¼š
+		// ç¬¬ä¸€æ¬¡åŠ /å‡æ—¶ï¼Œsrc1å°±æ˜¯whileä¹‹å‰è¯»å…¥çš„é‚£ä¸ªterm
+		// ä¹‹ååŠ /å‡æ—¶ï¼Œsrc1å°±æ˜¯ä¸Šä¸€ä¸ªå››å…ƒå¼çš„ç»“æœ
 		if(is_first_operator)
 		{
-			// Á½¸ö³£ÊıÏà¼Ó/¼õµÄÓÅ»¯£ºÖ±½ÓÔÚ±àÒëÊ±¼ÆËã½á¹û
+			// ä¸¤ä¸ªå¸¸æ•°ç›¸åŠ /å‡çš„ä¼˜åŒ–ï¼šç›´æ¥åœ¨ç¼–è¯‘æ—¶è®¡ç®—ç»“æœ
 			if(Quaternary::IMMEDIATE_ADDRESSING == first_term.addressingmethod_
 				&& Quaternary::IMMEDIATE_ADDRESSING == new_term.addressingmethod_)
 			{
@@ -1329,7 +1329,7 @@ ExpressionAttribute SyntaxAnalyzer::Expression(size_t depth) throw()				// ±í´ïÊ
 						(first_term.value_ + new_term.value_) : (first_term.value_ - new_term.value_);
 				continue;
 			}
-			// Õı³£Á÷³Ì
+			// æ­£å¸¸æµç¨‹
 			q_term.method1_ = first_term.addressingmethod_;
 			q_term.src1_ = first_term.value_;
 			is_first_operator = false;
@@ -1339,19 +1339,19 @@ ExpressionAttribute SyntaxAnalyzer::Expression(size_t depth) throw()				// ±í´ïÊ
 			q_term.method1_ = q_term.method3_;
 			q_term.src1_ = q_term.dst_;
 		}
-		// src2µÄÈ·¶¨£º
-		// src2¾ÍÊÇ¶Áµ½µÄĞÂµÄterm
+		// src2çš„ç¡®å®šï¼š
+		// src2å°±æ˜¯è¯»åˆ°çš„æ–°çš„term
 		q_term.method2_ = new_term.addressingmethod_;
 		q_term.src2_ = new_term.value_;
-		// dstµÄÈ·¶¨£º
-		// Èç¹ûsrc1ÊÇÁÙÊ±±äÁ¿£¬¾ÍÁîdstÎªsrc1
-		// ·ñÔò£¬Èç¹ûsrc2ÊÇÁÙÊ±±äÁ¿£¬¾ÍÁîdstÎªsrc2
-		// ·ñÔò£¬ÁîdstÎªĞÂµÄÁÙÊ±±äÁ¿
+		// dstçš„ç¡®å®šï¼š
+		// å¦‚æœsrc1æ˜¯ä¸´æ—¶å˜é‡ï¼Œå°±ä»¤dstä¸ºsrc1
+		// å¦åˆ™ï¼Œå¦‚æœsrc2æ˜¯ä¸´æ—¶å˜é‡ï¼Œå°±ä»¤dstä¸ºsrc2
+		// å¦åˆ™ï¼Œä»¤dstä¸ºæ–°çš„ä¸´æ—¶å˜é‡
 		if(Quaternary::TEMPORARY_ADDRESSING == q_term.method1_)
 		{
 			q_term.method3_ = q_term.method1_;
 			q_term.dst_ = q_term.src1_;
-			// ´ËÊ±£¬Èç¹ûsrc2Ò²ÊÇÁÙÊ±±äÁ¿£¬ÄÇÃ´¾Í¿ÉÒÔÔÚÖ´ĞĞÍêÕâ¸öËÄÔªÊ½ºó£¬°ÑÕâ¸öÁÙÊ±±äÁ¿µÄ±êºÅ»ØÊÕ
+			// æ­¤æ—¶ï¼Œå¦‚æœsrc2ä¹Ÿæ˜¯ä¸´æ—¶å˜é‡ï¼Œé‚£ä¹ˆå°±å¯ä»¥åœ¨æ‰§è¡Œå®Œè¿™ä¸ªå››å…ƒå¼åï¼ŒæŠŠè¿™ä¸ªä¸´æ—¶å˜é‡çš„æ ‡å·å›æ”¶
 			if(Quaternary::TEMPORARY_ADDRESSING == q_term.method2_)
 			{
 				--tempvar_index_;
@@ -1367,31 +1367,31 @@ ExpressionAttribute SyntaxAnalyzer::Expression(size_t depth) throw()				// ±í´ïÊ
 			q_term.method3_ = Quaternary::TEMPORARY_ADDRESSING;
 			q_term.dst_ = tempvar_index_++;
 		}
-		// ±£´æËÄÔªÊ½
+		// ä¿å­˜å››å…ƒå¼
 		quaternarytable_.push_back(q_term);
 	}
 
 	
 
-	// ·µ»Ø×îÖÕµÄ±í´ïÊ½ÊôĞÔ
-	if(is_first_operator)	// Ö»ÓĞÒ»ÏîµÄÇé¿ö
+	// è¿”å›æœ€ç»ˆçš„è¡¨è¾¾å¼å±æ€§
+	if(is_first_operator)	// åªæœ‰ä¸€é¡¹çš„æƒ…å†µ
 	{
 		new_term = first_term;
 	}
-	else	// ÓĞ¶àÏîµÄÇé¿ö£¬Òª¸üĞÂnew_termµÄÊôĞÔ¡£·ñÔònew_term³ıÁËdecoratetype_Íâ£¬ÆäÓà¶¼ÊÇ×îºóÒ»ÏîµÄÊôĞÔ
+	else	// æœ‰å¤šé¡¹çš„æƒ…å†µï¼Œè¦æ›´æ–°new_termçš„å±æ€§ã€‚å¦åˆ™new_termé™¤äº†decoratetype_å¤–ï¼Œå…¶ä½™éƒ½æ˜¯æœ€åä¸€é¡¹çš„å±æ€§
 	{
 		new_term.addressingmethod_ = Quaternary::TEMPORARY_ADDRESSING;
 		new_term.value_ = q_term.dst_;
 		new_term.offset_addressingmethod_ = Quaternary::NIL_ADDRESSING;
 		new_term.offset_ = 0;
 	}
-	//// ÒıÓÃµÄÊôĞÔ
+	//// å¼•ç”¨çš„å±æ€§
 	//new_term.isref_ = isref;
 	return new_term;
 }
 
-// <Ïî> ::= <Òò×Ó>{<³Ë·¨ÔËËã·û><Òò×Ó>}
-ExpressionAttribute SyntaxAnalyzer::Term(size_t depth) throw()						// Ïî
+// <é¡¹> ::= <å› å­>{<ä¹˜æ³•è¿ç®—ç¬¦><å› å­>}
+ExpressionAttribute SyntaxAnalyzer::Term(size_t depth) throw()						// é¡¹
 {
 	PrintFunctionFrame("Term()", depth);
 
@@ -1404,36 +1404,36 @@ ExpressionAttribute SyntaxAnalyzer::Term(size_t depth) throw()						// Ïî
 	while(	token_.type_ == Token::MUL
 		||	token_.type_ == Token::DIV)
 	{
-		//// Ö»ÒªÓĞ¹ı²Ù×÷£¬¼´±äÎª·ÇÒıÓÃ
+		//// åªè¦æœ‰è¿‡æ“ä½œï¼Œå³å˜ä¸ºéå¼•ç”¨
 		//isref = false;
 
-		// µÚÒ»´ÎÊ±£¬Èç¹ûfirst_factorÊÇÊı×éÔªËØ£¬ÔòÒª½«Æä¸³Öµ¸øÁÙÊ±±äÁ¿
+		// ç¬¬ä¸€æ¬¡æ—¶ï¼Œå¦‚æœfirst_factoræ˜¯æ•°ç»„å…ƒç´ ï¼Œåˆ™è¦å°†å…¶èµ‹å€¼ç»™ä¸´æ—¶å˜é‡
 		if(is_first_operator)
 		{
 			SimplifyArrayOperand(first_factor);
 		}
 
-		// È·¶¨ËÄÔªÊ½µÄ²Ù×÷·û
+		// ç¡®å®šå››å…ƒå¼çš„æ“ä½œç¬¦
 		q_factor.op_ = Token::MUL == token_.type_ ? Quaternary::MUL : Quaternary::DIV;
 
-		// Óï·¨·ÖÎö£º¶ÁÈ¡ÏÂÒ»Ïî
+		// è¯­æ³•åˆ†æï¼šè¯»å–ä¸‹ä¸€é¡¹
 		lexical_analyzer_.GetNextToken(token_);
 		TokenTableItem::DecorateType last_factor_decoratetype = is_first_operator ? first_factor.decoratetype_ : new_factor.decoratetype_;
 		new_factor = Factor(depth + 1);
-		// ÓïÒå·ÖÎö£ºÖ´ĞĞÀàĞÍ×ª»»
+		// è¯­ä¹‰åˆ†æï¼šæ‰§è¡Œç±»å‹è½¬æ¢
 		new_factor.decoratetype_ = TokenTableItem::TypeConversionMatrix[last_factor_decoratetype][new_factor.decoratetype_];
 
-		// Èç¹û¶Áµ½µÄÏî»¹ÊÇÊı×éÔªËØ£¬ÄÇÃ´ÈÔÈ»ĞèÒªÒ»´Î×ª»»
-		// ½«Êı×éÔªËØµÄÖµ¸³¸øÁÙÊ±±äÁ¿
+		// å¦‚æœè¯»åˆ°çš„é¡¹è¿˜æ˜¯æ•°ç»„å…ƒç´ ï¼Œé‚£ä¹ˆä»ç„¶éœ€è¦ä¸€æ¬¡è½¬æ¢
+		// å°†æ•°ç»„å…ƒç´ çš„å€¼èµ‹ç»™ä¸´æ—¶å˜é‡
 		SimplifyArrayOperand(new_factor);
 
-		// È·¶¨ËÄÔªÊ½µÄ²Ù×÷Êı
-		// src1µÄÈ·¶¨£º
-		// µÚÒ»´Î³Ë/³ı£¬src1¾ÍÊÇwhileÖ®Ç°¶ÁÈëµÄÄÇ¸öfactor
-		// Ö®ºó¼Ó/¼õÊ±£¬src1¾ÍÊÇÉÏÒ»¸öËÄÔªÊ½µÄ½á¹û
+		// ç¡®å®šå››å…ƒå¼çš„æ“ä½œæ•°
+		// src1çš„ç¡®å®šï¼š
+		// ç¬¬ä¸€æ¬¡ä¹˜/é™¤ï¼Œsrc1å°±æ˜¯whileä¹‹å‰è¯»å…¥çš„é‚£ä¸ªfactor
+		// ä¹‹ååŠ /å‡æ—¶ï¼Œsrc1å°±æ˜¯ä¸Šä¸€ä¸ªå››å…ƒå¼çš„ç»“æœ
 		if(is_first_operator)
 		{
-			// Á½¸ö³£ÊıÏà³Ë/³ıµÄÓÅ»¯£ºÖ±½ÓÔÚ±àÒëÊ±¼ÆËã½á¹û
+			// ä¸¤ä¸ªå¸¸æ•°ç›¸ä¹˜/é™¤çš„ä¼˜åŒ–ï¼šç›´æ¥åœ¨ç¼–è¯‘æ—¶è®¡ç®—ç»“æœ
 			if(Quaternary::IMMEDIATE_ADDRESSING == first_factor.addressingmethod_
 				&& Quaternary::IMMEDIATE_ADDRESSING == new_factor.addressingmethod_)
 			{
@@ -1442,7 +1442,7 @@ ExpressionAttribute SyntaxAnalyzer::Term(size_t depth) throw()						// Ïî
 						(first_factor.value_ * new_factor.value_) : (first_factor.value_ / new_factor.value_);
 				continue;
 			}
-			// Õı³£Á÷³Ì
+			// æ­£å¸¸æµç¨‹
 			q_factor.method1_ = first_factor.addressingmethod_;
 			q_factor.src1_ = first_factor.value_;
 			is_first_operator = false;
@@ -1452,19 +1452,19 @@ ExpressionAttribute SyntaxAnalyzer::Term(size_t depth) throw()						// Ïî
 			q_factor.method1_ = q_factor.method3_;
 			q_factor.src1_ = q_factor.dst_;
 		}
-		// src2µÄÈ·¶¨£º
-		// src2ÊÇ¶Áµ½µÄĞÂµÄfactor
+		// src2çš„ç¡®å®šï¼š
+		// src2æ˜¯è¯»åˆ°çš„æ–°çš„factor
 		q_factor.method2_ = new_factor.addressingmethod_;
 		q_factor.src2_ = new_factor.value_;
-		// dstµÄÈ·¶¨£º
-		// Èç¹ûsrc1ÊÇÁÙÊ±±äÁ¿£¬¾ÍÁîdstÎªsrc1
-		// ·ñÔò£¬Èç¹ûsrc2ÊÇÁÙÊ±±äÁ¿£¬¾ÍÁîdstÎªsrc2
-		// ·ñÔò£¬ÁîdstÎªĞÂµÄÁÙÊ±±äÁ¿
+		// dstçš„ç¡®å®šï¼š
+		// å¦‚æœsrc1æ˜¯ä¸´æ—¶å˜é‡ï¼Œå°±ä»¤dstä¸ºsrc1
+		// å¦åˆ™ï¼Œå¦‚æœsrc2æ˜¯ä¸´æ—¶å˜é‡ï¼Œå°±ä»¤dstä¸ºsrc2
+		// å¦åˆ™ï¼Œä»¤dstä¸ºæ–°çš„ä¸´æ—¶å˜é‡
 		if(Quaternary::TEMPORARY_ADDRESSING == q_factor.method1_)
 		{
 			q_factor.method3_ = q_factor.method1_;
 			q_factor.dst_ = q_factor.src1_;
-			// ´ËÊ±£¬Èç¹ûsrc2Ò²ÊÇÁÙÊ±±äÁ¿£¬ÄÇÃ´¾Í¿ÉÒÔÔÚÖ´ĞĞÍêÕâ¸öËÄÔªÊ½ºó£¬°ÑÕâ¸öÁÙÊ±±äÁ¿µÄ±êºÅ»ØÊÕ
+			// æ­¤æ—¶ï¼Œå¦‚æœsrc2ä¹Ÿæ˜¯ä¸´æ—¶å˜é‡ï¼Œé‚£ä¹ˆå°±å¯ä»¥åœ¨æ‰§è¡Œå®Œè¿™ä¸ªå››å…ƒå¼åï¼ŒæŠŠè¿™ä¸ªä¸´æ—¶å˜é‡çš„æ ‡å·å›æ”¶
 			if(Quaternary::TEMPORARY_ADDRESSING == q_factor.method2_)
 			{
 				--tempvar_index_;
@@ -1480,165 +1480,165 @@ ExpressionAttribute SyntaxAnalyzer::Term(size_t depth) throw()						// Ïî
 			q_factor.method3_ = Quaternary::TEMPORARY_ADDRESSING;
 			q_factor.dst_ = tempvar_index_++;
 		}
-		// ±£´æËÄÔªÊ½
+		// ä¿å­˜å››å…ƒå¼
 		quaternarytable_.push_back(q_factor);
 	}
 
-	// ·µ»ØÏîµÄÊôĞÔ
-	if(is_first_operator)	// Ö»ÓĞÒ»¸öÒò×Ó
+	// è¿”å›é¡¹çš„å±æ€§
+	if(is_first_operator)	// åªæœ‰ä¸€ä¸ªå› å­
 	{
 		new_factor = first_factor;
 	}
 	else
 	{
-		// ¸üĞÂnew_factorµÄÊôĞÔ
-		// ·ñÔònew_factor³ıdecoratetypeÍâ£¬ÆäÓàÊôĞÔ¾ù±£ÁôÁË×îºóÒ»¸öÒò×ÓµÄÊôĞÔ
+		// æ›´æ–°new_factorçš„å±æ€§
+		// å¦åˆ™new_factoré™¤decoratetypeå¤–ï¼Œå…¶ä½™å±æ€§å‡ä¿ç•™äº†æœ€åä¸€ä¸ªå› å­çš„å±æ€§
 		new_factor.addressingmethod_ = Quaternary::TEMPORARY_ADDRESSING;
 		new_factor.value_ = q_factor.dst_;
 		new_factor.offset_addressingmethod_ = Quaternary::NIL_ADDRESSING;
 		new_factor.offset_ = 0;
 	}
-	// ÒıÓÃµÄÊôĞÔ
+	// å¼•ç”¨çš„å±æ€§
 	//new_factor.isref_ = isref;
 	return new_factor;
 }
 
-// <Òò×Ó> ::= <±êÊ¶·û>(['['<±í´ïÊ½>']'] | [<º¯Êıµ÷ÓÃÓï¾ä>])
-//          | '('<±í´ïÊ½>')' 
-//          | <ÎŞ·ûºÅÕûÊı> 
-//          | <×Ö·û>
-ExpressionAttribute SyntaxAnalyzer::Factor(size_t depth) throw()					// Òò×Ó
+// <å› å­> ::= <æ ‡è¯†ç¬¦>(['['<è¡¨è¾¾å¼>']'] | [<å‡½æ•°è°ƒç”¨è¯­å¥>])
+//          | '('<è¡¨è¾¾å¼>')' 
+//          | <æ— ç¬¦å·æ•´æ•°> 
+//          | <å­—ç¬¦>
+ExpressionAttribute SyntaxAnalyzer::Factor(size_t depth) throw()					// å› å­
 {
 	PrintFunctionFrame("Factor()", depth);
-	ExpressionAttribute factor_attribute;	// ¼ÇÂ¼¸ÃfactorÒò×ÓµÄĞÅÏ¢
+	ExpressionAttribute factor_attribute;	// è®°å½•è¯¥factorå› å­çš„ä¿¡æ¯
 
-	// Óï·¨¼ì²é£º±êÊ¶·ûµÄÇé¿ö¡¾±äÁ¿¡¢³£±äÁ¿¡¢Êı×é¡¢º¯Êıµ÷ÓÃ¡¿
+	// è¯­æ³•æ£€æŸ¥ï¼šæ ‡è¯†ç¬¦çš„æƒ…å†µã€å˜é‡ã€å¸¸å˜é‡ã€æ•°ç»„ã€å‡½æ•°è°ƒç”¨ã€‘
 	if(Token::IDENTIFIER == token_.type_)
 	{
 #ifdef SYNTAXDEBUG
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
-		// ÓïÒå¼ì²é
-		TokenTable::iterator iter = tokentable_.SearchDefinition(token_);	// Ñ°ÕÒ¶¨Òå
+		// è¯­ä¹‰æ£€æŸ¥
+		TokenTable::iterator iter = tokentable_.SearchDefinition(token_);	// å¯»æ‰¾å®šä¹‰
 		if(iter == tokentable_.end())
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  undeclared identifier\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
 			return factor_attribute;
 		}
-		// ÓïÒå£º¼ÇÂ¼ĞŞÊÎÀàĞÍÓëÒıÓÃÀàĞÍ£¬²¢¸üĞÂ·ûºÅ±í
+		// è¯­ä¹‰ï¼šè®°å½•ä¿®é¥°ç±»å‹ä¸å¼•ç”¨ç±»å‹ï¼Œå¹¶æ›´æ–°ç¬¦å·è¡¨
 		factor_attribute.decoratetype_ = iter->decoratetype_;		
-		iter->AddUsedLine(token_.lineNumber_);		// ÔÚ·ûºÅ±íÖĞ²åÈëÒıÓÃĞĞ¼ÇÂ¼
-		Token idToken = token_;	// ¼ÇÏÂ£¬´ıÓÃ
+		iter->AddUsedLine(token_.lineNumber_);		// åœ¨ç¬¦å·è¡¨ä¸­æ’å…¥å¼•ç”¨è¡Œè®°å½•
+		Token idToken = token_;	// è®°ä¸‹ï¼Œå¾…ç”¨
 		lexical_analyzer_.GetNextToken(token_);
-		// Óï·¨¼ì²é
-		if(Token::LEFT_BRACKET == token_.type_)	// ×óÖĞÀ¨ºÅ£¬Êı×éÔªËØ
+		// è¯­æ³•æ£€æŸ¥
+		if(Token::LEFT_BRACKET == token_.type_)	// å·¦ä¸­æ‹¬å·ï¼Œæ•°ç»„å…ƒç´ 
 		{
-			// factor_attribute×Ô¼ºµÄÀàĞÍÓëÖµ
+			// factor_attributeè‡ªå·±çš„ç±»å‹ä¸å€¼
 			factor_attribute.addressingmethod_ = Quaternary::ARRAY_ADDRESSING;
 			factor_attribute.value_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
-			// ÓïÒå¼ì²é£ºÊÇ·ñÎªÊı×éÃû
+			// è¯­ä¹‰æ£€æŸ¥ï¼šæ˜¯å¦ä¸ºæ•°ç»„å
 			if(iter->itemtype_ != TokenTableItem::ARRAY)	
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  subscript requires array or pointer type\n";
 				is_successful_ = false;
-				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 				{ 
 					lexical_analyzer_.GetNextToken(token_);
 				}
 				return factor_attribute;
 			}
-			// Óï·¨£º¶ÁÈë×÷ÎªÏÂ±êµÄ±í´ïÊ½
+			// è¯­æ³•ï¼šè¯»å…¥ä½œä¸ºä¸‹æ ‡çš„è¡¨è¾¾å¼
 			lexical_analyzer_.GetNextToken(token_);
 			ExpressionAttribute offset_attribute = Expression(depth + 1);
-			// ÖĞ¼ä´úÂëÉú³É
-			// È·¶¨factor_attributeµÄÏÂ±ê
-			// ÕâÀïµÄoffset_attribute²»ÄÜÊÇÊı×éÔªËØ£¬·ñÔò»á¹¹³ÉÇ¶Ì×µÄÊı×éÏÂ±ê£¨¼´Êı×éÏÂ±êÓÖÊÇÒ»¸öÊı×éÔªËØ£©£¬ÎŞ·¨·­Òë³ÉËÄÔªÊ½
-			// Èç¹ûÊÇÊı×é£¬¾ÍÒª°Ñoffset_attribute´æµ½ÁÙÊ±±äÁ¿ÖĞ£¬×÷Îªµ±Ç°factorµÄÏÂ±ê
+			// ä¸­é—´ä»£ç ç”Ÿæˆ
+			// ç¡®å®šfactor_attributeçš„ä¸‹æ ‡
+			// è¿™é‡Œçš„offset_attributeä¸èƒ½æ˜¯æ•°ç»„å…ƒç´ ï¼Œå¦åˆ™ä¼šæ„æˆåµŒå¥—çš„æ•°ç»„ä¸‹æ ‡ï¼ˆå³æ•°ç»„ä¸‹æ ‡åˆæ˜¯ä¸€ä¸ªæ•°ç»„å…ƒç´ ï¼‰ï¼Œæ— æ³•ç¿»è¯‘æˆå››å…ƒå¼
+			// å¦‚æœæ˜¯æ•°ç»„ï¼Œå°±è¦æŠŠoffset_attributeå­˜åˆ°ä¸´æ—¶å˜é‡ä¸­ï¼Œä½œä¸ºå½“å‰factorçš„ä¸‹æ ‡
 			SimplifyArrayOperand(offset_attribute);
 			factor_attribute.offset_addressingmethod_ = offset_attribute.addressingmethod_;
 			factor_attribute.offset_ = offset_attribute.value_;
-			// Óï·¨¼ì²é
+			// è¯­æ³•æ£€æŸ¥
 			if(token_.type_ != Token::RIGHT_BRACKET)
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ']' to match '['\n";
 				is_successful_ = false;
-				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 				{ 
 					lexical_analyzer_.GetNextToken(token_);
 				}
 				return factor_attribute;
 			}
-			// ¶ÁÈëÓÒÖĞÀ¨ºÅµÄÏÂÒ»¸öµ¥´Ê <bug fixed by mxf at 21:28 1.29 2016>
+			// è¯»å…¥å³ä¸­æ‹¬å·çš„ä¸‹ä¸€ä¸ªå•è¯ <bug fixed by mxf at 21:28 1.29 2016>
 			lexical_analyzer_.GetNextToken(token_);
 		}
-		else if(Token::LEFT_PAREN == token_.type_)	// ×óÀ¨ºÅ£¬º¯Êıµ÷ÓÃ
+		else if(Token::LEFT_PAREN == token_.type_)	// å·¦æ‹¬å·ï¼Œå‡½æ•°è°ƒç”¨
 		{
-			// ÓïÒå¼ì²é£ºÊÇ·ñÎªº¯Êı
+			// è¯­ä¹‰æ£€æŸ¥ï¼šæ˜¯å¦ä¸ºå‡½æ•°
 			if(iter->itemtype_ != TokenTableItem::FUNCTION)
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  not declared as a function\n";
 				is_successful_ = false;
-				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 				{ 
 					lexical_analyzer_.GetNextToken(token_);
 				}
 				return factor_attribute;
 			}
-			// ÓïÒå£ºÀàĞÍÆ¥Åä
-			// ´Ó·ûºÅ±íÖĞÈ¡³öº¯ÊıµÄ²ÎÊıÀàĞÍ£¬´ıFunctionCallStatementÈ¥Æ¥Åä²ÎÊı
+			// è¯­ä¹‰ï¼šç±»å‹åŒ¹é…
+			// ä»ç¬¦å·è¡¨ä¸­å–å‡ºå‡½æ•°çš„å‚æ•°ç±»å‹ï¼Œå¾…FunctionCallStatementå»åŒ¹é…å‚æ•°
 			vector<ExpressionAttribute> parameter_attributes = tokentable_.GetProcFuncParameterAttributes(iter);
-			// ËÄÔªÊ½£ºÏÈ½øÈëFunctionCallStatement£¬ÉèÖÃºÃ²ÎÊı£¬È»ºóÔÙÉú³Éº¯Êıµ÷ÓÃÓï¾ä
+			// å››å…ƒå¼ï¼šå…ˆè¿›å…¥FunctionCallStatementï¼Œè®¾ç½®å¥½å‚æ•°ï¼Œç„¶åå†ç”Ÿæˆå‡½æ•°è°ƒç”¨è¯­å¥
 			//FunctionCallStatement(idToken, decorate_types, depth + 1);
-			// ËÄÔªÊ½£ºÏÈ½øÈëProcFuncCallStatement£¬ÉèÖÃºÃ²ÎÊı£¬È»ºóÔÙÉú³Éº¯Êıµ÷ÓÃÓï¾ä
+			// å››å…ƒå¼ï¼šå…ˆè¿›å…¥ProcFuncCallStatementï¼Œè®¾ç½®å¥½å‚æ•°ï¼Œç„¶åå†ç”Ÿæˆå‡½æ•°è°ƒç”¨è¯­å¥
 			ProcFuncCallStatement(idToken, parameter_attributes, depth + 1);			
-			// Éú³Éº¯Êıµ÷ÓÃµÄËÄÔªÊ½
+			// ç”Ÿæˆå‡½æ•°è°ƒç”¨çš„å››å…ƒå¼
 			Quaternary q_functioncall(Quaternary::FUNC_CALL, 
 				Quaternary::NIL_ADDRESSING, 0, 
 				Quaternary::NIL_ADDRESSING, 0,
 				Quaternary::IMMEDIATE_ADDRESSING, distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter)));
 			quaternarytable_.push_back(q_functioncall);
-			// ÔÚÕı³£´¦ÀíÁ÷³ÌÖĞ£¬Ï£Íû½«º¯ÊıµÄ·µ»ØÖµ·ÅÖÃÔÚtemp#tempvar_indexµÄÎ»ÖÃ
-			// µ«ÔÚ×Óº¯ÊıÖĞ£¬ÎŞ·¨ÅĞ¶¨temp#tempvar_indexµÄÎ»ÖÃ
-			// ËùÒÔ×Óº¯Êı½«·µ»ØÖµ´æ´¢ÔÚEAXÖĞ£¬ÔÙ¼ÓÒ»ÌõÖ¸Áî£¬½«EAXµÄÖµ´æ½øÁÙÊ±±äÁ¿ÖĞ
+			// åœ¨æ­£å¸¸å¤„ç†æµç¨‹ä¸­ï¼Œå¸Œæœ›å°†å‡½æ•°çš„è¿”å›å€¼æ”¾ç½®åœ¨temp#tempvar_indexçš„ä½ç½®
+			// ä½†åœ¨å­å‡½æ•°ä¸­ï¼Œæ— æ³•åˆ¤å®štemp#tempvar_indexçš„ä½ç½®
+			// æ‰€ä»¥å­å‡½æ•°å°†è¿”å›å€¼å­˜å‚¨åœ¨EAXä¸­ï¼Œå†åŠ ä¸€æ¡æŒ‡ä»¤ï¼Œå°†EAXçš„å€¼å­˜è¿›ä¸´æ—¶å˜é‡ä¸­
 			Quaternary q_store(Quaternary::STORE, 
 				Quaternary::NIL_ADDRESSING, 0,
 				Quaternary::NIL_ADDRESSING, 0, 
 				Quaternary::TEMPORARY_ADDRESSING, tempvar_index_++);
 			quaternarytable_.push_back(q_store);
-			// ËùÒÔfactor_attributeµÄÊôĞÔÊÇÁÙÊ±±äÁ¿
+			// æ‰€ä»¥factor_attributeçš„å±æ€§æ˜¯ä¸´æ—¶å˜é‡
 			factor_attribute.addressingmethod_ = Quaternary::TEMPORARY_ADDRESSING;
 			factor_attribute.value_ = q_store.dst_;
 			factor_attribute.offset_addressingmethod_ = Quaternary::NIL_ADDRESSING;
 			factor_attribute.offset_ = 0;
 		}
-		else	// µ¥¶ÀÒ»¸ö±êÊ¶·û
+		else	// å•ç‹¬ä¸€ä¸ªæ ‡è¯†ç¬¦
 		{
-			// ÓïÒå¼ì²é£ºÊÇ·ñÎª±äÁ¿¡¢³£Á¿»ò¹ı³Ì/º¯ÊıµÄ²ÎÊı
+			// è¯­ä¹‰æ£€æŸ¥ï¼šæ˜¯å¦ä¸ºå˜é‡ã€å¸¸é‡æˆ–è¿‡ç¨‹/å‡½æ•°çš„å‚æ•°
 			if(iter->itemtype_ != TokenTableItem::VARIABLE && iter->itemtype_ != TokenTableItem::PARAMETER && iter->itemtype_ != TokenTableItem::CONST)
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  single token Factor should be varaible or constant\n";
 				is_successful_ = false;
-				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 				{ 
 					lexical_analyzer_.GetNextToken(token_);
 				}
 				return factor_attribute;
 			}
-			// factor_attributeµÄÊôĞÔ
-			if(TokenTableItem::CONST == iter->itemtype_)	// ³£±äÁ¿
+			// factor_attributeçš„å±æ€§
+			if(TokenTableItem::CONST == iter->itemtype_)	// å¸¸å˜é‡
 			{
-				// ÕâÀïÖ±½Ó½«³£±äÁ¿×ª»»³ÉÁ¢¼´ÊıÀàĞÍ£¬Ïê¼û¡¶Appendix1 Éè¼Æ±¸×¢¡·
+				// è¿™é‡Œç›´æ¥å°†å¸¸å˜é‡è½¬æ¢æˆç«‹å³æ•°ç±»å‹ï¼Œè¯¦è§ã€ŠAppendix1 è®¾è®¡å¤‡æ³¨ã€‹
 				factor_attribute.addressingmethod_ = Quaternary::IMMEDIATE_ADDRESSING;
 				factor_attribute.value_ = iter->value_;
 				factor_attribute.offset_addressingmethod_ = Quaternary::NIL_ADDRESSING;
 				factor_attribute.offset_ = 0;
 			}
-			else	// Ò»°ã±äÁ¿
+			else	// ä¸€èˆ¬å˜é‡
 			{
 				factor_attribute.addressingmethod_ = Quaternary::VARIABLE_ADDRESSING;
 				factor_attribute.value_ = std::distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter));
@@ -1651,18 +1651,18 @@ ExpressionAttribute SyntaxAnalyzer::Factor(size_t depth) throw()					// Òò×Ó
 			factor_attribute.addressingmethod_ = Quaternary::REFERENCE_ADDRESSING;
 		}
 	}
-	else if(Token::LEFT_PAREN == token_.type_)	// À¨ºÅÀ¨ÆğÀ´µÄ±í´ïÊ½
+	else if(Token::LEFT_PAREN == token_.type_)	// æ‹¬å·æ‹¬èµ·æ¥çš„è¡¨è¾¾å¼
 	{
-		// bug fixed by mxf at 0:42 1/31 2016¡¾¶Á±í´ïÊ½Ö®Ç°Ã»ÓĞ¶ÁÈ¡À¨ºÅºóµÄµÚÒ»¸öµ¥´Ê¡¿
-		// ¶Á±í´ïÊ½µÄµÚÒ»¸öµ¥´Ê
+		// bug fixed by mxf at 0:42 1/31 2016ã€è¯»è¡¨è¾¾å¼ä¹‹å‰æ²¡æœ‰è¯»å–æ‹¬å·åçš„ç¬¬ä¸€ä¸ªå•è¯ã€‘
+		// è¯»è¡¨è¾¾å¼çš„ç¬¬ä¸€ä¸ªå•è¯
 		lexical_analyzer_.GetNextToken(token_);
-		// ÔÙ¶ÁÈ¡±í´ïÊ½
-		factor_attribute = Expression(depth + 1);	// ¼ÇÂ¼ÀàĞÍ
+		// å†è¯»å–è¡¨è¾¾å¼
+		factor_attribute = Expression(depth + 1);	// è®°å½•ç±»å‹
 		if(token_.type_ != Token::RIGHT_PAREN)
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match '('\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
@@ -1670,7 +1670,7 @@ ExpressionAttribute SyntaxAnalyzer::Factor(size_t depth) throw()					// Òò×Ó
 		}
 		lexical_analyzer_.GetNextToken(token_);
 	}
-	else if(Token::CONST_INTEGER == token_.type_)	// ÕûĞÍ×ÖÃæ³£Á¿
+	else if(Token::CONST_INTEGER == token_.type_)	// æ•´å‹å­—é¢å¸¸é‡
 	{
 
 #ifdef SYNTAXDEBUG
@@ -1683,7 +1683,7 @@ ExpressionAttribute SyntaxAnalyzer::Factor(size_t depth) throw()					// Òò×Ó
 		factor_attribute.offset_ = 0;
 		lexical_analyzer_.GetNextToken(token_);
 	}
-	else if(Token::CONST_CHAR == token_.type_)	// ×Ö·ûĞÍ×ÖÃæ³£Á¿
+	else if(Token::CONST_CHAR == token_.type_)	// å­—ç¬¦å‹å­—é¢å¸¸é‡
 	{
 
 #ifdef SYNTAXDEBUG
@@ -1698,10 +1698,10 @@ ExpressionAttribute SyntaxAnalyzer::Factor(size_t depth) throw()					// Òò×Ó
 	}
 	else
 	{
-		// Óï·¨£º³ö´í´¦Àí
+		// è¯­æ³•ï¼šå‡ºé”™å¤„ç†
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  not a legal Factor\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -1709,62 +1709,62 @@ ExpressionAttribute SyntaxAnalyzer::Factor(size_t depth) throw()					// Òò×Ó
 	return factor_attribute;
 }
 
-// <Ìõ¼şÓï¾ä> ::= if<Ìõ¼ş>then<Óï¾ä>[else<Óï¾ä>]
-void SyntaxAnalyzer::IfStatement(size_t depth) throw()				// Ìõ¼şÓï¾ä
+// <æ¡ä»¶è¯­å¥> ::= if<æ¡ä»¶>then<è¯­å¥>[else<è¯­å¥>]
+void SyntaxAnalyzer::IfStatement(size_t depth) throw()				// æ¡ä»¶è¯­å¥
 {
 	PrintFunctionFrame("IfStatement()", depth);
 
 	assert(Token::IF == token_.type_);
 
-	// ÏÈÉêÇëÒ»¸ölabel
+	// å…ˆç”³è¯·ä¸€ä¸ªlabel
 	int label1 = label_index_++;
-	// ¶ÁÈ¡Ìõ¼şÓï¾ä
+	// è¯»å–æ¡ä»¶è¯­å¥
 	lexical_analyzer_.GetNextToken(token_);
-	Condition(label1, depth + 1);	// ÔÚconditionÖĞÉèÖÃÌø×ªÓï¾ä
+	Condition(label1, depth + 1);	// åœ¨conditionä¸­è®¾ç½®è·³è½¬è¯­å¥
 	if(Token::THEN != token_.type_)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"then\" after Condition\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
 		return;
 	}
-	// ¶ÁÈ¡if³É¹¦ºóµÄÓï¾ä
+	// è¯»å–ifæˆåŠŸåçš„è¯­å¥
 	lexical_analyzer_.GetNextToken(token_);
 	Statement(depth + 1);
 
-	// ¶ÁÈ¡elseµÄÓï¾ä
+	// è¯»å–elseçš„è¯­å¥
 	if(Token::ELSE == token_.type_)
 	{
-		// ÉêÇëµÚ¶ş¸ölabel
+		// ç”³è¯·ç¬¬äºŒä¸ªlabel
 		int label2 =  label_index_++;
-		// Éú³ÉÎŞÌõ¼şÌø×ªÓï¾ä
+		// ç”Ÿæˆæ— æ¡ä»¶è·³è½¬è¯­å¥
 		Quaternary q_jmp(Quaternary::JMP, 
 			Quaternary::NIL_ADDRESSING, 0,
 			Quaternary::NIL_ADDRESSING, 0,
 			Quaternary::IMMEDIATE_ADDRESSING, label2);
 		quaternarytable_.push_back(q_jmp);
-		// ÉèÖÃµÚÒ»¸ölabel
+		// è®¾ç½®ç¬¬ä¸€ä¸ªlabel
 		Quaternary q_label1(Quaternary::LABEL, 
 				Quaternary::NIL_ADDRESSING, 0,
 				Quaternary::NIL_ADDRESSING, 0,
 				Quaternary::IMMEDIATE_ADDRESSING, label1);
 		quaternarytable_.push_back(q_label1);
-		// ¶ÁÈ¡elseÖĞµÄÓï¾ä
+		// è¯»å–elseä¸­çš„è¯­å¥
 		lexical_analyzer_.GetNextToken(token_);
 		Statement(depth + 1);
-		// ÉèÖÃµÚ¶ş¸ölabel
+		// è®¾ç½®ç¬¬äºŒä¸ªlabel
 		Quaternary q_label2(Quaternary::LABEL, 
 			Quaternary::NIL_ADDRESSING, 0,
 			Quaternary::NIL_ADDRESSING, 0,
 			Quaternary::IMMEDIATE_ADDRESSING, label2);
 		quaternarytable_.push_back(q_label2);
 	}
-	else	// Èç¹ûÃ»ÓĞelseÓï¾ä£¬¾ÍÔÚifÓï¾ä¿é½áÊøµÄÊ±ºòÉèÖÃµÚÒ»¸ölabel
+	else	// å¦‚æœæ²¡æœ‰elseè¯­å¥ï¼Œå°±åœ¨ifè¯­å¥å—ç»“æŸçš„æ—¶å€™è®¾ç½®ç¬¬ä¸€ä¸ªlabel
 	{
-		// ÉèÖÃµÚÒ»¸ölabel
+		// è®¾ç½®ç¬¬ä¸€ä¸ªlabel
 		Quaternary q_label1(Quaternary::LABEL, 
 				Quaternary::NIL_ADDRESSING, 0,
 				Quaternary::NIL_ADDRESSING, 0,
@@ -1773,22 +1773,22 @@ void SyntaxAnalyzer::IfStatement(size_t depth) throw()				// Ìõ¼şÓï¾ä
 	}
 }
 
-// <Ìõ¼ş> ::= <±í´ïÊ½><¹ØÏµÔËËã·û><±í´ïÊ½>
-// ÓÉif»òforÓï¾äÖĞ´«µİÏÂÀ´label²ÎÊı£¬±êÊ¶ifÓï¾ä¿é»òforÑ­»·ÌåµÄ½áÊø
-// ÓÃÓÚÔÚ´¦ÀíconditionÊ±ÉèÖÃÌø×ªÓï¾ä
-void SyntaxAnalyzer::Condition(int endlabel, size_t depth) throw()				// Ìõ¼ş
+// <æ¡ä»¶> ::= <è¡¨è¾¾å¼><å…³ç³»è¿ç®—ç¬¦><è¡¨è¾¾å¼>
+// ç”±ifæˆ–forè¯­å¥ä¸­ä¼ é€’ä¸‹æ¥labelå‚æ•°ï¼Œæ ‡è¯†ifè¯­å¥å—æˆ–forå¾ªç¯ä½“çš„ç»“æŸ
+// ç”¨äºåœ¨å¤„ç†conditionæ—¶è®¾ç½®è·³è½¬è¯­å¥
+void SyntaxAnalyzer::Condition(int endlabel, size_t depth) throw()				// æ¡ä»¶
 {
 	PrintFunctionFrame("Condition()", depth);
 
 	ExpressionAttribute left_attribute = Expression(depth + 1);
-	// »¯¼òÊı×éÔªËØÎªÁÙÊ±±äÁ¿
+	// åŒ–ç®€æ•°ç»„å…ƒç´ ä¸ºä¸´æ—¶å˜é‡
 	SimplifyArrayOperand(left_attribute);
 		
 	bool isonlyexpression = false;
-	// Éú³ÉÓĞÌõ¼şµÄÌø×ªÓï¾ä
-	// ²»·ûºÏÌõ¼şÊ±²Å»áÌø×ª£¬ËùÒÔÕâÀïµÄ²Ù×÷·ûÓë¶Áµ½µÄtokenÒª·´Ò»ÏÂ
+	// ç”Ÿæˆæœ‰æ¡ä»¶çš„è·³è½¬è¯­å¥
+	// ä¸ç¬¦åˆæ¡ä»¶æ—¶æ‰ä¼šè·³è½¬ï¼Œæ‰€ä»¥è¿™é‡Œçš„æ“ä½œç¬¦ä¸è¯»åˆ°çš„tokenè¦åä¸€ä¸‹
 	Quaternary q_jmp_condition;
-	switch(token_.type_)	// Õâ¸öµ¥´Ê¿ÉÄÜÊÇ¹ØÏµÔËËã·û£¬µ«Ò²ÓĞ¿ÉÄÜÊÇTHEN£¨µ±Ìõ¼şÖĞ½öÓĞÒ»¸ö±í´ïÊ½Ê±£©
+	switch(token_.type_)	// è¿™ä¸ªå•è¯å¯èƒ½æ˜¯å…³ç³»è¿ç®—ç¬¦ï¼Œä½†ä¹Ÿæœ‰å¯èƒ½æ˜¯THENï¼ˆå½“æ¡ä»¶ä¸­ä»…æœ‰ä¸€ä¸ªè¡¨è¾¾å¼æ—¶ï¼‰
 	{
 	case Token::LT:
 		q_jmp_condition.op_ = Quaternary::JNL;
@@ -1812,11 +1812,11 @@ void SyntaxAnalyzer::Condition(int endlabel, size_t depth) throw()				// Ìõ¼ş
 		q_jmp_condition.op_ = Quaternary::JE;
 		isonlyexpression = true;
 		break;
-	// ÒòÎªÖ®Ç°ÒÑ¾­¼ì²é¹ıÁË£¬ËùÒÔÕı³£Çé¿öÏÂ²»¿ÉÄÜÓĞdefault
+	// å› ä¸ºä¹‹å‰å·²ç»æ£€æŸ¥è¿‡äº†ï¼Œæ‰€ä»¥æ­£å¸¸æƒ…å†µä¸‹ä¸å¯èƒ½æœ‰default
 	default:
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be logic operator in the middle of Condition\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -1824,11 +1824,11 @@ void SyntaxAnalyzer::Condition(int endlabel, size_t depth) throw()				// Ìõ¼ş
 		break;
 	}
 	ExpressionAttribute right_attribute;
-	if(!isonlyexpression)	// Èç¹û»¹ÓĞÏÂÒ»¸ö±í´ïÊ½£¬ÔÙ¼ÌĞø¶ÁÈ¡
+	if(!isonlyexpression)	// å¦‚æœè¿˜æœ‰ä¸‹ä¸€ä¸ªè¡¨è¾¾å¼ï¼Œå†ç»§ç»­è¯»å–
 	{
 		lexical_analyzer_.GetNextToken(token_);
 		right_attribute = Expression(depth + 1);
-		// »¯¼òÊı×éÎªÁÙÊ±±äÁ¿
+		// åŒ–ç®€æ•°ç»„ä¸ºä¸´æ—¶å˜é‡
 		SimplifyArrayOperand(right_attribute);
 	}
 	else
@@ -1839,16 +1839,16 @@ void SyntaxAnalyzer::Condition(int endlabel, size_t depth) throw()				// Ìõ¼ş
 		right_attribute.offset_ = 0;
 		right_attribute.decoratetype_ = TokenTableItem::VOID;
 	}
-	// ²Ù×÷Êı
+	// æ“ä½œæ•°
 	q_jmp_condition.method1_ = left_attribute.addressingmethod_;
 	q_jmp_condition.src1_ = left_attribute.value_;
 	q_jmp_condition.method2_ = right_attribute.addressingmethod_;
 	q_jmp_condition.src2_ = right_attribute.value_;
 	q_jmp_condition.method3_ = Quaternary::IMMEDIATE_ADDRESSING;
 	q_jmp_condition.dst_ = endlabel;
-	// ±£´æËÄÔªÊ½
+	// ä¿å­˜å››å…ƒå¼
 	quaternarytable_.push_back(q_jmp_condition);
-	// »ØÊÕÁÙÊ±±äÁ¿
+	// å›æ”¶ä¸´æ—¶å˜é‡
 	if(Quaternary::TEMPORARY_ADDRESSING == left_attribute.addressingmethod_)
 	{
 		--tempvar_index_;
@@ -1859,30 +1859,30 @@ void SyntaxAnalyzer::Condition(int endlabel, size_t depth) throw()				// Ìõ¼ş
 	}
 }
 
-// <Çé¿öÓï¾ä> ::= case <±í´ïÊ½> of <Çé¿ö±íÔªËØ>{; <Çé¿ö±íÔªËØ>}end
-void SyntaxAnalyzer::CaseStatement(size_t depth) throw()			// Çé¿öÓï¾ä
+// <æƒ…å†µè¯­å¥> ::= case <è¡¨è¾¾å¼> of <æƒ…å†µè¡¨å…ƒç´ >{; <æƒ…å†µè¡¨å…ƒç´ >}end
+void SyntaxAnalyzer::CaseStatement(size_t depth) throw()			// æƒ…å†µè¯­å¥
 {
 	PrintFunctionFrame("CaseStatement()", depth);
 
 	assert(Token::CASE == token_.type_);
 
-	// ¶ÁÈ¡±í´ïÊ½
+	// è¯»å–è¡¨è¾¾å¼
 	lexical_analyzer_.GetNextToken(token_);
 	ExpressionAttribute exp_attribute = Expression(depth + 1);
-	// ½«±í´ïÊ½»¯Îª·ÇÊı×éÔªËØ
+	// å°†è¡¨è¾¾å¼åŒ–ä¸ºéæ•°ç»„å…ƒç´ 
 	SimplifyArrayOperand(exp_attribute);
 
 	if(Token::OF != token_.type_)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"of\" to specify the certain case\n";
 		is_successful_ = false;
-		// ÕâÀï¼ÙÉèÊÇÍü¼ÇĞ´of£¬¹Ê²»·µ»Ø
+		// è¿™é‡Œå‡è®¾æ˜¯å¿˜è®°å†™ofï¼Œæ•…ä¸è¿”å›
 	}
-	// ÎªEND´¦ÉêÇëÒ»¸ölabel
+	// ä¸ºENDå¤„ç”³è¯·ä¸€ä¸ªlabel
 	int endlabel = label_index_++;
-	// case±í´ïÊ½Ö®ºóµÄÌø×ªÓï¾äµÄ²åÈëÎ»ÖÃ
+	// caseè¡¨è¾¾å¼ä¹‹åçš„è·³è½¬è¯­å¥çš„æ’å…¥ä½ç½®
 	int jmp_insertion_location = quaternarytable_.size();
-	// Èô¸É¸öJEµÄÌø×ªÓï¾ä
+	// è‹¥å¹²ä¸ªJEçš„è·³è½¬è¯­å¥
 	Quaternary q_jmp;
 	q_jmp.op_ = Quaternary::JE;
 	q_jmp.method1_ = exp_attribute.addressingmethod_;
@@ -1892,10 +1892,10 @@ void SyntaxAnalyzer::CaseStatement(size_t depth) throw()			// Çé¿öÓï¾ä
 	do
 	{
 		lexical_analyzer_.GetNextToken(token_);
-		// Îªµ±Ç°Çé¿ö±íÔªËØÉêÇëÒ»¸ölabel
+		// ä¸ºå½“å‰æƒ…å†µè¡¨å…ƒç´ ç”³è¯·ä¸€ä¸ªlabel
 		int caselabel = label_index_++;
 		vector<int> constant_list = CaseElement(caselabel, endlabel, depth + 1);
-		// ²åÈëJEÌø×ªÓï¾ä
+		// æ’å…¥JEè·³è½¬è¯­å¥
 		q_jmp.dst_ = caselabel;
 		for(vector<int>::const_iterator c_iter = constant_list.begin();
 			c_iter != constant_list.end(); ++c_iter)
@@ -1905,32 +1905,32 @@ void SyntaxAnalyzer::CaseStatement(size_t depth) throw()			// Çé¿öÓï¾ä
 		}
 	}while(Token::SEMICOLON == token_.type_);
 
-	// Ö´ĞĞÍêËùÓĞJEºó£¬Ìø×ªµ½END´¦
+	// æ‰§è¡Œå®Œæ‰€æœ‰JEåï¼Œè·³è½¬åˆ°ENDå¤„
 	Quaternary q_endjmp(Quaternary::JMP,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::IMMEDIATE_ADDRESSING, endlabel);
 	quaternarytable_.insert(quaternarytable_.begin() + jmp_insertion_location, q_endjmp);
 	
-	// ²åÈë½áÊøµÄlabel
+	// æ’å…¥ç»“æŸçš„label
 	Quaternary q_endlabel(Quaternary::LABEL,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::IMMEDIATE_ADDRESSING, endlabel);
 	quaternarytable_.push_back(q_endlabel);
 
-	// »ØÊÕcaseºóExpressionµÄÁÙÊ±±äÁ¿
+	// å›æ”¶caseåExpressionçš„ä¸´æ—¶å˜é‡
 	if(Quaternary::TEMPORARY_ADDRESSING == exp_attribute.addressingmethod_)
 	{
 		--tempvar_index_;
 	}
 
-	// ¼ì²â½áÊø±êÖ¾
+	// æ£€æµ‹ç»“æŸæ ‡å¿—
 	if(Token::END != token_.type_)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"end\" at the end of case Statement\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -1943,9 +1943,9 @@ void SyntaxAnalyzer::CaseStatement(size_t depth) throw()			// Çé¿öÓï¾ä
 	lexical_analyzer_.GetNextToken(token_);
 }
 
-// <Çé¿ö±íÔªËØ> ::= <Çé¿ö³£Á¿±í>:<Óï¾ä>
-// <Çé¿ö³£Á¿±í> ::=  <³£Á¿ | ³£±äÁ¿>{, <³£Á¿ | ³£±äÁ¿>}
-vector<int> SyntaxAnalyzer::CaseElement(int caselabel, int endlabel, size_t depth) throw()					// Çé¿ö±íÔªËØ
+// <æƒ…å†µè¡¨å…ƒç´ > ::= <æƒ…å†µå¸¸é‡è¡¨>:<è¯­å¥>
+// <æƒ…å†µå¸¸é‡è¡¨> ::=  <å¸¸é‡ | å¸¸å˜é‡>{, <å¸¸é‡ | å¸¸å˜é‡>}
+vector<int> SyntaxAnalyzer::CaseElement(int caselabel, int endlabel, size_t depth) throw()					// æƒ…å†µè¡¨å…ƒç´ 
 {
 	PrintFunctionFrame("CaseElement()", depth);
 
@@ -1958,7 +1958,7 @@ vector<int> SyntaxAnalyzer::CaseElement(int caselabel, int endlabel, size_t dept
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be constant integer or character or constant variable after \"case\"\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -1968,7 +1968,7 @@ vector<int> SyntaxAnalyzer::CaseElement(int caselabel, int endlabel, size_t dept
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
 
-	// ¼ÇÂ¼¸Ã³£Á¿
+	// è®°å½•è¯¥å¸¸é‡
 	if(Token::CONST_INTEGER == token_.type_)
 	{
 		constant_list.push_back(token_.value_.integer);
@@ -1977,7 +1977,7 @@ vector<int> SyntaxAnalyzer::CaseElement(int caselabel, int endlabel, size_t dept
 	{	
 		constant_list.push_back(token_.value_.character);
 	}
-	else	// ³£±äÁ¿
+	else	// å¸¸å˜é‡
 	{
 		constant_list.push_back(iter->value_);		
 	}
@@ -1993,7 +1993,7 @@ vector<int> SyntaxAnalyzer::CaseElement(int caselabel, int endlabel, size_t dept
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be constant integer or character after \"case\"\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
@@ -2002,7 +2002,7 @@ vector<int> SyntaxAnalyzer::CaseElement(int caselabel, int endlabel, size_t dept
 #ifdef SYNTAXDEBUG
 	syntax_info_buffer_ << syntax_assist_buffer_ << "  " << token_.toString() << std::endl;
 #endif
-		// ¼ÇÂ¼¸Ã³£Á¿
+		// è®°å½•è¯¥å¸¸é‡
 		if(Token::CONST_INTEGER == token_.type_)
 		{
 			constant_list.push_back(token_.value_.integer);
@@ -2011,24 +2011,24 @@ vector<int> SyntaxAnalyzer::CaseElement(int caselabel, int endlabel, size_t dept
 		{	
 			constant_list.push_back(token_.value_.character);
 		}
-		else	// ³£±äÁ¿
+		else	// å¸¸å˜é‡
 		{
 			constant_list.push_back(iter->value_);		
 		}
-		// ¶ÁÈ¡ÏÂÒ»¸öµ¥´Ê
+		// è¯»å–ä¸‹ä¸€ä¸ªå•è¯
 		lexical_analyzer_.GetNextToken(token_);
 	}
 	if(Token::COLON != token_.type_)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ':' after constant to specify the certain action\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
 		return constant_list;
 	}
-	// ¶ÁÈëÇé¿ö±íÔªËØµÄÓï¾äÖ®Ç°£¬´òÏÂÒ»¸ölabel
+	// è¯»å…¥æƒ…å†µè¡¨å…ƒç´ çš„è¯­å¥ä¹‹å‰ï¼Œæ‰“ä¸‹ä¸€ä¸ªlabel
 	Quaternary q_caselabel(Quaternary::LABEL,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::NIL_ADDRESSING, 0,
@@ -2038,19 +2038,19 @@ vector<int> SyntaxAnalyzer::CaseElement(int caselabel, int endlabel, size_t dept
 	lexical_analyzer_.GetNextToken(token_);
 	Statement(depth + 1);
 
-	// Çé¿ö±íÔªËØµÄÓï¾äÖ´ĞĞÍêºó£¬Ìø×ªµ½END´¦
+	// æƒ…å†µè¡¨å…ƒç´ çš„è¯­å¥æ‰§è¡Œå®Œåï¼Œè·³è½¬åˆ°ENDå¤„
 	Quaternary q_endjmp(Quaternary::JMP,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::IMMEDIATE_ADDRESSING, endlabel);
 	quaternarytable_.push_back(q_endjmp);
-	// ·µ»Ø¼ÇÂ¼µÄÇé¿ö±íÔªËØµÄ³£Á¿Êı×é
+	// è¿”å›è®°å½•çš„æƒ…å†µè¡¨å…ƒç´ çš„å¸¸é‡æ•°ç»„
 	return constant_list;
 }
 
-// <¶ÁÓï¾ä> ::= read'('<±êÊ¶·û>{,<±êÊ¶·û>}')'
-// TODO À©Õ¹³ö¶ÔÊı×éµÄÖ§³Ö
-void SyntaxAnalyzer::ReadStatement(size_t depth) throw()			// ¶ÁÓï¾ä
+// <è¯»è¯­å¥> ::= read'('<æ ‡è¯†ç¬¦>{,<æ ‡è¯†ç¬¦>}')'
+// TODO æ‰©å±•å‡ºå¯¹æ•°ç»„çš„æ”¯æŒ
+void SyntaxAnalyzer::ReadStatement(size_t depth) throw()			// è¯»è¯­å¥
 {
 	PrintFunctionFrame("ReadStatement()", depth);
 
@@ -2064,7 +2064,7 @@ void SyntaxAnalyzer::ReadStatement(size_t depth) throw()			// ¶ÁÓï¾ä
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be '(' to specify the arguments\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -2078,7 +2078,7 @@ void SyntaxAnalyzer::ReadStatement(size_t depth) throw()			// ¶ÁÓï¾ä
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be variable name in the location of read argument\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
@@ -2092,62 +2092,62 @@ void SyntaxAnalyzer::ReadStatement(size_t depth) throw()			// ¶ÁÓï¾ä
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  undeclared identifier\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
 			return;
 		}
-		iter->AddUsedLine(token_.lineNumber_);		// ÔÚ·ûºÅ±íÖĞ²åÈëÒıÓÃĞĞ¼ÇÂ¼
+		iter->AddUsedLine(token_.lineNumber_);		// åœ¨ç¬¦å·è¡¨ä¸­æ’å…¥å¼•ç”¨è¡Œè®°å½•
 
-		// ¶ÁÈ¡ÏÂÒ»¸öµ¥´Ê£¬ÅĞ¶ÏÊÇ·ñÎªÊı×éÔªËØ
+		// è¯»å–ä¸‹ä¸€ä¸ªå•è¯ï¼Œåˆ¤æ–­æ˜¯å¦ä¸ºæ•°ç»„å…ƒç´ 
 		lexical_analyzer_.GetNextToken(token_);
-		if(Token::LEFT_BRACKET != token_.type_)	// ²»ÊÇÊı×éÔªËØ
+		if(Token::LEFT_BRACKET != token_.type_)	// ä¸æ˜¯æ•°ç»„å…ƒç´ 
 		{
 			if(iter->itemtype_ != TokenTableItem::VARIABLE
-			&& iter->itemtype_ != TokenTableItem::PARAMETER)	// ¼ì²éÊÇ·ñÎª±äÁ¿»ò²ÎÊı»òº¯ÊıÃû
+			&& iter->itemtype_ != TokenTableItem::PARAMETER)	// æ£€æŸ¥æ˜¯å¦ä¸ºå˜é‡æˆ–å‚æ•°æˆ–å‡½æ•°å
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot be assigned in read call\n";
 				is_successful_ = false;
-				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 				{ 
 					lexical_analyzer_.GetNextToken(token_);
 				}
 				return;
 			}
-			// Éú³ÉREADµ÷ÓÃµÄËÄÔªÊ½
+			// ç”ŸæˆREADè°ƒç”¨çš„å››å…ƒå¼
 			Quaternary q_read(Quaternary::READ,
 				Quaternary::NIL_ADDRESSING, 0,
 				Quaternary::NIL_ADDRESSING, 0,
 				Quaternary::VARIABLE_ADDRESSING, distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter)));
 			quaternarytable_.push_back(q_read);
 		}
-		else	// Êı×éÔªËØ
+		else	// æ•°ç»„å…ƒç´ 
 		{
-			// ÀàĞÍ¼ì²é
-			if(iter->itemtype_ != TokenTableItem::ARRAY)	// ¼ì²éÊÇ·ñÎªÊı×é±äÁ¿
+			// ç±»å‹æ£€æŸ¥
+			if(iter->itemtype_ != TokenTableItem::ARRAY)	// æ£€æŸ¥æ˜¯å¦ä¸ºæ•°ç»„å˜é‡
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << iter->name_ << "  is not an array\n";
 				is_successful_ = false;
-				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+				while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 				{ 
 					lexical_analyzer_.GetNextToken(token_);
 				}
 				return;
 			}
-			// ¶ÁÈëÊı×éÏÂ±êµÄµÚÒ»¸öµ¥´Ê
+			// è¯»å…¥æ•°ç»„ä¸‹æ ‡çš„ç¬¬ä¸€ä¸ªå•è¯
 			lexical_analyzer_.GetNextToken(token_);
-			// ¶Áµ½Õû¸öÏÂ±êµÄ±í´ïÊ½
+			// è¯»åˆ°æ•´ä¸ªä¸‹æ ‡çš„è¡¨è¾¾å¼
 			ExpressionAttribute exp_attribute = Expression(depth + 1);
-			// ·ÇÊı×é»¯
+			// éæ•°ç»„åŒ–
 			SimplifyArrayOperand(exp_attribute);
-			// Éú³ÉREADµ÷ÓÃµÄËÄÔªÊ½
+			// ç”ŸæˆREADè°ƒç”¨çš„å››å…ƒå¼
 			Quaternary q_read(Quaternary::READ,
 				Quaternary::NIL_ADDRESSING, 0,
 				exp_attribute.addressingmethod_, exp_attribute.value_,
 				Quaternary::ARRAY_ADDRESSING, distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(iter)));
 			quaternarytable_.push_back(q_read);
-			// ÅĞ¶ÏÓÒÀ¨ºÅ
+			// åˆ¤æ–­å³æ‹¬å·
 			if(Token::RIGHT_BRACKET != token_.type_)
 			{
 				std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ']' to match '['\n";
@@ -2155,7 +2155,7 @@ void SyntaxAnalyzer::ReadStatement(size_t depth) throw()			// ¶ÁÓï¾ä
 			}
 			else
 			{
-				// ¶ÁÈëÏÂÒ»¸öµ¥´Ê
+				// è¯»å…¥ä¸‹ä¸€ä¸ªå•è¯
 				lexical_analyzer_.GetNextToken(token_);
 			}
 		}
@@ -2165,7 +2165,7 @@ void SyntaxAnalyzer::ReadStatement(size_t depth) throw()			// ¶ÁÓï¾ä
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -2174,8 +2174,8 @@ void SyntaxAnalyzer::ReadStatement(size_t depth) throw()			// ¶ÁÓï¾ä
 	lexical_analyzer_.GetNextToken(token_);
 }
 
-// <Ğ´Óï¾ä> ::= write'(' (<×Ö·û´®>[,<±í´ïÊ½>] | <±í´ïÊ½>) ')'
-void SyntaxAnalyzer::WriteStatement(size_t depth) throw()			// Ğ´Óï¾ä
+// <å†™è¯­å¥> ::= write'(' (<å­—ç¬¦ä¸²>[,<è¡¨è¾¾å¼>] | <è¡¨è¾¾å¼>) ')'
+void SyntaxAnalyzer::WriteStatement(size_t depth) throw()			// å†™è¯­å¥
 {
 	PrintFunctionFrame("WriteStatement()", depth);
 
@@ -2190,7 +2190,7 @@ void SyntaxAnalyzer::WriteStatement(size_t depth) throw()			// Ğ´Óï¾ä
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be '(' to specify the arguments\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -2206,7 +2206,7 @@ void SyntaxAnalyzer::WriteStatement(size_t depth) throw()			// Ğ´Óï¾ä
 #endif
 		
 		vector<string>::const_iterator iter = std::find(stringtable_.begin(), stringtable_.end(), token_.value_.identifier);
-		// Éú³ÉWRITEµ÷ÓÃµÄËÄÔªÊ½
+		// ç”ŸæˆWRITEè°ƒç”¨çš„å››å…ƒå¼
 		Quaternary q_read(Quaternary::WRITE,
 			Quaternary::NIL_ADDRESSING, 0,
 			Quaternary::NIL_ADDRESSING, 0,
@@ -2217,23 +2217,23 @@ void SyntaxAnalyzer::WriteStatement(size_t depth) throw()			// Ğ´Óï¾ä
 		if(Token::COMMA == token_.type_)
 		{
 			lexical_analyzer_.GetNextToken(token_);
-			ExpressionAttribute exp_attribute = Expression(depth + 1);	// ¶ÁÈ¡µÚ¶ş¸ö²ÎÊı£¨±í´ïÊ½£©
-			// Éú³ÉWRITEµ÷ÓÃµÄËÄÔªÊ½
+			ExpressionAttribute exp_attribute = Expression(depth + 1);	// è¯»å–ç¬¬äºŒä¸ªå‚æ•°ï¼ˆè¡¨è¾¾å¼ï¼‰
+			// ç”ŸæˆWRITEè°ƒç”¨çš„å››å…ƒå¼
 			Quaternary q_write(Quaternary::WRITE,
 				Quaternary::NIL_ADDRESSING, 0,
 				exp_attribute.offset_addressingmethod_, exp_attribute.offset_,
 				exp_attribute.addressingmethod_, exp_attribute.value_);
-			//// Imp£¡Èç¹ûÕû¸ö±í´ïÊ½¾ÍÖ»ÊÇÒ»¸öÁ¢¼´Êı£¬ÄÇÃ´ÔÚ×îºó¸øËü´æ´¢Ò»¸ödecoratetypeµÄÊôĞÔ£¬ÓÃ×÷Êä³öÊ±µÄÀàĞÍÍÆµ¼
+			//// Impï¼å¦‚æœæ•´ä¸ªè¡¨è¾¾å¼å°±åªæ˜¯ä¸€ä¸ªç«‹å³æ•°ï¼Œé‚£ä¹ˆåœ¨æœ€åç»™å®ƒå­˜å‚¨ä¸€ä¸ªdecoratetypeçš„å±æ€§ï¼Œç”¨ä½œè¾“å‡ºæ—¶çš„ç±»å‹æ¨å¯¼
 			/*if(Quaternary::IMMEDIATE_ADDRESSING == exp_attribute.addressingmethod_)
 			{
 				q_write.dst_decoratetype_ = exp_attribute.decoratetype_;
 			}*/
-			// ¸üÕı£ºÔÚwriteµÄËÄÔªÊ½Ä©Î²Ò»¶¨ÒªÓĞdecoratetypeµÄÊôĞÔ£¬ÓÃ×÷Êä³öÊ±µÄÀàĞÍÍÆµ¼
+			// æ›´æ­£ï¼šåœ¨writeçš„å››å…ƒå¼æœ«å°¾ä¸€å®šè¦æœ‰decoratetypeçš„å±æ€§ï¼Œç”¨ä½œè¾“å‡ºæ—¶çš„ç±»å‹æ¨å¯¼
 			q_write.dst_decoratetype_ = exp_attribute.decoratetype_;
 			quaternarytable_.push_back(q_write);
-			// »ØÊÕÁÙÊ±±äÁ¿
+			// å›æ”¶ä¸´æ—¶å˜é‡
 			if(Quaternary::TEMPORARY_ADDRESSING == exp_attribute.addressingmethod_
-			|| Quaternary::TEMPORARY_ADDRESSING == exp_attribute.offset_addressingmethod_)	// Á½Õß²»¿ÉÄÜÍ¬Ê±³ÉÁ¢£¬¹ÊĞ´ÔÚÒ»Æğ
+			|| Quaternary::TEMPORARY_ADDRESSING == exp_attribute.offset_addressingmethod_)	// ä¸¤è€…ä¸å¯èƒ½åŒæ—¶æˆç«‹ï¼Œæ•…å†™åœ¨ä¸€èµ·
 			{
 				--tempvar_index_;
 			}
@@ -2242,22 +2242,22 @@ void SyntaxAnalyzer::WriteStatement(size_t depth) throw()			// Ğ´Óï¾ä
 	else
 	{
 		ExpressionAttribute exp_attribute = Expression(depth + 1);
-		// Éú³ÉWRITEµ÷ÓÃµÄËÄÔªÊ½
+		// ç”ŸæˆWRITEè°ƒç”¨çš„å››å…ƒå¼
 		Quaternary q_write(Quaternary::WRITE,
 			Quaternary::NIL_ADDRESSING, 0,
 			exp_attribute.offset_addressingmethod_, exp_attribute.offset_,
 			exp_attribute.addressingmethod_, exp_attribute.value_);
-		//// Imp£¡Èç¹ûÕû¸ö±í´ïÊ½¾ÍÖ»ÊÇÒ»¸öÁ¢¼´Êı£¬ÄÇÃ´ÔÚ×îºó¸øËü´æ´¢Ò»¸ödecoratetypeµÄÊôĞÔ£¬ÓÃ×÷Êä³öÊ±µÄÀàĞÍÍÆµ¼
+		//// Impï¼å¦‚æœæ•´ä¸ªè¡¨è¾¾å¼å°±åªæ˜¯ä¸€ä¸ªç«‹å³æ•°ï¼Œé‚£ä¹ˆåœ¨æœ€åç»™å®ƒå­˜å‚¨ä¸€ä¸ªdecoratetypeçš„å±æ€§ï¼Œç”¨ä½œè¾“å‡ºæ—¶çš„ç±»å‹æ¨å¯¼
 		/*if(Quaternary::IMMEDIATE_ADDRESSING == exp_attribute.addressingmethod_)
 		{
 			q_write.dst_decoratetype_ = exp_attribute.decoratetype_;
 		}*/
-		// ¸üÕı£ºÔÚwriteµÄËÄÔªÊ½Ä©Î²Ò»¶¨ÒªÓĞdecoratetypeµÄÊôĞÔ£¬ÓÃ×÷Êä³öÊ±µÄÀàĞÍÍÆµ¼
+		// æ›´æ­£ï¼šåœ¨writeçš„å››å…ƒå¼æœ«å°¾ä¸€å®šè¦æœ‰decoratetypeçš„å±æ€§ï¼Œç”¨ä½œè¾“å‡ºæ—¶çš„ç±»å‹æ¨å¯¼
 		q_write.dst_decoratetype_ = exp_attribute.decoratetype_;
 		quaternarytable_.push_back(q_write);
-		// »ØÊÕÁÙÊ±±äÁ¿
+		// å›æ”¶ä¸´æ—¶å˜é‡
 		if(Quaternary::TEMPORARY_ADDRESSING == exp_attribute.addressingmethod_
-		|| Quaternary::TEMPORARY_ADDRESSING == exp_attribute.offset_addressingmethod_)	// Á½Õß²»¿ÉÄÜÍ¬Ê±³ÉÁ¢£¬¹ÊĞ´ÔÚÒ»Æğ
+		|| Quaternary::TEMPORARY_ADDRESSING == exp_attribute.offset_addressingmethod_)	// ä¸¤è€…ä¸å¯èƒ½åŒæ—¶æˆç«‹ï¼Œæ•…å†™åœ¨ä¸€èµ·
 		{
 			--tempvar_index_;
 		}
@@ -2267,7 +2267,7 @@ void SyntaxAnalyzer::WriteStatement(size_t depth) throw()			// Ğ´Óï¾ä
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -2276,54 +2276,54 @@ void SyntaxAnalyzer::WriteStatement(size_t depth) throw()			// Ğ´Óï¾ä
 	lexical_analyzer_.GetNextToken(token_);
 }
 
-// <whileÑ­»·Óï¾ä> ::= while <Ìõ¼ş> do <Óï¾ä>
-// <whileÑ­»·Óï¾ä> ::= while @Label<check> <Ìõ¼ş> @JZLabel<end> do <Óï¾ä> @JMPLabel<check> @Label<end>
-void SyntaxAnalyzer::WhileLoopStatement(size_t depth) throw()			// whileÑ­»·Óï¾ä
+// <whileå¾ªç¯è¯­å¥> ::= while <æ¡ä»¶> do <è¯­å¥>
+// <whileå¾ªç¯è¯­å¥> ::= while @Label<check> <æ¡ä»¶> @JZLabel<end> do <è¯­å¥> @JMPLabel<check> @Label<end>
+void SyntaxAnalyzer::WhileLoopStatement(size_t depth) throw()			// whileå¾ªç¯è¯­å¥
 {
 	PrintFunctionFrame("WhileLoopStatement()", depth);
 	assert(Token::WHILE == token_.type_);
 
-	// ÉêÇëÌõ¼şÓï¾äÇ°ÃæµÄlabel<check>ºÍ½áÊøÊ±µÄlabel<end>
+	// ç”³è¯·æ¡ä»¶è¯­å¥å‰é¢çš„label<check>å’Œç»“æŸæ—¶çš„label<end>
 	int checklabel = label_index_++;
 	int endlabel = label_index_++;
-	// ¸üĞÂcontinue_label_Õ»Óëbreak_label_Õ»
+	// æ›´æ–°continue_label_æ ˆä¸break_label_æ ˆ
 	continue_label_.push(checklabel);
 	break_label_.push(endlabel);
-	// ·ÅÏÂlabel<check>
+	// æ”¾ä¸‹label<check>
 	Quaternary q_checklabel(Quaternary::LABEL,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::IMMEDIATE_ADDRESSING, checklabel);
 	quaternarytable_.push_back(q_checklabel);
 	
-	// ¶ÁÈ¡ÏÂÒ»¸öµ¥´Ê£¬²¢½øÈëÌõ¼şÓï¾ä
+	// è¯»å–ä¸‹ä¸€ä¸ªå•è¯ï¼Œå¹¶è¿›å…¥æ¡ä»¶è¯­å¥
 	lexical_analyzer_.GetNextToken(token_);
-	Condition(endlabel, depth + 1);	// Ìõ¼şÓï¾äÖĞ»áÖ´ĞĞ¶¯×÷@JZLabel<end>
-	// Óï·¨¼ì²é
+	Condition(endlabel, depth + 1);	// æ¡ä»¶è¯­å¥ä¸­ä¼šæ‰§è¡ŒåŠ¨ä½œ@JZLabel<end>
+	// è¯­æ³•æ£€æŸ¥
 	if(Token::DO != token_.type_)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"do\" before loop body\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
 		return;
 	}
-	// ¶ÁÈëÑ­»·ÌåµÄµÚÒ»¸öµ¥´Ê
+	// è¯»å…¥å¾ªç¯ä½“çš„ç¬¬ä¸€ä¸ªå•è¯
 	lexical_analyzer_.GetNextToken(token_);
-	// ¶ÁÈëÑ­»·Ìå
+	// è¯»å…¥å¾ªç¯ä½“
 	Statement(depth + 1);
-	// ¸üĞÂcontinue_label_Õ»Óëbreak_label_Õ»
+	// æ›´æ–°continue_label_æ ˆä¸break_label_æ ˆ
 	continue_label_.pop();
 	break_label_.pop();
-	// Ñ­»·Ìå½áÊøºóµÄÌø×ª
+	// å¾ªç¯ä½“ç»“æŸåçš„è·³è½¬
 	Quaternary q_jmp(Quaternary::JMP,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::IMMEDIATE_ADDRESSING, checklabel);
 	quaternarytable_.push_back(q_jmp);
-	// ·ÅÏÂ½áÊøµÄlabel
+	// æ”¾ä¸‹ç»“æŸçš„label
 	Quaternary q_endlabel(Quaternary::LABEL,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::NIL_ADDRESSING, 0,
@@ -2331,23 +2331,23 @@ void SyntaxAnalyzer::WhileLoopStatement(size_t depth) throw()			// whileÑ­»·Óï¾ä
 	quaternarytable_.push_back(q_endlabel);
 }
 
-// <forÑ­»·Óï¾ä> ::= for <±êÊ¶·û> := <±í´ïÊ½> £¨downto | to£© <±í´ïÊ½> do <Óï¾ä>
-// <forÑ­»·Óï¾ä> ::= for <±êÊ¶·û> := <±í´ïÊ½> £¨downto | to£©
-// @ASG<init> @JMPLABEL<check> @Label<vary> @ASG<vary> @Label<check> <±í´ïÊ½> @JZLABEL<end> 
-// do <Óï¾ä>@JMPLABEL<vary>@Label<end>
-void SyntaxAnalyzer::ForLoopStatement(size_t depth) throw()			// forÑ­»·Óï¾ä
+// <forå¾ªç¯è¯­å¥> ::= for <æ ‡è¯†ç¬¦> := <è¡¨è¾¾å¼> ï¼ˆdownto | toï¼‰ <è¡¨è¾¾å¼> do <è¯­å¥>
+// <forå¾ªç¯è¯­å¥> ::= for <æ ‡è¯†ç¬¦> := <è¡¨è¾¾å¼> ï¼ˆdownto | toï¼‰
+// @ASG<init> @JMPLABEL<check> @Label<vary> @ASG<vary> @Label<check> <è¡¨è¾¾å¼> @JZLABEL<end> 
+// do <è¯­å¥>@JMPLABEL<vary>@Label<end>
+void SyntaxAnalyzer::ForLoopStatement(size_t depth) throw()			// forå¾ªç¯è¯­å¥
 {
 	PrintFunctionFrame("ForLoopStatement()", depth);
 
 	assert(Token::FOR == token_.type_);
 
-	// ¶ÁÈ¡±êÊ¶·û
+	// è¯»å–æ ‡è¯†ç¬¦
 	lexical_analyzer_.GetNextToken(token_);
 	if(Token::IDENTIFIER != token_.type_)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be loop variable name after for\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -2361,106 +2361,106 @@ void SyntaxAnalyzer::ForLoopStatement(size_t depth) throw()			// forÑ­»·Óï¾ä
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  undeclared identifier\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
 		return;
 	}
-	loopvar_iter->AddUsedLine(token_.lineNumber_);		// ÔÚ·ûºÅ±íÖĞ²åÈëÒıÓÃĞĞ¼ÇÂ¼
+	loopvar_iter->AddUsedLine(token_.lineNumber_);		// åœ¨ç¬¦å·è¡¨ä¸­æ’å…¥å¼•ç”¨è¡Œè®°å½•
 	if(loopvar_iter->itemtype_ != TokenTableItem::VARIABLE
-	&& loopvar_iter->itemtype_ != TokenTableItem::PARAMETER)	// ¼ì²éÊÇ·ñÎª±äÁ¿»ò²ÎÊı
+	&& loopvar_iter->itemtype_ != TokenTableItem::PARAMETER)	// æ£€æŸ¥æ˜¯å¦ä¸ºå˜é‡æˆ–å‚æ•°
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot be assigned in for loop\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
 		return;
 	}
-	// ¶ÁÈ¡¸³ÖµºÅ
+	// è¯»å–èµ‹å€¼å·
 	lexical_analyzer_.GetNextToken(token_);
 	if(Token::ASSIGN != token_.type_)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \":=\" after loop variable\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
 		return;
 	}
-	// ¶ÁÈ¡±í´ïÊ½
+	// è¯»å–è¡¨è¾¾å¼
 	lexical_analyzer_.GetNextToken(token_);
 	ExpressionAttribute init_attribute = Expression(depth + 1);
 
-	// ¼ì²âto/downto
+	// æ£€æµ‹to/downto
 	if(Token::DOWNTO != token_.type_
 		&& Token::TO != token_.type_)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be \"to\" or \"downto\" after variable assigning\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
 		return;
 	}
-	// ±£´æµİÔö/¼õ·ûºÅ
+	// ä¿å­˜é€’å¢/å‡ç¬¦å·
 	Token vary_token = token_;
-	// ÉêÇëÑ­»·±äÁ¿µÄµİÔö/¼õµÄlabel<vary>, ±ß½ç¼ì²éµÄlabel<check>£¬ÒÔ¼°Ä©Î²µÄlabel<end>
+	// ç”³è¯·å¾ªç¯å˜é‡çš„é€’å¢/å‡çš„label<vary>, è¾¹ç•Œæ£€æŸ¥çš„label<check>ï¼Œä»¥åŠæœ«å°¾çš„label<end>
 	int varylabel = label_index_++;
 	int checklabel = label_index_++;
 	int endlabel = label_index_++;
-	// ¸üĞÂcontinue_label_Õ»Óëbreak_label_Õ»
+	// æ›´æ–°continue_label_æ ˆä¸break_label_æ ˆ
 	continue_label_.push(varylabel);
 	break_label_.push(endlabel);
-	// Éú³ÉforµÄÑ­»·±äÁ¿µÄ³õÊ¼»¯£¨¸³Öµ£©ËÄÔªÊ½
+	// ç”Ÿæˆforçš„å¾ªç¯å˜é‡çš„åˆå§‹åŒ–ï¼ˆèµ‹å€¼ï¼‰å››å…ƒå¼
 	Quaternary q_init(Quaternary::ASG,
 		init_attribute.addressingmethod_, init_attribute.value_,
 		init_attribute.offset_addressingmethod_, init_attribute.offset_,
 		Quaternary::VARIABLE_ADDRESSING, distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(loopvar_iter)));
 	quaternarytable_.push_back(q_init);
-	// Éú³ÉÌø×ªµ½±ß½ç¼ì²éµÄJMPËÄÔªÊ½
+	// ç”Ÿæˆè·³è½¬åˆ°è¾¹ç•Œæ£€æŸ¥çš„JMPå››å…ƒå¼
 	Quaternary q_jmpcheck(Quaternary::JMP,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::IMMEDIATE_ADDRESSING, checklabel);
 	quaternarytable_.push_back(q_jmpcheck);
-	// Éú³ÉÑ­»·±äÁ¿µİÔö/¼õµÄlabel<vary>
+	// ç”Ÿæˆå¾ªç¯å˜é‡é€’å¢/å‡çš„label<vary>
 	Quaternary q_varylabel(Quaternary::LABEL,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::IMMEDIATE_ADDRESSING, varylabel);
 	quaternarytable_.push_back(q_varylabel);
-	// Éú³ÉÑ­»·±äÁ¿µİÔö/¼õµÄËÄÔªÊ½
+	// ç”Ÿæˆå¾ªç¯å˜é‡é€’å¢/å‡çš„å››å…ƒå¼
 	Quaternary q_vary(Token::TO == vary_token.type_ ? Quaternary::ADD : Quaternary::SUB,
 		Quaternary::VARIABLE_ADDRESSING, distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(loopvar_iter)),
 		Quaternary::IMMEDIATE_ADDRESSING, 1,
 		Quaternary::VARIABLE_ADDRESSING, distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(loopvar_iter)));
 	quaternarytable_.push_back(q_vary);
-	// Éú³ÉÑ­»·±äÁ¿±ß½ç¼ì²éµÄlabel<check>
+	// ç”Ÿæˆå¾ªç¯å˜é‡è¾¹ç•Œæ£€æŸ¥çš„label<check>
 	Quaternary q_checklabel(Quaternary::LABEL,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::IMMEDIATE_ADDRESSING, checklabel);
 	quaternarytable_.push_back(q_checklabel);
 
-	// ¶ÁÈ¡±í´ïÊ½
+	// è¯»å–è¡¨è¾¾å¼
 	lexical_analyzer_.GetNextToken(token_);
 	ExpressionAttribute bound_attribute = Expression(depth + 1);
 
-	// »¯¼òÖÁ·ÇÊı×éÔªËØ±í´ïÊ½
+	// åŒ–ç®€è‡³éæ•°ç»„å…ƒç´ è¡¨è¾¾å¼
 	SimplifyArrayOperand(bound_attribute);
-	// Éú³É±ß½ç¼ì²éµÄJMPËÄÔªÊ½
+	// ç”Ÿæˆè¾¹ç•Œæ£€æŸ¥çš„JMPå››å…ƒå¼
 	Quaternary q_check(Token::TO == vary_token.type_ ? Quaternary::JG : Quaternary::JL,
 		Quaternary::VARIABLE_ADDRESSING, distance(tokentable_.begin(), static_cast<TokenTable::const_iterator>(loopvar_iter)),
 		bound_attribute.addressingmethod_, bound_attribute.value_,
 		Quaternary::IMMEDIATE_ADDRESSING, endlabel);
 	quaternarytable_.push_back(q_check);
 
-	// »ØÊÕÁ½¸öExpressionµÄÁÙÊ±±äÁ¿
+	// å›æ”¶ä¸¤ä¸ªExpressionçš„ä¸´æ—¶å˜é‡
 	if(	Quaternary::TEMPORARY_ADDRESSING == init_attribute.addressingmethod_
 		|| Quaternary::TEMPORARY_ADDRESSING == init_attribute.offset_addressingmethod_)
 	{
@@ -2471,30 +2471,30 @@ void SyntaxAnalyzer::ForLoopStatement(size_t depth) throw()			// forÑ­»·Óï¾ä
 		--tempvar_index_;
 	}
 
-	// ¶ÁÈ¡DO
+	// è¯»å–DO
 	if(Token::DO != token_.type_)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be do after loop head\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
 		return;
 	}
 	lexical_analyzer_.GetNextToken(token_);
-	// ¶ÁÈ¡Ñ­»·Ìå
+	// è¯»å–å¾ªç¯ä½“
 	Statement(depth + 1);
-	// ¸üĞÂcontinue_label_Õ»Óëbreak_label_Õ»
+	// æ›´æ–°continue_label_æ ˆä¸break_label_æ ˆ
 	continue_label_.pop();
 	break_label_.pop();
-	// Ìø×ª»ØÑ­»·±äÁ¿µİÔö/¼õµÄlabel<vary>
+	// è·³è½¬å›å¾ªç¯å˜é‡é€’å¢/å‡çš„label<vary>
 	Quaternary q_jmpvary(Quaternary::JMP,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::IMMEDIATE_ADDRESSING, varylabel);
 	quaternarytable_.push_back(q_jmpvary);
-	// forÑ­»·½áÊøµÄlabel<end>
+	// forå¾ªç¯ç»“æŸçš„label<end>
 	Quaternary q_endlabel(Quaternary::LABEL,
 		Quaternary::NIL_ADDRESSING, 0,
 		Quaternary::NIL_ADDRESSING, 0,
@@ -2516,16 +2516,16 @@ void SyntaxAnalyzer::ContinueStatement(size_t depth) throw()	// continue
 	}
 	else
 	{
-		// ±¨´í
+		// æŠ¥é”™
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  no loop body found around \"continue\"\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
 		return;
 	}
-	// ¶ÁÈëÏÂÒ»¸öµ¥´Ê²¢·µ»Ø
+	// è¯»å…¥ä¸‹ä¸€ä¸ªå•è¯å¹¶è¿”å›
 	lexical_analyzer_.GetNextToken(token_);
 }
 void SyntaxAnalyzer::BreakStatement(size_t depth) throw()		// break
@@ -2542,61 +2542,61 @@ void SyntaxAnalyzer::BreakStatement(size_t depth) throw()		// break
 	}
 	else
 	{
-		// ±¨´í
+		// æŠ¥é”™
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  no loop body found around \"break\"\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
 		return;
 	}
-	// ¶ÁÈëÏÂÒ»¸öµ¥´Ê²¢·µ»Ø
+	// è¯»å…¥ä¸‹ä¸€ä¸ªå•è¯å¹¶è¿”å›
 	lexical_analyzer_.GetNextToken(token_);
 }
 
 
-//// <¹ı³Ìµ÷ÓÃÓï¾ä> ::= '('[<ÊµÔÚ²ÎÊı±í>]')'
-//void SyntaxAnalyzer::ProcedureCallStatement(const Token proc_token, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth)	// ¹ı³Ìµ÷ÓÃÓï¾ä
+//// <è¿‡ç¨‹è°ƒç”¨è¯­å¥> ::= '('[<å®åœ¨å‚æ•°è¡¨>]')'
+//void SyntaxAnalyzer::ProcedureCallStatement(const Token proc_token, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth)	// è¿‡ç¨‹è°ƒç”¨è¯­å¥
 //{
 //	PrintFunctionFrame("ProcedureCallStatement()", depth);
-//	// Óï·¨¼ì²é
+//	// è¯­æ³•æ£€æŸ¥
 //	if(Token::LEFT_PAREN != token_.type_)
 //	{
 //		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be '(' to specify the argument\n";
 //		is_successful_ = false;
-//		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+//		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 //		{ 
 //			lexical_analyzer_.GetNextToken(token_);
 //		}
 //		return;
 //	}
-//	// Óï·¨£º¶ÁÈëÓÒÀ¨ºÅ»ò²ÎÊı±íµÄµÚÒ»¸öµ¥´Ê
+//	// è¯­æ³•ï¼šè¯»å…¥å³æ‹¬å·æˆ–å‚æ•°è¡¨çš„ç¬¬ä¸€ä¸ªå•è¯
 //	lexical_analyzer_.GetNextToken(token_);
-//	if(parameter_decorate_types.size() == 0)	// Èç¹ûº¯Êı±¾Éí¾ÍÃ»ÓĞ²ÎÊıµÄ»°£¬¾Í²»ÓÃ¶Á²ÎÊıÁË
+//	if(parameter_decorate_types.size() == 0)	// å¦‚æœå‡½æ•°æœ¬èº«å°±æ²¡æœ‰å‚æ•°çš„è¯ï¼Œå°±ä¸ç”¨è¯»å‚æ•°äº†
 //	{
-//		// Óï·¨¼ì²é
+//		// è¯­æ³•æ£€æŸ¥
 //		if(Token::RIGHT_PAREN != token_.type_)
 //		{
 //			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
 //			is_successful_ = false;
-//			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+//			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 //			{ 
 //				lexical_analyzer_.GetNextToken(token_);
 //			}
 //			return;
 //		}
-//		lexical_analyzer_.GetNextToken(token_);	// ¶Áº¯Êıµ÷ÓÃÍê±ÏºóµÄÏÂÒ»¸öµ¥´Ê
+//		lexical_analyzer_.GetNextToken(token_);	// è¯»å‡½æ•°è°ƒç”¨å®Œæ¯•åçš„ä¸‹ä¸€ä¸ªå•è¯
 //		return;
 //	}
-//	// Óï·¨£º¶Á²ÎÊı£¬²¢Éú³ÉÉèÖÃ²ÎÊıµÄËÄÔªÊ½
+//	// è¯­æ³•ï¼šè¯»å‚æ•°ï¼Œå¹¶ç”Ÿæˆè®¾ç½®å‚æ•°çš„å››å…ƒå¼
 //	vector<TokenTableItem::DecorateType> arg_decoratetypes = ArgumentList(depth + 1);
-//	// Óï·¨¼ì²é
+//	// è¯­æ³•æ£€æŸ¥
 //	if(Token::RIGHT_PAREN != token_.type_)
 //	{
 //		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
 //		is_successful_ = false;
-//		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+//		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 //		{ 
 //			lexical_analyzer_.GetNextToken(token_);
 //		}
@@ -2604,8 +2604,8 @@ void SyntaxAnalyzer::BreakStatement(size_t depth) throw()		// break
 //	}
 //	lexical_analyzer_.GetNextToken(token_);
 //
-//	// ÓïÒå¼ì²é£º¹ı³Ì²ÎÊıÓë¹ı³ÌÉùÃ÷ÊÇ·ñÆ¥Åä
-//	if(parameter_decorate_types.size() != arg_decoratetypes.size())	// ¼ì²é²ÎÊıÊıÁ¿
+//	// è¯­ä¹‰æ£€æŸ¥ï¼šè¿‡ç¨‹å‚æ•°ä¸è¿‡ç¨‹å£°æ˜æ˜¯å¦åŒ¹é…
+//	if(parameter_decorate_types.size() != arg_decoratetypes.size())	// æ£€æŸ¥å‚æ•°æ•°é‡
 //	{
 //		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  procedure does not take " << arg_decoratetypes.size() << " argument";
 //		if(arg_decoratetypes.size() > 1)
@@ -2617,7 +2617,7 @@ void SyntaxAnalyzer::BreakStatement(size_t depth) throw()		// break
 //			std::cout << "\n";
 //		}
 //		is_successful_ = false;
-//		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+//		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 //		{ 
 //			lexical_analyzer_.GetNextToken(token_);
 //		}
@@ -2625,56 +2625,56 @@ void SyntaxAnalyzer::BreakStatement(size_t depth) throw()		// break
 //	}
 //	for(int i = 0; i < static_cast<int>(parameter_decorate_types.size()); ++i)
 //	{
-//		// ×óĞ¡ÓÚÓÒĞ¡ÓÚ±íÊ¾²»ÄÜ´ÓÓÒ²Ù×÷ÊıÀàĞÍ×ªµ½×ó²Ù×÷ÊıÀàĞÍ
+//		// å·¦å°äºå³å°äºè¡¨ç¤ºä¸èƒ½ä»å³æ“ä½œæ•°ç±»å‹è½¬åˆ°å·¦æ“ä½œæ•°ç±»å‹
 //		if(parameter_decorate_types[i] < arg_decoratetypes[i])
 //		{
 //			std::cout << "warning: line " << token_.lineNumber_ << ":  " << token_.toString() 
 //				<< "  cannot convert parameter " << i + 1 << " from " << TokenTableItem::DecorateTypeString[arg_decoratetypes[i]]
 //				<< " to " <<  TokenTableItem::DecorateTypeString[parameter_decorate_types[i]] <<"\n";
-//			// ÕâÀï½ö½öÊÇ¼ì²éÁË²ÎÊıÀàĞÍ²»Æ¥Åä£¬Óï·¨·ÖÎö»¹¿É¼ÌĞø£¬¹Ê²»·µ»Ø
+//			// è¿™é‡Œä»…ä»…æ˜¯æ£€æŸ¥äº†å‚æ•°ç±»å‹ä¸åŒ¹é…ï¼Œè¯­æ³•åˆ†æè¿˜å¯ç»§ç»­ï¼Œæ•…ä¸è¿”å›
 //		}
 //		//if(parameter_decorate_types[i] == TokenTableItem::CHAR && arg_decoratetypes[i] == TokenTableItem::INTEGER)
 //		//{
 //		//	std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  cannot convert parameter " << i + 1 << " from integer to char\n";
 //		//	is_successful_ = false;
-//		//	// ÕâÀï½ö½öÊÇ¼ì²éÁË²ÎÊıÀàĞÍ²»Æ¥Åä£¬Êµ¼ÊÓï·¨³É·Ö·ÖÎö»¹¿É¼ÌĞø£¬
+//		//	// è¿™é‡Œä»…ä»…æ˜¯æ£€æŸ¥äº†å‚æ•°ç±»å‹ä¸åŒ¹é…ï¼Œå®é™…è¯­æ³•æˆåˆ†åˆ†æè¿˜å¯ç»§ç»­ï¼Œ
 //		//}
 //	}
 //}
 //
-//// <º¯Êıµ÷ÓÃÓï¾ä> ::= '('[<ÊµÔÚ²ÎÊı±í>]')'
-//void SyntaxAnalyzer::FunctionCallStatement(const Token func_token, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth)	// º¯Êıµ÷ÓÃÓï¾ä
+//// <å‡½æ•°è°ƒç”¨è¯­å¥> ::= '('[<å®åœ¨å‚æ•°è¡¨>]')'
+//void SyntaxAnalyzer::FunctionCallStatement(const Token func_token, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth)	// å‡½æ•°è°ƒç”¨è¯­å¥
 //{
 //	PrintFunctionFrame("FunctionCallStatement()", depth);
 //
 //	assert(Token::LEFT_PAREN == token_.type_);
 //
-//	// Óï·¨£º¶ÁÈëÓÒÀ¨ºÅ»ò²ÎÊı±íµÄµÚÒ»¸öµ¥´Ê
+//	// è¯­æ³•ï¼šè¯»å…¥å³æ‹¬å·æˆ–å‚æ•°è¡¨çš„ç¬¬ä¸€ä¸ªå•è¯
 //	lexical_analyzer_.GetNextToken(token_);
-//	if(parameter_decorate_types.size() == 0)	// Èç¹ûº¯Êı±¾Éí¾ÍÃ»ÓĞ²ÎÊıµÄ»°£¬¾Í²»ÓÃ¶Á²ÎÊıÁË
+//	if(parameter_decorate_types.size() == 0)	// å¦‚æœå‡½æ•°æœ¬èº«å°±æ²¡æœ‰å‚æ•°çš„è¯ï¼Œå°±ä¸ç”¨è¯»å‚æ•°äº†
 //	{
-//		// Óï·¨¼ì²é
+//		// è¯­æ³•æ£€æŸ¥
 //		if(Token::RIGHT_PAREN != token_.type_)
 //		{
 //			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
 //			is_successful_ = false;
-//			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+//			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 //			{ 
 //				lexical_analyzer_.GetNextToken(token_);
 //			}
 //			return;
 //		}
-//		lexical_analyzer_.GetNextToken(token_);	// ¶Áº¯Êıµ÷ÓÃÍê±ÏºóµÄÏÂÒ»¸öµ¥´Ê
+//		lexical_analyzer_.GetNextToken(token_);	// è¯»å‡½æ•°è°ƒç”¨å®Œæ¯•åçš„ä¸‹ä¸€ä¸ªå•è¯
 //		return;
 //	}
-//	// Óï·¨£º¶Á²ÎÊı
+//	// è¯­æ³•ï¼šè¯»å‚æ•°
 //	vector<TokenTableItem::DecorateType> arg_decoratetypes = ArgumentList(depth + 1);
-//	// Óï·¨¼ì²é
+//	// è¯­æ³•æ£€æŸ¥
 //	if(Token::RIGHT_PAREN != token_.type_)
 //	{
 //		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
 //		is_successful_ = false;
-//		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+//		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 //		{ 
 //			lexical_analyzer_.GetNextToken(token_);
 //		}
@@ -2682,8 +2682,8 @@ void SyntaxAnalyzer::BreakStatement(size_t depth) throw()		// break
 //	}
 //	lexical_analyzer_.GetNextToken(token_);
 //
-//	// ÓïÒå¼ì²é£ºº¯Êı²ÎÊıÓëº¯ÊıÉùÃ÷ÊÇ·ñÆ¥Åä
-//	if(parameter_decorate_types.size() != arg_decoratetypes.size())	// ¼ì²é²ÎÊıÊıÁ¿
+//	// è¯­ä¹‰æ£€æŸ¥ï¼šå‡½æ•°å‚æ•°ä¸å‡½æ•°å£°æ˜æ˜¯å¦åŒ¹é…
+//	if(parameter_decorate_types.size() != arg_decoratetypes.size())	// æ£€æŸ¥å‚æ•°æ•°é‡
 //	{
 //		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  function does not take " << arg_decoratetypes.size() << " argument";
 //		if(arg_decoratetypes.size() > 1)
@@ -2695,68 +2695,68 @@ void SyntaxAnalyzer::BreakStatement(size_t depth) throw()		// break
 //			std::cout << "\n";
 //		}
 //		is_successful_ = false;
-//		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+//		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 //		{ 
 //			lexical_analyzer_.GetNextToken(token_);
 //		}
 //		return;
 //	}
-//	// ÀàĞÍÊÇ·ñÆ¥Åä
+//	// ç±»å‹æ˜¯å¦åŒ¹é…
 //	for(int i = 0; i < static_cast<int>(parameter_decorate_types.size()); ++i)
 //	{
-//		// ×óĞ¡ÓÚÓÒĞ¡ÓÚ±íÊ¾²»ÄÜ´ÓÓÒ²Ù×÷ÊıÀàĞÍ×ªµ½×ó²Ù×÷ÊıÀàĞÍ
+//		// å·¦å°äºå³å°äºè¡¨ç¤ºä¸èƒ½ä»å³æ“ä½œæ•°ç±»å‹è½¬åˆ°å·¦æ“ä½œæ•°ç±»å‹
 //		if(parameter_decorate_types[i] < arg_decoratetypes[i])
 //		{
 //			std::cout << "warning: line " << token_.lineNumber_ << ":  " << token_.toString() 
 //				<< " convert parameter " << i + 1 << " from " << TokenTableItem::DecorateTypeString[parameter_decorate_types[i]]
 //				<< " to " <<  TokenTableItem::DecorateTypeString[arg_decoratetypes[i]] <<"\n";
-//			// ÕâÀï½ö½öÊÇ¼ì²éÁË²ÎÊıÀàĞÍ²»Æ¥Åä£¬Óï·¨·ÖÎö»¹¿É¼ÌĞø£¬¹Ê²»·µ»Ø
+//			// è¿™é‡Œä»…ä»…æ˜¯æ£€æŸ¥äº†å‚æ•°ç±»å‹ä¸åŒ¹é…ï¼Œè¯­æ³•åˆ†æè¿˜å¯ç»§ç»­ï¼Œæ•…ä¸è¿”å›
 //		}
 //	}
 //	
 //}
 
-// <¹ı³Ì/º¯Êıµ÷ÓÃÓï¾ä> ::= '('[<ÊµÔÚ²ÎÊı±í>]')'
-void SyntaxAnalyzer::ProcFuncCallStatement(const Token proc_token, const vector<ExpressionAttribute> &parameter_attributes, size_t depth)	// ¹ı³Ìµ÷ÓÃÓï¾ä
+// <è¿‡ç¨‹/å‡½æ•°è°ƒç”¨è¯­å¥> ::= '('[<å®åœ¨å‚æ•°è¡¨>]')'
+void SyntaxAnalyzer::ProcFuncCallStatement(const Token proc_token, const vector<ExpressionAttribute> &parameter_attributes, size_t depth)	// è¿‡ç¨‹è°ƒç”¨è¯­å¥
 {
 	PrintFunctionFrame("ProcFuncCallStatement()", depth);
-	// Óï·¨¼ì²é
+	// è¯­æ³•æ£€æŸ¥
 	if(Token::LEFT_PAREN != token_.type_)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be '(' to specify the argument\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
 		return;
 	}
-	// Óï·¨£º¶ÁÈëÓÒÀ¨ºÅ»ò²ÎÊı±íµÄµÚÒ»¸öµ¥´Ê
+	// è¯­æ³•ï¼šè¯»å…¥å³æ‹¬å·æˆ–å‚æ•°è¡¨çš„ç¬¬ä¸€ä¸ªå•è¯
 	lexical_analyzer_.GetNextToken(token_);
-	if(parameter_attributes.size() == 0)	// Èç¹ûº¯Êı±¾Éí¾ÍÃ»ÓĞ²ÎÊıµÄ»°£¬¾Í²»ÓÃ¶Á²ÎÊıÁË
+	if(parameter_attributes.size() == 0)	// å¦‚æœå‡½æ•°æœ¬èº«å°±æ²¡æœ‰å‚æ•°çš„è¯ï¼Œå°±ä¸ç”¨è¯»å‚æ•°äº†
 	{
-		// Óï·¨¼ì²é
+		// è¯­æ³•æ£€æŸ¥
 		if(Token::RIGHT_PAREN != token_.type_)
 		{
 			std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
 			is_successful_ = false;
-			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+			while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 			{ 
 				lexical_analyzer_.GetNextToken(token_);
 			}
 			return;
 		}
-		lexical_analyzer_.GetNextToken(token_);	// ¶Áº¯Êıµ÷ÓÃÍê±ÏºóµÄÏÂÒ»¸öµ¥´Ê
+		lexical_analyzer_.GetNextToken(token_);	// è¯»å‡½æ•°è°ƒç”¨å®Œæ¯•åçš„ä¸‹ä¸€ä¸ªå•è¯
 		return;
 	}
-	// Óï·¨£º¶Á²ÎÊı£¬²¢Éú³ÉÉèÖÃ²ÎÊıµÄËÄÔªÊ½
+	// è¯­æ³•ï¼šè¯»å‚æ•°ï¼Œå¹¶ç”Ÿæˆè®¾ç½®å‚æ•°çš„å››å…ƒå¼
 	vector<ExpressionAttribute> exp_attributes = ArgumentList(parameter_attributes, depth + 1);
-	// Óï·¨¼ì²é
+	// è¯­æ³•æ£€æŸ¥
 	if(Token::RIGHT_PAREN != token_.type_)
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  should be ')' to match the '('\n";
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -2764,8 +2764,8 @@ void SyntaxAnalyzer::ProcFuncCallStatement(const Token proc_token, const vector<
 	}
 	lexical_analyzer_.GetNextToken(token_);
 
-	// ÓïÒå¼ì²é£º¹ı³Ì²ÎÊıÓë¹ı³ÌÉùÃ÷ÊÇ·ñÆ¥Åä
-	if(parameter_attributes.size() != exp_attributes.size())	// ¼ì²é²ÎÊıÊıÁ¿
+	// è¯­ä¹‰æ£€æŸ¥ï¼šè¿‡ç¨‹å‚æ•°ä¸è¿‡ç¨‹å£°æ˜æ˜¯å¦åŒ¹é…
+	if(parameter_attributes.size() != exp_attributes.size())	// æ£€æŸ¥å‚æ•°æ•°é‡
 	{
 		std::cout << "line " << token_.lineNumber_ << ":  " << token_.toString() << "  procedure/function does not take " << exp_attributes.size() << " argument";
 		if(exp_attributes.size() > 1)
@@ -2777,7 +2777,7 @@ void SyntaxAnalyzer::ProcFuncCallStatement(const Token proc_token, const vector<
 			std::cout << "\n";
 		}
 		is_successful_ = false;
-		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// ¶Áµ½½áÎ²»ò·ÖºÅ»òEND
+		while(token_.type_ != Token::NIL && token_.type_ != Token::SEMICOLON && token_.type_ != Token::END)	// è¯»åˆ°ç»“å°¾æˆ–åˆ†å·æˆ–END
 		{ 
 			lexical_analyzer_.GetNextToken(token_);
 		}
@@ -2785,18 +2785,18 @@ void SyntaxAnalyzer::ProcFuncCallStatement(const Token proc_token, const vector<
 	}
 	for(int i = 0; i < static_cast<int>(exp_attributes.size()); ++i)
 	{
-		// ×óĞ¡ÓÚÓÒĞ¡ÓÚ±íÊ¾²»ÄÜ´ÓÓÒ²Ù×÷ÊıÀàĞÍ×ªµ½×ó²Ù×÷ÊıÀàĞÍ
+		// å·¦å°äºå³å°äºè¡¨ç¤ºä¸èƒ½ä»å³æ“ä½œæ•°ç±»å‹è½¬åˆ°å·¦æ“ä½œæ•°ç±»å‹
 		if(parameter_attributes[i].decoratetype_ < exp_attributes[i].decoratetype_)
 		{
 			std::cout << "warning: line " << token_.lineNumber_ << ":  " << token_.toString() 
 				<< "  cannot convert parameter " << i + 1 << " from " << TokenTableItem::DecorateTypeString[exp_attributes[i].decoratetype_]
 			<< " to " <<  TokenTableItem::DecorateTypeString[parameter_attributes[i].decoratetype_] <<"\n";
-			// ÕâÀï½ö½öÊÇ¼ì²éÁË²ÎÊıÀàĞÍ²»Æ¥Åä£¬Óï·¨·ÖÎö»¹¿É¼ÌĞø£¬¹Ê²»·µ»Ø
+			// è¿™é‡Œä»…ä»…æ˜¯æ£€æŸ¥äº†å‚æ•°ç±»å‹ä¸åŒ¹é…ï¼Œè¯­æ³•åˆ†æè¿˜å¯ç»§ç»­ï¼Œæ•…ä¸è¿”å›
 		}
 	}
 }
 
-// ¸ø¶¨µÄÔªËØµÄ²Ù×÷ÊıÈç¹ûÊÇÊı×é±äÁ¿£¬¾Í½«Æä»¯¼òÎªÁÙÊ±±äÁ¿
+// ç»™å®šçš„å…ƒç´ çš„æ“ä½œæ•°å¦‚æœæ˜¯æ•°ç»„å˜é‡ï¼Œå°±å°†å…¶åŒ–ç®€ä¸ºä¸´æ—¶å˜é‡
 void SyntaxAnalyzer::SimplifyArrayOperand(ExpressionAttribute &attribute) throw()
 {
 	if(Quaternary::ARRAY_ADDRESSING == attribute.addressingmethod_)
@@ -2808,9 +2808,9 @@ void SyntaxAnalyzer::SimplifyArrayOperand(ExpressionAttribute &attribute) throw(
 		q_subscript2temp.method2_ = attribute.offset_addressingmethod_;
 		q_subscript2temp.offset2_ = attribute.offset_;
 		q_subscript2temp.method3_ = Quaternary::TEMPORARY_ADDRESSING;
-		// Ä¿±êµÄÁÙÊ±±äÁ¿±êºÅµÄÈ·¶¨
-		// Èç¹ûÊı×éÏÂ±ê¾ÍÊÇÁÙÊ±±äÁ¿£¬ÄÇÃ´¾ÍÓÃÕâ¸ö±äÁ¿
-		// ·ñÔò¾ÍĞÂ¿ªÒ»¸öÁÙÊ±±äÁ¿
+		// ç›®æ ‡çš„ä¸´æ—¶å˜é‡æ ‡å·çš„ç¡®å®š
+		// å¦‚æœæ•°ç»„ä¸‹æ ‡å°±æ˜¯ä¸´æ—¶å˜é‡ï¼Œé‚£ä¹ˆå°±ç”¨è¿™ä¸ªå˜é‡
+		// å¦åˆ™å°±æ–°å¼€ä¸€ä¸ªä¸´æ—¶å˜é‡
 		if(Quaternary::TEMPORARY_ADDRESSING == attribute.offset_addressingmethod_)
 		{
 			q_subscript2temp.dst_ = attribute.offset_;
@@ -2818,7 +2818,7 @@ void SyntaxAnalyzer::SimplifyArrayOperand(ExpressionAttribute &attribute) throw(
 		else
 		{
 			q_subscript2temp.dst_ = tempvar_index_++;
-			//// ¸üĞÂ×î´óÁÙÊ±±äÁ¿¸öÊı
+			//// æ›´æ–°æœ€å¤§ä¸´æ—¶å˜é‡ä¸ªæ•°
 			//if(tempvar_index_ > max_local_temp_count_)
 			//{
 			//	max_local_temp_count_ = tempvar_index_;
@@ -2832,7 +2832,7 @@ void SyntaxAnalyzer::SimplifyArrayOperand(ExpressionAttribute &attribute) throw(
 	}
 }
 
-//// ĞŞ¸ÄÔÚ·ûºÅ±íµÄÎ»ÖÃproc_func_index´¦µÄ¹ı³Ì/º¯Êı¶ÔÓ¦µÄËÄÔªÊ½µÄBEGINÓï¾ä£¬ÉèÖÃÆäÁÙÊ±±äÁ¿µÄÊıÁ¿
+//// ä¿®æ”¹åœ¨ç¬¦å·è¡¨çš„ä½ç½®proc_func_indexå¤„çš„è¿‡ç¨‹/å‡½æ•°å¯¹åº”çš„å››å…ƒå¼çš„BEGINè¯­å¥ï¼Œè®¾ç½®å…¶ä¸´æ—¶å˜é‡çš„æ•°é‡
 //void SyntaxAnalyzer::SetTempVarCount(int proc_func_index, int max_tempvar_count) throw()
 //{
 //	for(vector<Quaternary>::reverse_iterator r_iter = quaternarytable_.rbegin();

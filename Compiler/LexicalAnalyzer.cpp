@@ -15,27 +15,27 @@ bool LexicalAnalyzer::IsBound() const throw()
 	return srcfile_.is_open();
 }
 
-// ¸ù¾İ°ó¶¨µÄÔ´´úÂëÎÄ¼ş£¬½øĞĞ´Ê·¨·ÖÎö
-// ·ÖÎöµÄ½á¹û´æÈëtoken_vector_ÖĞ
-bool LexicalAnalyzer::Parse() throw()							// ½øĞĞ´Ê·¨·ÖÎö
+// æ ¹æ®ç»‘å®šçš„æºä»£ç æ–‡ä»¶ï¼Œè¿›è¡Œè¯æ³•åˆ†æ
+// åˆ†æçš„ç»“æœå­˜å…¥token_vector_ä¸­
+bool LexicalAnalyzer::Parse() throw()							// è¿›è¡Œè¯æ³•åˆ†æ
 {
 	bool isSuccessful = true;
-	//if(!srcfile_.is_open())	// ¼ì²éÎÄ¼şÊÇ·ñ´ò¿ª
+	//if(!srcfile_.is_open())	// æ£€æŸ¥æ–‡ä»¶æ˜¯å¦æ‰“å¼€
 	//{
 	//	return false;
 	//}
 	
-	// Çå¿ÕtokenÕ»
+	// æ¸…ç©ºtokenæ ˆ
 	token_vector_.clear();
-	// Çå¿Õ³£Á¿×Ö·û´®±í
+	// æ¸…ç©ºå¸¸é‡å­—ç¬¦ä¸²è¡¨
 	string_set.clear();
-	// ¿ªÊ¼°´´Ê·¨×´Ì¬Í¼½øĞĞ½âÎö
+	// å¼€å§‹æŒ‰è¯æ³•çŠ¶æ€å›¾è¿›è¡Œè§£æ
 	Token token;
 	currentline_ = 0;
 	char ch = getNextChar();	
 	while(ch != '\0')
 	{
-		// ºöÂÔ¿Õ¸ñ
+		// å¿½ç•¥ç©ºæ ¼
 		if(isspace(ch))
 		{
 			ch = getNextChar();
@@ -50,7 +50,7 @@ bool LexicalAnalyzer::Parse() throw()							// ½øĞĞ´Ê·¨·ÖÎö
 		{
 			isSuccessful = false;
 			std::cout << ex.what() << std::endl;
-			// ½øĞĞ´Ê·¨´íÎó»Ö¸´
+			// è¿›è¡Œè¯æ³•é”™è¯¯æ¢å¤
 			do
 			{
 				ch = getNextChar();
@@ -59,17 +59,17 @@ bool LexicalAnalyzer::Parse() throw()							// ½øĞĞ´Ê·¨·ÖÎö
 			token.type_ = Token::NIL;
 			continue;
 		}
-		if(token.type_ != Token::COMMENT)	// Èôµ¥´Ê²»ÊÇ×¢ÊÍ
+		if(token.type_ != Token::COMMENT)	// è‹¥å•è¯ä¸æ˜¯æ³¨é‡Š
 		{
-			token_vector_.push_back(token);	// Ôò½«µ¥´Ê·ÅÈëvector
+			token_vector_.push_back(token);	// åˆ™å°†å•è¯æ”¾å…¥vector
 		}
 	}
-	ResetTokenPos();	// Ìí¼ÓÍêËùÓĞµ¥´Êºó£¬ÖØÖÃµ¥´Êµü´úÆ÷µÄ³õÊ¼Î»ÖÃ
+	ResetTokenPos();	// æ·»åŠ å®Œæ‰€æœ‰å•è¯åï¼Œé‡ç½®å•è¯è¿­ä»£å™¨çš„åˆå§‹ä½ç½®
 	return isSuccessful;
 }
 
 
-// ½«´Ê·¨·ÖÎöµÄ½á¹ûÊä³öµ½ÎÄ¼ş
+// å°†è¯æ³•åˆ†æçš„ç»“æœè¾“å‡ºåˆ°æ–‡ä»¶
 bool LexicalAnalyzer::Print(string fileName) const throw()		
 {
 	std::ofstream outFile(fileName);
@@ -82,7 +82,7 @@ bool LexicalAnalyzer::Print(string fileName) const throw()
 	outFile.close();
 	return true;
 }
-// ½«´Ê·¨·ÖÎöµÄ½á¹ûÊä³öµ½Á÷£¨ÎÄ¼şÁ÷¡¢×Ö·ûÁ÷»ò¿ØÖÆÌ¨Êä³öÁ÷£©
+// å°†è¯æ³•åˆ†æçš„ç»“æœè¾“å‡ºåˆ°æµï¼ˆæ–‡ä»¶æµã€å­—ç¬¦æµæˆ–æ§åˆ¶å°è¾“å‡ºæµï¼‰
 void LexicalAnalyzer::Print(ostream &output) const throw()		
 {
 	int tokenNo = 1;
@@ -92,7 +92,7 @@ void LexicalAnalyzer::Print(ostream &output) const throw()
 		output << tokenNo++ << "\t\t" << iter->lineNumber_ << "\t\t";
 		output.width(16);
 		output << std::left << Token::sTokenTypeToString[iter->type_] << "    ";
-		// Ö»ÔÚ±ØÒªÊ±Êä³ö
+		// åªåœ¨å¿…è¦æ—¶è¾“å‡º
 		//if(iter->type_ == Token::IDENTIFIER)
 		//{
 		//	output << iter->value_.identifier;
@@ -109,7 +109,7 @@ void LexicalAnalyzer::Print(ostream &output) const throw()
 		//{
 		//	output << iter->value_.identifier;
 		//}
-		// ËùÓĞToken¾ùÒªÊä³ö
+		// æ‰€æœ‰Tokenå‡è¦è¾“å‡º
 		if(iter->type_ == Token::CONST_INTEGER)
 		{
 			output << iter->value_.integer;
@@ -127,11 +127,11 @@ void LexicalAnalyzer::Print(ostream &output) const throw()
 	}
 }
 
-void LexicalAnalyzer::ResetTokenPos() throw()				// ÖØÖÃ·ûºÅÎ»ÖÃ
+void LexicalAnalyzer::ResetTokenPos() throw()				// é‡ç½®ç¬¦å·ä½ç½®
 {
 	token_iter_ = token_vector_.begin();
 }
-bool LexicalAnalyzer::GetNextToken(Token &token) throw()	// »ñÈ¡ÏÂÒ»·ûºÅ
+bool LexicalAnalyzer::GetNextToken(Token &token) throw()	// è·å–ä¸‹ä¸€ç¬¦å·
 {
 	if(token_iter_ != token_vector_.end())
 	{
@@ -150,27 +150,27 @@ vector<string> LexicalAnalyzer::getStringTable() const throw()
 	return vector<string>(string_set.begin(), string_set.end());
 }
 
-// ÔÚ×î³õÉè¼ÆÊ±¸Ãº¯ÊıÃ»ÓĞ²ÎÊı£¬ĞĞÎªÊÇ°´ÕÕskipSpace=falseÀ´´¦ÀíµÄ
-// ¿¼ÂÇµ½+/-ºÅÖ®ºóÓëµÚÒ»¸ö³£ÊıÖ®¼ä¿ÉÄÜÓĞ¿Õ¸ñµÄÇé¿ö£¬¹Ê¼ÓÉÏ²ÎÊıskipSpaceÒÔ´¦Àí¸ÃÖÖÇé¿ö
-// µ÷ÓÃÊ±¿É²»Ğ´²ÎÊı£¬Ä¬ÈÏÎªfalse
-char LexicalAnalyzer::getNextChar(bool skipSpace)				// µÃµ½ÏÂÒ»¸ö×Ö·û
+// åœ¨æœ€åˆè®¾è®¡æ—¶è¯¥å‡½æ•°æ²¡æœ‰å‚æ•°ï¼Œè¡Œä¸ºæ˜¯æŒ‰ç…§skipSpace=falseæ¥å¤„ç†çš„
+// è€ƒè™‘åˆ°+/-å·ä¹‹åä¸ç¬¬ä¸€ä¸ªå¸¸æ•°ä¹‹é—´å¯èƒ½æœ‰ç©ºæ ¼çš„æƒ…å†µï¼Œæ•…åŠ ä¸Šå‚æ•°skipSpaceä»¥å¤„ç†è¯¥ç§æƒ…å†µ
+// è°ƒç”¨æ—¶å¯ä¸å†™å‚æ•°ï¼Œé»˜è®¤ä¸ºfalse
+char LexicalAnalyzer::getNextChar(bool skipSpace)				// å¾—åˆ°ä¸‹ä¸€ä¸ªå­—ç¬¦
 {
 	static string line;
 	static string::const_iterator iter = line.end();
 	
-	if(skipSpace)	// Ìø¹ı¿Õ×Ö·ûµÄ¶Á·¨
+	if(skipSpace)	// è·³è¿‡ç©ºå­—ç¬¦çš„è¯»æ³•
 	{
-		// Èô¶Áµ½ÁËĞĞÎ²£¬Ôò¶ÁÈ¡ĞÂµÄÒ»ĞĞ£¬Ö±µ½¶Áµ½·Ç¿ÕĞĞ»òÎÄ¼ş½áÊø
+		// è‹¥è¯»åˆ°äº†è¡Œå°¾ï¼Œåˆ™è¯»å–æ–°çš„ä¸€è¡Œï¼Œç›´åˆ°è¯»åˆ°éç©ºè¡Œæˆ–æ–‡ä»¶ç»“æŸ
 		while(iter == line.end() || isspace(*iter))
 		{
-			while(iter == line.end())// Ö±µ½¶Áµ½ÁËĞÂµÄ·Ç¿ÕĞĞ£¬»òÕß¶Áµ½ÎÄ¼şÎ²£¬²ÅÌø³öÑ­»·
+			while(iter == line.end())// ç›´åˆ°è¯»åˆ°äº†æ–°çš„éç©ºè¡Œï¼Œæˆ–è€…è¯»åˆ°æ–‡ä»¶å°¾ï¼Œæ‰è·³å‡ºå¾ªç¯
 			{
-				if(getline(srcfile_, line))	// ¶ÁÈ¡³É¹¦
+				if(getline(srcfile_, line))	// è¯»å–æˆåŠŸ
 				{
 					++currentline_;
 					iter = line.begin();
 				}
-				else						// ¶Áµ½ÎÄ¼şÎ²
+				else						// è¯»åˆ°æ–‡ä»¶å°¾
 				{
 					return '\0';
 				}
@@ -182,17 +182,17 @@ char LexicalAnalyzer::getNextChar(bool skipSpace)				// µÃµ½ÏÂÒ»¸ö×Ö·û
 		}
 		return *(iter++);
 	}
-	else	// ²»Ìø¹ı¿Õ×Ö·ûµÄ¶Á·¨
+	else	// ä¸è·³è¿‡ç©ºå­—ç¬¦çš„è¯»æ³•
 	{
 		if(iter == line.end())
 		{
-			if(getline(srcfile_, line))	// ¶ÁÈ¡³É¹¦
+			if(getline(srcfile_, line))	// è¯»å–æˆåŠŸ
 			{
 				++currentline_;
 				iter = line.begin();
 				return '\n';
 			}
-			else						// ¶Áµ½ÎÄ¼şÎ²
+			else						// è¯»åˆ°æ–‡ä»¶å°¾
 			{
 				return '\0';
 			}
@@ -204,25 +204,25 @@ char LexicalAnalyzer::getNextChar(bool skipSpace)				// µÃµ½ÏÂÒ»¸ö×Ö·û
 
 void LexicalAnalyzer::ParseCurrentToken(Token &token, char &ch) throw(LexException)
 {
-	// ÏÈÅĞ¶ÏÈıÖÖ²»¶¨³¤×Ö·ûµÄÇé¿ö
-	if(isalpha(ch))		// ±£Áô×Ö»ò±êÊ¶·û			
+	// å…ˆåˆ¤æ–­ä¸‰ç§ä¸å®šé•¿å­—ç¬¦çš„æƒ…å†µ
+	if(isalpha(ch))		// ä¿ç•™å­—æˆ–æ ‡è¯†ç¬¦			
 	{
 		LetterHandle(token, ch);
 	}
-	else if(isdigit(ch))// ÎŞ·ûºÅÕûĞÍ³£Á¿
+	else if(isdigit(ch))// æ— ç¬¦å·æ•´å‹å¸¸é‡
 	{
 		DigitHandle(token, ch);
 	}
-	else if('"' == ch)	// ×Ö·û´®³£Á¿
+	else if('"' == ch)	// å­—ç¬¦ä¸²å¸¸é‡
 	{
 		StringHandle(token, ch);
 	}
-	// Ò»ÖÖÈı×Ö·ûµÄÇé¿ö
-	else if('\'' == ch)	// ×Ö·û³£Á¿
+	// ä¸€ç§ä¸‰å­—ç¬¦çš„æƒ…å†µ
+	else if('\'' == ch)	// å­—ç¬¦å¸¸é‡
 	{
 		CharHandle(token, ch);
 	}
-	// ¿ÉÄÜÎªµ¥×Ö·û»òË«×Ö·ûµÄÇé¿ö
+	// å¯èƒ½ä¸ºå•å­—ç¬¦æˆ–åŒå­—ç¬¦çš„æƒ…å†µ
 	else if(':' == ch)
 	{
 		ColonHandle(token, ch);
@@ -235,7 +235,7 @@ void LexicalAnalyzer::ParseCurrentToken(Token &token, char &ch) throw(LexExcepti
 	{
 		GreaterthanHandle(token, ch);
 	}
-	// ¿ÉÄÜµ¥×Ö·û»ò¶à×Ö·ûµÄÇé¿ö
+	// å¯èƒ½å•å­—ç¬¦æˆ–å¤šå­—ç¬¦çš„æƒ…å†µ
 	else if('+' == ch)
 	{
 		PlusHandle(token, ch);
@@ -244,7 +244,7 @@ void LexicalAnalyzer::ParseCurrentToken(Token &token, char &ch) throw(LexExcepti
 	{
 		MinusHandle(token, ch);
 	}
-	else if('/' == ch)	// µ¥ĞĞ×¢ÊÍ
+	else if('/' == ch)	// å•è¡Œæ³¨é‡Š
 	{
 		token.value_.identifier.clear();
 		token.value_.identifier.push_back(ch);
@@ -259,11 +259,11 @@ void LexicalAnalyzer::ParseCurrentToken(Token &token, char &ch) throw(LexExcepti
 		}
 		else
 		{
-			// ¾ÍÊÇÒ»¸ö¼òµ¥µÄ³ıºÅ
+			// å°±æ˜¯ä¸€ä¸ªç®€å•çš„é™¤å·
 			token.type_ = Token::DIV;
 		}
 	}
-	// Ê£ÏÂÊÇµ¥×Ö·ûµÄÇé¿ö
+	// å‰©ä¸‹æ˜¯å•å­—ç¬¦çš„æƒ…å†µ
 	else
 	{
 		token.value_.identifier.clear();
@@ -304,12 +304,12 @@ void LexicalAnalyzer::ParseCurrentToken(Token &token, char &ch) throw(LexExcepti
 			throw LexException("unkown character", ch, currentline_);
 			break;
 		}
-		// ¶ÁÈëÏÂÒ»¸ö·ûºÅ
+		// è¯»å…¥ä¸‹ä¸€ä¸ªç¬¦å·
 		ch = getNextChar(true);
 	}
 }
 
-void LexicalAnalyzer::SingleLineCommentHandle(Token &token, char &ch) throw()			// µ¥ĞĞ×¢ÊÍ
+void LexicalAnalyzer::SingleLineCommentHandle(Token &token, char &ch) throw()			// å•è¡Œæ³¨é‡Š
 {
 	do
 	{
@@ -318,9 +318,9 @@ void LexicalAnalyzer::SingleLineCommentHandle(Token &token, char &ch) throw()			
 	}
 	while(ch != '\0' && ch != '\n');
 	token.type_ = Token::COMMENT;
-	ch = getNextChar();	// Õâ¾ä¿ÉÓĞ¿ÉÎŞ£¬ÒòÎª'\0'ºÍ'\n'¶¼¿ÉÒÔÔÚParseÖĞ±»Í×ÉÆ´¦Àí¡£µ«¼ÓÔÚÕâÀïµÄĞ§ÂÊ»á¸ßÒ»Ğ©
+	ch = getNextChar();	// è¿™å¥å¯æœ‰å¯æ— ï¼Œå› ä¸º'\0'å’Œ'\n'éƒ½å¯ä»¥åœ¨Parseä¸­è¢«å¦¥å–„å¤„ç†ã€‚ä½†åŠ åœ¨è¿™é‡Œçš„æ•ˆç‡ä¼šé«˜ä¸€äº›
 }
-void LexicalAnalyzer::BlockCommentHandle(Token &token, char &ch) throw(LexException)			// ¶àĞĞ×¢ÊÍ
+void LexicalAnalyzer::BlockCommentHandle(Token &token, char &ch) throw(LexException)			// å¤šè¡Œæ³¨é‡Š
 {
 	token.value_.identifier.push_back(ch);
 	char lastCh = '\0';
@@ -337,17 +337,17 @@ void LexicalAnalyzer::BlockCommentHandle(Token &token, char &ch) throw(LexExcept
 	}
 	token.value_.identifier.push_back(ch);
 	token.type_ = Token::COMMENT;
-	ch = getNextChar();	// Õâ¾äÒ»¶¨ÒªÓĞ£¬Ê¹ch±äÎª×¢ÊÍºóµÄµÚÒ»¸ö×Ö·û
+	ch = getNextChar();	// è¿™å¥ä¸€å®šè¦æœ‰ï¼Œä½¿chå˜ä¸ºæ³¨é‡Šåçš„ç¬¬ä¸€ä¸ªå­—ç¬¦
 }
-void LexicalAnalyzer::DigitHandle(Token &token, char &ch) throw(LexException)					// ´¦ÀíÎŞ·ûºÅÕûÊı³£Á¿
+void LexicalAnalyzer::DigitHandle(Token &token, char &ch) throw(LexException)					// å¤„ç†æ— ç¬¦å·æ•´æ•°å¸¸é‡
 {
 	int n = static_cast<int>(ch - '0');
 	int last_n = 0;
-	while(isdigit(ch = getNextChar()))	// ½«Êı×ÖÆ´½Ó³ÉÊı
+	while(isdigit(ch = getNextChar()))	// å°†æ•°å­—æ‹¼æ¥æˆæ•°
 	{
 		last_n = n;
 		n = n * 10 + static_cast<int>(ch - '0');
-		if(n < last_n)	// ³£ÊıÌ«´ó
+		if(n < last_n)	// å¸¸æ•°å¤ªå¤§
 		{
 			throw LexException("truncation of constant value", ch, currentline_);
 		}
@@ -355,34 +355,34 @@ void LexicalAnalyzer::DigitHandle(Token &token, char &ch) throw(LexException)			
 	token.type_ = Token::CONST_INTEGER;
 	token.value_.integer = n;
 }
-void LexicalAnalyzer::LetterHandle(Token &token, char &ch) throw()					// ´¦Àí×ÖÄ¸
+void LexicalAnalyzer::LetterHandle(Token &token, char &ch) throw()					// å¤„ç†å­—æ¯
 {
 	token.lineNumber_ = currentline_;
 	token.value_.identifier.clear();
-	do	// ½«×ÖÄ¸Æ´½Ó³É×Ö·û´®
+	do	// å°†å­—æ¯æ‹¼æ¥æˆå­—ç¬¦ä¸²
 	{
 		token.value_.identifier.push_back(ch);
 		ch = getNextChar();
 	}while(isalpha(ch) || isdigit(ch) || '_' == ch);
-	// ÔÚ±£Áô×Ö±íÖĞ²éÕÒ£¬ÊÇ·ñÎª±£Áô×Ö
+	// åœ¨ä¿ç•™å­—è¡¨ä¸­æŸ¥æ‰¾ï¼Œæ˜¯å¦ä¸ºä¿ç•™å­—
 	map<string, Token::TokenType>::const_iterator iter = Token::sReserveWordToTokenType.find(token.value_.identifier);
-	if(iter != Token::sReserveWordToTokenType.end())	// ÕÒµ½ÁË£¬ËµÃ÷ÊÇ±£Áô×Ö
+	if(iter != Token::sReserveWordToTokenType.end())	// æ‰¾åˆ°äº†ï¼Œè¯´æ˜æ˜¯ä¿ç•™å­—
 	{
 		token.type_ = iter->second;
 	}
-	else												// Ã»ÕÒµ½£¬ËµÃ÷ÊÇÓÃ»§×Ô¶¨ÒåµÄ±êÊ¶·û
+	else												// æ²¡æ‰¾åˆ°ï¼Œè¯´æ˜æ˜¯ç”¨æˆ·è‡ªå®šä¹‰çš„æ ‡è¯†ç¬¦
 	{
 		token.type_ = Token::IDENTIFIER;
 	}
 }
-void LexicalAnalyzer::StringHandle(Token &token, char &ch) throw(LexException)					// ´¦Àí×Ö·û´®³£Á¿
+void LexicalAnalyzer::StringHandle(Token &token, char &ch) throw(LexException)					// å¤„ç†å­—ç¬¦ä¸²å¸¸é‡
 {
 	token.lineNumber_ = currentline_;
 	ch = getNextChar();
 	token.value_.identifier.clear();
-	while(ch < 0 || (isprint(ch) && ch != '"'))	// ch < 0ÊÇÎªÁË´¦Àíºº×Ö×¨ÃÅÉèÁ¢µÄ
+	while(ch < 0 || (isprint(ch) && ch != '"'))	// ch < 0æ˜¯ä¸ºäº†å¤„ç†æ±‰å­—ä¸“é—¨è®¾ç«‹çš„
 	{
-		// ±àÒë³ÌĞòÒª²»Òª´¦Àí×ªÒå×Ö·û£¿ĞèÒª£¡
+		// ç¼–è¯‘ç¨‹åºè¦ä¸è¦å¤„ç†è½¬ä¹‰å­—ç¬¦ï¼Ÿéœ€è¦ï¼
 		if('\\' == ch)
 		{
 			ch = GetEscapeValue(getNextChar());
@@ -390,11 +390,11 @@ void LexicalAnalyzer::StringHandle(Token &token, char &ch) throw(LexException)		
 		token.value_.identifier.push_back(ch);
 		ch = getNextChar();
 	}
-	if('"' == ch)	// ÅĞ¶Ï½áÊø·ûºÅÊÇ²»ÊÇË«ÒıºÅ
+	if('"' == ch)	// åˆ¤æ–­ç»“æŸç¬¦å·æ˜¯ä¸æ˜¯åŒå¼•å·
 	{
 		token.type_ = Token::CONST_STRING;
 		ch = getNextChar();
-		// ½«×Ö·û´®¼ÓÈë³£Á¿×Ö·û´®±í
+		// å°†å­—ç¬¦ä¸²åŠ å…¥å¸¸é‡å­—ç¬¦ä¸²è¡¨
 		string_set.insert(token.value_.identifier);
 	}
 	else
@@ -402,52 +402,52 @@ void LexicalAnalyzer::StringHandle(Token &token, char &ch) throw(LexException)		
 		throw LexException("wrong string constant definition: require \" as an end sign", ch, currentline_);
 	}
 }
-void LexicalAnalyzer::CharHandle(Token &token, char &ch) throw(LexException)						// ´¦Àí×Ö·û³£Á¿
+void LexicalAnalyzer::CharHandle(Token &token, char &ch) throw(LexException)						// å¤„ç†å­—ç¬¦å¸¸é‡
 {
 	token.lineNumber_ = currentline_;
-	ch = getNextChar();	// ¶ÁÈ¡µ¥ÒıºÅºóÃæµÄÄÇ¸ö×Ö·û
-	if(!isprint(ch))	// ÅĞ¶ÏÊÇ²»ÊÇ×ÖÄ¸»òÕßÊı×Ö
+	ch = getNextChar();	// è¯»å–å•å¼•å·åé¢çš„é‚£ä¸ªå­—ç¬¦
+	if(!isprint(ch))	// åˆ¤æ–­æ˜¯ä¸æ˜¯å­—æ¯æˆ–è€…æ•°å­—
 	{
 		throw LexException("wrong character constant definition: require letter after \"'\"", ch, currentline_);
 	}
-	else	// ¶ÁÈ¡½áÊøµÄµ¥ÒıºÅ
+	else	// è¯»å–ç»“æŸçš„å•å¼•å·
 	{
-		if('\\' == ch)	// ×ªÒå×Ö·û
+		if('\\' == ch)	// è½¬ä¹‰å­—ç¬¦
 		{
 			ch = GetEscapeValue(getNextChar());
 		}
 		token.value_.character = ch;
 		ch = getNextChar();
-		if('\'' == ch)	// ³É¹¦¶ÁÈ¡µ½µ¥ÒıºÅ
+		if('\'' == ch)	// æˆåŠŸè¯»å–åˆ°å•å¼•å·
 		{
 			token.type_ = Token::CONST_CHAR;
 			ch = getNextChar();
 		}
-		else	// Èç¹û²»ÊÇµ¥ÒıºÅ
+		else	// å¦‚æœä¸æ˜¯å•å¼•å·
 		{
 			throw LexException("wrong character constant definition: require \"'\"", ch, currentline_);
 		}
 	}
 }
 
-void LexicalAnalyzer::ColonHandle(Token &token, char &ch) throw()					// ´¦ÀíÃ°ºÅ
+void LexicalAnalyzer::ColonHandle(Token &token, char &ch) throw()					// å¤„ç†å†’å·
 {
 	token.value_.identifier.clear();
 	token.value_.identifier.push_back(ch);
 	token.lineNumber_ = currentline_;
-	ch = getNextChar();// ¶ÁÈ¡Ã°ºÅµÄÏÂÒ»¸ö·ûºÅ
-	if('=' == ch)	// ÈôÊÇµÈºÅ£¬ÔòÓëÇ°Ò»¸öÃ°ºÅÒ»Æğ¹¹³ÉÒ»¸ö¸³Öµ·ûºÅ
+	ch = getNextChar();// è¯»å–å†’å·çš„ä¸‹ä¸€ä¸ªç¬¦å·
+	if('=' == ch)	// è‹¥æ˜¯ç­‰å·ï¼Œåˆ™ä¸å‰ä¸€ä¸ªå†’å·ä¸€èµ·æ„æˆä¸€ä¸ªèµ‹å€¼ç¬¦å·
 	{
 		token.value_.identifier.push_back(ch);
 		token.type_ = Token::ASSIGN;
 		ch = getNextChar();
 	}
-	else			// ²»ÊÇµÈºÅ£¬ÔòÇ°ÃæµÄÃ°ºÅ¾ÍÖ»ÊÇµ¥´¿µÄÃ°ºÅ
+	else			// ä¸æ˜¯ç­‰å·ï¼Œåˆ™å‰é¢çš„å†’å·å°±åªæ˜¯å•çº¯çš„å†’å·
 	{
 		token.type_ = Token::COLON;
 	}
 }
-void LexicalAnalyzer::LessthanHandle(Token &token, char &ch) throw()						// ´¦ÀíĞ¡ÓÚºÅ
+void LexicalAnalyzer::LessthanHandle(Token &token, char &ch) throw()						// å¤„ç†å°äºå·
 {
 	token.value_.identifier.clear();
 	token.value_.identifier.push_back(ch);
@@ -470,7 +470,7 @@ void LexicalAnalyzer::LessthanHandle(Token &token, char &ch) throw()						// ´¦À
 		token.type_ = Token::LT;
 	}
 }
-void LexicalAnalyzer::GreaterthanHandle(Token &token, char &ch) throw()						// ´¦Àí´óÓÚºÅ
+void LexicalAnalyzer::GreaterthanHandle(Token &token, char &ch) throw()						// å¤„ç†å¤§äºå·
 {
 	token.value_.identifier.clear();
 	token.value_.identifier.push_back(ch);
@@ -488,40 +488,40 @@ void LexicalAnalyzer::GreaterthanHandle(Token &token, char &ch) throw()						// 
 	}
 }
 
-// ×¢Òâch = getNextChar(true)Ò»¶¨ÒªÓÃtrue×÷getNextCharµÄ²ÎÊı
-// ·ñÔò¾ÍÖ»ÄÜ´¦Àí+ÓëºóÃæ³£Êı½ôÁÚµÄÇé¿ö
-// ¶øÇÒÒª±£Ö¤µ÷ÓÃ¸Ãº¯ÊıÊ±£¬token.type_´æµÄÒ»¶¨ÊÇÉÏÒ»¸ötokenµÄÀàĞÍ
+// æ³¨æ„ch = getNextChar(true)ä¸€å®šè¦ç”¨trueä½œgetNextCharçš„å‚æ•°
+// å¦åˆ™å°±åªèƒ½å¤„ç†+ä¸åé¢å¸¸æ•°ç´§é‚»çš„æƒ…å†µ
+// è€Œä¸”è¦ä¿è¯è°ƒç”¨è¯¥å‡½æ•°æ—¶ï¼Œtoken.type_å­˜çš„ä¸€å®šæ˜¯ä¸Šä¸€ä¸ªtokençš„ç±»å‹
 void LexicalAnalyzer::PlusHandle(Token &token, char &ch) throw(LexException)
 {
 	token.value_.identifier.clear();
 	token.value_.identifier.push_back(ch);
 	token.lineNumber_ = currentline_;
-	ch = getNextChar(true);	// È¡µÃÏÂÒ»¸öÓĞĞ§µÄ×Ö·û(ÕâÀïÒ»¶¨Ò»¶¨ÒªÓÃtrue×÷²ÎÊı£¬ÒÔ´¦Àí+Ö®ºóÓĞ¿Õ¸ñµÄÇé¿ö)
-	// Ç°ÃæÊÇµÈºÅ»ò¸³ÖµºÅµÄÇé¿ö£¨ÈôºóÃæÊÇÊı×Ö£¬Ôò°´µ¥²Ù×÷·û¸ººÅÀ´´¦Àí£©
+	ch = getNextChar(true);	// å–å¾—ä¸‹ä¸€ä¸ªæœ‰æ•ˆçš„å­—ç¬¦(è¿™é‡Œä¸€å®šä¸€å®šè¦ç”¨trueä½œå‚æ•°ï¼Œä»¥å¤„ç†+ä¹‹åæœ‰ç©ºæ ¼çš„æƒ…å†µ)
+	// å‰é¢æ˜¯ç­‰å·æˆ–èµ‹å€¼å·çš„æƒ…å†µï¼ˆè‹¥åé¢æ˜¯æ•°å­—ï¼Œåˆ™æŒ‰å•æ“ä½œç¬¦è´Ÿå·æ¥å¤„ç†ï¼‰
 	if((token.type_ == Token::EQU || token.type_ == Token::ASSIGN) && isdigit(ch))
 	{
 		DigitHandle(token, ch);
 	}
-	else	// °´Ë«²Ù×÷·ûµÄ¼õºÅÀ´´¦Àí
+	else	// æŒ‰åŒæ“ä½œç¬¦çš„å‡å·æ¥å¤„ç†
 	{
 		token.type_ = Token::PLUS;
 	}
 }
-// ×¢Òâch = getNextChar(true)Ò»¶¨ÒªÓÃtrue×÷getNextCharµÄ²ÎÊı
-// ·ñÔò¾ÍÖ»ÄÜ´¦Àí-ÓëºóÃæ³£Êı½ôÁÚµÄÇé¿ö
+// æ³¨æ„ch = getNextChar(true)ä¸€å®šè¦ç”¨trueä½œgetNextCharçš„å‚æ•°
+// å¦åˆ™å°±åªèƒ½å¤„ç†-ä¸åé¢å¸¸æ•°ç´§é‚»çš„æƒ…å†µ
 void LexicalAnalyzer::MinusHandle(Token &token, char &ch) throw(LexException)
 {
 	token.value_.identifier.clear();
 	token.value_.identifier.push_back(ch);
 	token.lineNumber_ = currentline_;
-	ch = getNextChar(true);	// È¡µÃÏÂÒ»¸öÓĞĞ§µÄ×Ö·û(ÕâÀïÒ»¶¨Ò»¶¨ÒªÓÃtrue×÷²ÎÊı£¬ÒÔ´¦Àí-Ö®ºóÓĞ¿Õ¸ñµÄÇé¿ö)
-	// Ç°ÃæÊÇµÈºÅ»ò¸³ÖµºÅµÄÇé¿ö£¨ÈôºóÃæÊÇÊı×Ö£¬Ôò°´µ¥²Ù×÷·û¸ººÅÀ´´¦Àí£©
+	ch = getNextChar(true);	// å–å¾—ä¸‹ä¸€ä¸ªæœ‰æ•ˆçš„å­—ç¬¦(è¿™é‡Œä¸€å®šä¸€å®šè¦ç”¨trueä½œå‚æ•°ï¼Œä»¥å¤„ç†-ä¹‹åæœ‰ç©ºæ ¼çš„æƒ…å†µ)
+	// å‰é¢æ˜¯ç­‰å·æˆ–èµ‹å€¼å·çš„æƒ…å†µï¼ˆè‹¥åé¢æ˜¯æ•°å­—ï¼Œåˆ™æŒ‰å•æ“ä½œç¬¦è´Ÿå·æ¥å¤„ç†ï¼‰
 	if((token.type_ == Token::EQU || token.type_ == Token::ASSIGN) && isdigit(ch))
 	{
 		DigitHandle(token, ch);
 		token.value_.integer  = -token.value_.integer;
 	}
-	else	// °´Ë«²Ù×÷·ûµÄ¼õºÅÀ´´¦Àí
+	else	// æŒ‰åŒæ“ä½œç¬¦çš„å‡å·æ¥å¤„ç†
 	{
 		token.type_ = Token::MINUS;
 	}

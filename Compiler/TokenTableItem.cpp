@@ -51,8 +51,8 @@ string TokenTableItem::toString() const throw()
 	return buf.str();
 }
 
-// ÀàĞÍ×ª»»¾ØÕó£¬ĞĞÏÂ±êºÍÁĞÏÂ±êÎªÁ½¸ö²Ù×÷ÊıµÄÀàĞÍ£¬¶ÔÓ¦µÄÊı×éÔªËØÎªÁ½¸ö²Ù×÷ÊıÔËËãºóµÄ½á¹ûÀàĞÍ
-// ×¢Òâ£¬ÕâÀï¾ØÕóµÄĞĞÁĞÅÅ²¼ÑÏ¸ñÒÀÀµÓÚDecorateTypeÖĞµÄ¶¨ÒåË³Ğò
+// ç±»å‹è½¬æ¢çŸ©é˜µï¼Œè¡Œä¸‹æ ‡å’Œåˆ—ä¸‹æ ‡ä¸ºä¸¤ä¸ªæ“ä½œæ•°çš„ç±»å‹ï¼Œå¯¹åº”çš„æ•°ç»„å…ƒç´ ä¸ºä¸¤ä¸ªæ“ä½œæ•°è¿ç®—åçš„ç»“æœç±»å‹
+// æ³¨æ„ï¼Œè¿™é‡ŒçŸ©é˜µçš„è¡Œåˆ—æ’å¸ƒä¸¥æ ¼ä¾èµ–äºDecorateTypeä¸­çš„å®šä¹‰é¡ºåº
 const TokenTableItem::DecorateType TokenTableItem::TypeConversionMatrix[3][3] = 
 {
 ///*               VOID                              CHAR                          INTEGER*/
@@ -60,7 +60,7 @@ const TokenTableItem::DecorateType TokenTableItem::TypeConversionMatrix[3][3] =
 ///* CHAR    */    {TokenTableItem::CHAR,             TokenTableItem::CHAR,         TokenTableItem::INTEGER},
 ///* INTEGER */    {TokenTableItem::INTEGER,          TokenTableItem::INTEGER,      TokenTableItem::INTEGER}
 
-// ×¢£ºVOID²»²ÎÓëÀàĞÍ×ª»»£¬¹ÊVOIDËùÔÚµÄĞĞºÍÁĞµÄÔªËØ¶¼ÊÇVOID
+// æ³¨ï¼šVOIDä¸å‚ä¸ç±»å‹è½¬æ¢ï¼Œæ•…VOIDæ‰€åœ¨çš„è¡Œå’Œåˆ—çš„å…ƒç´ éƒ½æ˜¯VOID
 /*               VOID                              CHAR                          INTEGER*/
 /* VOID    */    {TokenTableItem::VOID,             TokenTableItem::VOID,         TokenTableItem::VOID},
 /* CHAR    */    {TokenTableItem::VOID,             TokenTableItem::CHAR,         TokenTableItem::INTEGER},

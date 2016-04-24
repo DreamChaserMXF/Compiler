@@ -32,7 +32,7 @@ private:
 	vector<Quaternary>::const_iterator GetProcFuncIterInQuaternaryTable(TokenTable::const_iterator c_iter) const throw();
 	
 	void TranslateQuaternary	(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	// ËãÊõÔËËã
+	// ç®—æœ¯è¿ç®—
 	void TranslateNeg			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateAdd			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateSub			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
@@ -40,7 +40,7 @@ private:
 	void TranslateDiv			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateAssign		(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateArrayAssign	(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	// Âß¼­ÔËËã
+	// é€»è¾‘è¿ç®—
 	void TranslateJmp			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateJe			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateJne			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
@@ -49,7 +49,7 @@ private:
 	void TranslateJl			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateJnl			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateLabel			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	// º¯Êıµ÷ÓÃ
+	// å‡½æ•°è°ƒç”¨
 	void TranslateSetP			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateSetRefP		(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateCall			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
@@ -57,16 +57,16 @@ private:
 	void TranslateStore			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateRead			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
 	void TranslateWrite			(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw();
-	// µ¥²Ù×÷Êı²Ù×÷£¨NEG, PUSH, IMUL, IDIV£©
+	// å•æ“ä½œæ•°æ“ä½œï¼ˆNEG, PUSH, IMUL, IDIVï¼‰
 	void OpGeneral	(enum SINGLEOPERATOR op, Quaternary::AddressingMethod addressingmethod, int index_or_value,   Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num, int var_space, int level) throw();
 	void OpImmediate(enum SINGLEOPERATOR op,                                                int value)																														throw();
 	void OpVar		(enum SINGLEOPERATOR op,                                                int tokentable_index,																	int para_num,                int level)	throw();
 	void OpReference(enum SINGLEOPERATOR op,                                                int tokentable_index,																	int para_num,				 int level)	throw();
 	void OpArray	(enum SINGLEOPERATOR op,                                                int tokentable_index, Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num,                int level) throw();
 	void OpTemp		(enum SINGLEOPERATOR op,                                                int index,                                            int var_space)															throw();
-	// Ë«²Ù×÷Êı²Ù×÷£¨µÚÒ»¸ö²Ù×÷ÊıÊÇ¸÷ÖÖÀàĞÍµÄÄÚ´æ±äÁ¿£¬µÚ¶ş¸öÊÇÁ¢¼´Êı»ò¼Ä´æÆ÷£©£¨MOV, ADD, SUB, LEA£©
-	// OpGeneralRegisterÖ÷ÒªÓÃÔÚStoreÖ¸ÁîÖĞ£¬ÏòÄÚ´æÖĞ´æÊı¾İÓÃ
-	// OpGeneralImmediateÖ÷ÒªÓÃÔÚ1.¶Ô±äÁ¿µÄÁ¢¼´Êı¸³Öµ£»2. ¶ÔÄÚ´æµÄÖ±½ÓµÄËãÊõ²Ù×÷£¨ËùÒÔÆäµÚ¶ş¸ö²Ù×÷ÊıÖ»ÄÜÎªÁ¢¼´Êı£©¡£µÚ2¸ö¹¦ÄÜÍùÍùÔÚËãÊõÔËËãµÄËÄÔªÊ½ÖĞ»¯¼òºó»áÓÃµ½¡£
+	// åŒæ“ä½œæ•°æ“ä½œï¼ˆç¬¬ä¸€ä¸ªæ“ä½œæ•°æ˜¯å„ç§ç±»å‹çš„å†…å­˜å˜é‡ï¼Œç¬¬äºŒä¸ªæ˜¯ç«‹å³æ•°æˆ–å¯„å­˜å™¨ï¼‰ï¼ˆMOV, ADD, SUB, LEAï¼‰
+	// OpGeneralRegisterä¸»è¦ç”¨åœ¨StoreæŒ‡ä»¤ä¸­ï¼Œå‘å†…å­˜ä¸­å­˜æ•°æ®ç”¨
+	// OpGeneralImmediateä¸»è¦ç”¨åœ¨1.å¯¹å˜é‡çš„ç«‹å³æ•°èµ‹å€¼ï¼›2. å¯¹å†…å­˜çš„ç›´æ¥çš„ç®—æœ¯æ“ä½œï¼ˆæ‰€ä»¥å…¶ç¬¬äºŒä¸ªæ“ä½œæ•°åªèƒ½ä¸ºç«‹å³æ•°ï¼‰ã€‚ç¬¬2ä¸ªåŠŸèƒ½å¾€å¾€åœ¨ç®—æœ¯è¿ç®—çš„å››å…ƒå¼ä¸­åŒ–ç®€åä¼šç”¨åˆ°ã€‚
 	void OpGeneralRegister   (enum DOUBLEOPERATOR op, Quaternary::AddressingMethod addressingmethod, int index_or_value,   Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num, int var_space, int level, enum REGISTER reg = EAX) throw();
 	void OpGeneralImmediate  (enum DOUBLEOPERATOR op, Quaternary::AddressingMethod addressingmethod, int index_or_value,   Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num, int var_space, int level, int immediate_value)	 throw();
 	void OpVarRegister		 (enum DOUBLEOPERATOR op,                                                int tokentable_index, int para_num,                                  int level, enum REGISTER reg = EAX)												 throw();
@@ -77,7 +77,7 @@ private:
 	void OpArrayImmediate	 (enum DOUBLEOPERATOR op,                                                int tokentable_index, Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num,                int level, int immediate_value)	 throw();
 	void OpTempRegister 	 (enum DOUBLEOPERATOR op,                                                int index,                                            int var_space           , enum REGISTER reg = EAX)												 throw();
 	void OpTempImmediate	 (enum DOUBLEOPERATOR op,                                                int index,                                            int var_space           , int immediate_value)													 throw();
-	// Ë«²Ù×÷Êı²Ù×÷£¨µÚÒ»¸ö²Ù×÷ÊıÊÇ¼Ä´æÆ÷£¬µÚ¶ş¸ö²Ù×÷ÊıÊÇ¸÷ÖÖÀàĞÍµÄÄÚ´æ±äÁ¿»òÁ¢¼´Êı£©£¨MOV, ADD, SUB, LEA£©
+	// åŒæ“ä½œæ•°æ“ä½œï¼ˆç¬¬ä¸€ä¸ªæ“ä½œæ•°æ˜¯å¯„å­˜å™¨ï¼Œç¬¬äºŒä¸ªæ“ä½œæ•°æ˜¯å„ç§ç±»å‹çš„å†…å­˜å˜é‡æˆ–ç«‹å³æ•°ï¼‰ï¼ˆMOV, ADD, SUB, LEAï¼‰
 	void OpRegisterGeneral	(enum DOUBLEOPERATOR op, enum REGISTER reg, Quaternary::AddressingMethod addressingmethod, int index_or_value,   Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num, int var_space, int level)	throw();
 	void OpRegisterImmediate(enum DOUBLEOPERATOR op, enum REGISTER reg,                                                int value)																														throw();
 	void OpRegisterVar		(enum DOUBLEOPERATOR op, enum REGISTER reg,                                                int tokentable_index, int para_num,                                  int level)													throw();
@@ -87,9 +87,9 @@ private:
 
 	string FindExitLabel(vector<Quaternary>::const_iterator c_iter) throw();
 
-	static string GenerateLabelString(int label_index);	// Í¨¹ılabel±êºÅÉú³Élabel×Ö·û´®
+	static string GenerateLabelString(int label_index);	// é€šè¿‡labelæ ‡å·ç”Ÿæˆlabelå­—ç¬¦ä¸²
 
-	static const char * const RegisterName[4];	// ¼Ä´æÆ÷Ãû
+	static const char * const RegisterName[4];	// å¯„å­˜å™¨å
 	static const char * const SingleOperatorName[4];
 	static const char * const DoubleOperatorName[5];
 

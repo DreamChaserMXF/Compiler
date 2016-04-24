@@ -52,19 +52,19 @@ bool AssemblyMaker::Assemble() throw()
 
 void AssemblyMaker::Head() throw()
 {
-	// ±êÌâ
+	// æ ‡é¢˜
 	assemble_buffer << "TITLE MXF_AssemblyCode\n";
 	
-	// Ö¸ÁîÄ£Ê½£¨32Î»£©£¬Ñ°Ö·Ä£Ê½£¨Æ½Ì¹Ñ°Ö·£©£¬´óĞ¡Ğ´Ä£Ê½£¨Ãô¸Ğ£©
+	// æŒ‡ä»¤æ¨¡å¼ï¼ˆ32ä½ï¼‰ï¼Œå¯»å€æ¨¡å¼ï¼ˆå¹³å¦å¯»å€ï¼‰ï¼Œå¤§å°å†™æ¨¡å¼ï¼ˆæ•æ„Ÿï¼‰
 	assemble_buffer << "\n.386";
 	assemble_buffer << "\n.model flat, stdcall";
 	assemble_buffer << "\noption casemap: none\n";
-	// °üº¬µÄ¿â
+	// åŒ…å«çš„åº“
 	assemble_buffer << "\nincludelib .\\masm32\\lib\\msvcrt.lib      ; for printf & scanf linking";
 	assemble_buffer << "\nincludelib .\\masm32\\lib\\kernel32.lib    ; for ExitProcess linking";
-	assemble_buffer << "\ninclude .\\masm32\\include\\msvcrt.inc     ; ËÆºõÃ»É¶ÓÃ£¬Ó¦¸ÃÊÇprintfºÍscanfµÄÉùÃ÷ÎÄ¼ş";
+	assemble_buffer << "\ninclude .\\masm32\\include\\msvcrt.inc     ; ä¼¼ä¹æ²¡å•¥ç”¨ï¼Œåº”è¯¥æ˜¯printfå’Œscanfçš„å£°æ˜æ–‡ä»¶";
 	assemble_buffer << "\ninclude .\\masm32\\include\\kernel32.inc   ; for ExitProcess";
-	// ÊäÈëÊä³öº¯Êıµ÷ÓÃ
+	// è¾“å…¥è¾“å‡ºå‡½æ•°è°ƒç”¨
 	assemble_buffer << "\nprintf PROTO C: ptr sbyte, :vararg";
 	assemble_buffer << "\nscanf  PROTO C: ptr sbyte, :vararg";
 	assemble_buffer << endl;
@@ -89,7 +89,7 @@ void AssemblyMaker::DataSegment() throw()
 		for(string::const_iterator iter = stringtable_[i].begin();
 			iter != stringtable_[i].end(); ++iter)
 		{
-			// Ã¿48¸öÕûÊı»»Ò»ĞĞ£¨Èç¹ûÉèÎª¼«ÏŞ£¬¼´49¸öÊı»»ĞĞ£¬µ«×îºó»¹ÓĞÒ»¸ö0£¬¼ÓÉÏÖ®ºó¿ÉÄÜ¾Í³¬ÁË
+			// æ¯48ä¸ªæ•´æ•°æ¢ä¸€è¡Œï¼ˆå¦‚æœè®¾ä¸ºæé™ï¼Œå³49ä¸ªæ•°æ¢è¡Œï¼Œä½†æœ€åè¿˜æœ‰ä¸€ä¸ª0ï¼ŒåŠ ä¸Šä¹‹åå¯èƒ½å°±è¶…äº†
 			if(iter != stringtable_[i].begin() && distance(iter, stringtable_[i].begin()) % 47 == 0)	
 			{
 				assemble_buffer << static_cast<int>(*iter) << "\n	                     db ";
@@ -109,21 +109,21 @@ void AssemblyMaker::CodeBeginSegment() throw()
 }
 void AssemblyMaker::MainFunction() throw()
 {
-	// Ö÷º¯ÊıÉùÃ÷
-	assemble_buffer << "\nstart:\n";				// ¿ªÊ¼Î»ÖÃ
-	assemble_buffer << "\n_main  proc far";		// Ìø×ª·½Ê½
-	// Ö÷º¯ÊıÍ·
-	// Ò». ÕÒ³öÖ÷º¯ÊıÖĞ¾Ö²¿±äÁ¿ÓëÁÙÊ±±äÁ¿µÄ´æ´¢¿Õ¼ä
+	// ä¸»å‡½æ•°å£°æ˜
+	assemble_buffer << "\nstart:\n";				// å¼€å§‹ä½ç½®
+	assemble_buffer << "\n_main  proc far";		// è·³è½¬æ–¹å¼
+	// ä¸»å‡½æ•°å¤´
+	// ä¸€. æ‰¾å‡ºä¸»å‡½æ•°ä¸­å±€éƒ¨å˜é‡ä¸ä¸´æ—¶å˜é‡çš„å­˜å‚¨ç©ºé—´
 	int var_space = tokentable_.GetVariableSpace(tokentable_.begin());;
 	int temp_space = quaternarytable_.front().src2_;
-	// ¶ş. ±£´æ¼Ä´æÆ÷²¢¹¹ÔìÔËĞĞÕ»
-	// »áÓÃµ½ eax ebx edx ebp esp
-	// esp²»ÄÜÑ¹Õ»±£´æ
+	// äºŒ. ä¿å­˜å¯„å­˜å™¨å¹¶æ„é€ è¿è¡Œæ ˆ
+	// ä¼šç”¨åˆ° eax ebx edx ebp esp
+	// espä¸èƒ½å‹æ ˆä¿å­˜
 	assemble_buffer << "\n    push    eax"
 					<< "\n    push    ebx"
 					<< "\n    push    ecx"
 					<< "\n    push    edx";
-	//// TEST Êä³öESP
+	//// TEST è¾“å‡ºESP
 	//assemble_buffer << "\n    mov     eax, esp"
 	//				<< "\n    push    eax"
 	//				<< "\n    push    offset _integer_format_p"
@@ -133,37 +133,37 @@ void AssemblyMaker::MainFunction() throw()
 	assemble_buffer	<< "\n    push    ebp"
 					<< "\n    mov     ebp,   esp"
 					<< "\n    sub     esp,   " << 4 * (var_space + temp_space);
-	//// TEST Êä³öEBP
+	//// TEST è¾“å‡ºEBP
 	//assemble_buffer << "\n    mov     eax, ebp"
 	//				<< "\n    push    eax"
 	//				<< "\n    push    offset _integer_format_p"
 	//				<< "\n    call    printf"
 	//				<< "\n    add     esp, 8";
 	assemble_buffer << '\n';
-	// Èı. ÔÚËÄÔªÊ½±íÖĞÕÒµ½Ö÷º¯ÊıµÄ¿ªÊ¼µØÖ·£¬¶ÔËÄÔªÊ½½øĞĞ»ã±à
+	// ä¸‰. åœ¨å››å…ƒå¼è¡¨ä¸­æ‰¾åˆ°ä¸»å‡½æ•°çš„å¼€å§‹åœ°å€ï¼Œå¯¹å››å…ƒå¼è¿›è¡Œæ±‡ç¼–
 	for(vector<Quaternary>::const_iterator q_iter = Quaternary::GetFunctionBody(quaternarytable_.begin());
 		Quaternary::END != q_iter->op_;
 		++q_iter)
 	{
-		// ×ª»»»ã±àÂë
+		// è½¬æ¢æ±‡ç¼–ç 
 		TranslateQuaternary(q_iter, 0, var_space, 0);
 	}
 	//assemble_buffer << "\n    push    offset  _String0"
 	//				<< "\n    push    offset  _str_format"
 	//				<< "\n    call    printf"
 	//				<< "\n    add     esp,   8";
-	// ËÄ. Ö÷º¯ÊıÎ²£º»¹Ô­¹¤×÷
+	// å››. ä¸»å‡½æ•°å°¾ï¼šè¿˜åŸå·¥ä½œ
 	assemble_buffer << '\n';
-	//// TEST Êä³öEBP
+	//// TEST è¾“å‡ºEBP
 	//assemble_buffer << "\n    mov     eax, ebp"
 	//				<< "\n    push    eax"
 	//				<< "\n    push    offset _integer_format_p"
 	//				<< "\n    call    printf"
 	//				<< "\n    add     esp, 8";
-	//assemble_buffer << "\n    add     esp,   " << 4 * (var_space + temp_space)	// »¹Ô­Õ»¶¥Ö¸Õë
-	assemble_buffer << "\n    mov     esp, ebp"	// »¹Ô­Õ»¶¥Ö¸Õë
+	//assemble_buffer << "\n    add     esp,   " << 4 * (var_space + temp_space)	// è¿˜åŸæ ˆé¡¶æŒ‡é’ˆ
+	assemble_buffer << "\n    mov     esp, ebp"	// è¿˜åŸæ ˆé¡¶æŒ‡é’ˆ
 					<< "\n    pop     ebp";
-	//// TEST Êä³öESP
+	//// TEST è¾“å‡ºESP
 	//assemble_buffer << "\n    mov     eax, esp"
 	//				<< "\n    push    eax"
 	//				<< "\n    push    offset _integer_format_p"
@@ -175,44 +175,44 @@ void AssemblyMaker::MainFunction() throw()
 					<< "\n    pop     ebx"
 					<< "\n    pop     eax";
 	//assemble_buffer << "\n    pop     0";
-	assemble_buffer << "\n    call    ExitProcess";	// Õâ¸öÓĞÉ¶ÓÃ£¿
+	assemble_buffer << "\n    call    ExitProcess";	// è¿™ä¸ªæœ‰å•¥ç”¨ï¼Ÿ
 	assemble_buffer << "\n_main  endp\n" << endl;
 }
 
-// ÆÕÍ¨º¯ÊıµÄ»ã±à¹ı³Ì
-// c_iterÊÇ¸Ãº¯ÊıÃûÔÚ·ûºÅ±íÖĞµÄ±íÏîµÄµü´úÆ÷
+// æ™®é€šå‡½æ•°çš„æ±‡ç¼–è¿‡ç¨‹
+// c_iteræ˜¯è¯¥å‡½æ•°ååœ¨ç¬¦å·è¡¨ä¸­çš„è¡¨é¡¹çš„è¿­ä»£å™¨
 void AssemblyMaker::OtherFunction(TokenTable::const_iterator c_iter) throw()
 {
-	// Ò». ÕÒµ½º¯ÊıÔÚËÄÔªÊ½µÄBEGINÓï¾ä
+	// ä¸€. æ‰¾åˆ°å‡½æ•°åœ¨å››å…ƒå¼çš„BEGINè¯­å¥
 	vector<Quaternary>::const_iterator q_iter = GetProcFuncIterInQuaternaryTable(c_iter);
-	// ¶ş. µÃµ½²ÎÊıËùÕ¼µÄ¿Õ¼ä£¨µ¥Î»£º4bytes£©
+	// äºŒ. å¾—åˆ°å‚æ•°æ‰€å çš„ç©ºé—´ï¼ˆå•ä½ï¼š4bytesï¼‰
 	int para_space = c_iter->value_;
-	// Èı. µÃµ½¾Ö²¿±äÁ¿µÄ¿Õ¼ä£¨µ¥Î»£º4bytes£©
+	// ä¸‰. å¾—åˆ°å±€éƒ¨å˜é‡çš„ç©ºé—´ï¼ˆå•ä½ï¼š4bytesï¼‰
 	int var_space = tokentable_.GetVariableSpace(c_iter + 1);
-	// ËÄ. µÃµ½ÁÙÊ±±äÁ¿µÄ¿Õ¼ä£¨µ¥Î»£º4bytes£©
+	// å››. å¾—åˆ°ä¸´æ—¶å˜é‡çš„ç©ºé—´ï¼ˆå•ä½ï¼š4bytesï¼‰
 	int temp_space = q_iter->src2_;
-	// Îå. Êä³öº¯ÊıÍ·£¬¹¹ÔìÔËĞĞÕ»£¨Îª¾Ö²¿±äÁ¿ºÍÁÙÊ±±äÁ¿·ÖÅä¿Õ¼ä£©
+	// äº”. è¾“å‡ºå‡½æ•°å¤´ï¼Œæ„é€ è¿è¡Œæ ˆï¼ˆä¸ºå±€éƒ¨å˜é‡å’Œä¸´æ—¶å˜é‡åˆ†é…ç©ºé—´ï¼‰
 	PrintQuaternaryComment(quaternarytable_, tokentable_, q_iter, assemble_buffer);
 	assemble_buffer << "\n_" << c_iter->name_ << distance(tokentable_.begin(), c_iter) <<"  proc near";
 	assemble_buffer << "\n    push    ebp"
 					<< "\n    mov     ebp,   esp"
 					<< "\n    sub     esp,   " << 4 * (var_space + temp_space);
 	assemble_buffer << '\n';
-	// Áù. ÕÒµ½º¯ÊıÖ÷ÌåÔÚËÄÔªÊ½ÖĞµÄÓï¾ä
-	//     È»ºóÖğ¸öËÄÔªÊ½Éú³É»ã±àÂë
+	// å…­. æ‰¾åˆ°å‡½æ•°ä¸»ä½“åœ¨å››å…ƒå¼ä¸­çš„è¯­å¥
+	//     ç„¶åé€ä¸ªå››å…ƒå¼ç”Ÿæˆæ±‡ç¼–ç 
 	for(q_iter = Quaternary::GetFunctionBody(q_iter);
 		Quaternary::END != q_iter->op_;
 		++q_iter)
 	{
 		TranslateQuaternary(q_iter, para_space, var_space, c_iter->level_);	
 	}
-	// Æß. Êä³öº¯ÊıÎ²
-	// º¯Êı·µ»ØµÄ±êºÅ£¬Ê¹µÃÔÚº¯ÊıÌåÖĞ£¬ÈÎÒâµØ·½·µ»ØÊ±£¬Ö»ÒªÌø×ªµ½Õâ¸ö±êºÅ¾Í¿ÉÒÔÁË
+	// ä¸ƒ. è¾“å‡ºå‡½æ•°å°¾
+	// å‡½æ•°è¿”å›çš„æ ‡å·ï¼Œä½¿å¾—åœ¨å‡½æ•°ä½“ä¸­ï¼Œä»»æ„åœ°æ–¹è¿”å›æ—¶ï¼Œåªè¦è·³è½¬åˆ°è¿™ä¸ªæ ‡å·å°±å¯ä»¥äº†
 	PrintQuaternaryComment(quaternarytable_, tokentable_, q_iter, assemble_buffer);
 	assemble_buffer << '\n' << c_iter->name_ << distance(tokentable_.begin(), c_iter) << "_Exit:";
-	// º¯Êı·µ»ØÓï¾ä
-	//assemble_buffer << "\n    add     esp,   " << 4 * (var_space + temp_space)	// »¹Ô­Õ»¶¥Ö¸Õë(ÕâÑùÒ²¿ÉÒÔ£¬µ«Èç¹ûÖĞ¼äÕ»»á±ä¶¯£¬¾Í²»ºÃÁË¡£±ÈÈç½«º¯Êı·µ»ØÖµÑ¹Õ»´æ´¢Ê±£¬¿ÉÄÜ»áÑ¹Èë¶à¸öÖµ£¬µ¼ÖÂaddµÄÊıÁ¿²»È·¶¨¡£)
-	assemble_buffer << "\n    mov     esp,    ebp"									// »¹Ô­Õ»¶¥Ö¸Õë
+	// å‡½æ•°è¿”å›è¯­å¥
+	//assemble_buffer << "\n    add     esp,   " << 4 * (var_space + temp_space)	// è¿˜åŸæ ˆé¡¶æŒ‡é’ˆ(è¿™æ ·ä¹Ÿå¯ä»¥ï¼Œä½†å¦‚æœä¸­é—´æ ˆä¼šå˜åŠ¨ï¼Œå°±ä¸å¥½äº†ã€‚æ¯”å¦‚å°†å‡½æ•°è¿”å›å€¼å‹æ ˆå­˜å‚¨æ—¶ï¼Œå¯èƒ½ä¼šå‹å…¥å¤šä¸ªå€¼ï¼Œå¯¼è‡´addçš„æ•°é‡ä¸ç¡®å®šã€‚)
+	assemble_buffer << "\n    mov     esp,    ebp"									// è¿˜åŸæ ˆé¡¶æŒ‡é’ˆ
 					<< "\n    pop     ebp"
 					<< "\n    ret";
 	//assemble_buffer ;
@@ -227,13 +227,13 @@ void AssemblyMaker::EndStatement() throw()
 	assemble_buffer << "\nend start" << endl;
 }
 
-// Í¨¹ıÖ¸Ïò·ûºÅ±íµÄ¹ı³Ì/º¯ÊıµÄµü´úÆ÷£¬ÕÒµ½ÆäÔÚËÄÔªÊ½±íÖĞ¶ÔÓ¦µÄBEGINÓï¾äµÄµü´úÆ÷
+// é€šè¿‡æŒ‡å‘ç¬¦å·è¡¨çš„è¿‡ç¨‹/å‡½æ•°çš„è¿­ä»£å™¨ï¼Œæ‰¾åˆ°å…¶åœ¨å››å…ƒå¼è¡¨ä¸­å¯¹åº”çš„BEGINè¯­å¥çš„è¿­ä»£å™¨
 vector<Quaternary>::const_iterator AssemblyMaker::GetProcFuncIterInQuaternaryTable(TokenTable::const_iterator c_iter) const throw()
 {
 	for(vector<Quaternary>::const_iterator iter = quaternarytable_.begin();
 		iter != quaternarytable_.end(); ++iter)
 	{
-		// ËÄÔªÊ½µÄBEGINÓï¾äÖĞ£¬dst_µÄÖµÎª¹ı³Ì/º¯ÊıÔÚ·ûºÅ±íÖĞµÄÏÂ±ê
+		// å››å…ƒå¼çš„BEGINè¯­å¥ä¸­ï¼Œdst_çš„å€¼ä¸ºè¿‡ç¨‹/å‡½æ•°åœ¨ç¬¦å·è¡¨ä¸­çš„ä¸‹æ ‡
 		if(Quaternary::BEGIN == iter->op_
 			&& iter->dst_ == distance(tokentable_.begin(), c_iter))
 		{
@@ -243,11 +243,11 @@ vector<Quaternary>::const_iterator AssemblyMaker::GetProcFuncIterInQuaternaryTab
 	return quaternarytable_.end();
 }
 
-// ·­ÒëËÄÔªÊ½
+// ç¿»è¯‘å››å…ƒå¼
 void AssemblyMaker::TranslateQuaternary(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	PrintQuaternaryComment(quaternarytable_, tokentable_, c_iter, assemble_buffer);
-	// ½«ËÄÔªÊ½·­ÒëÎª»ã±àÂë
+	// å°†å››å…ƒå¼ç¿»è¯‘ä¸ºæ±‡ç¼–ç 
 	switch(c_iter->op_)
 	{
 	case Quaternary::NEG:
@@ -317,7 +317,7 @@ void AssemblyMaker::TranslateQuaternary(const vector<Quaternary>::const_iterator
 	case Quaternary::LABEL:
 		TranslateLabel(c_iter, para_num, var_space, level);
 		break;
-	// ÒÔÏÂÈıÖÖÇé¿ö²»³öÏÖ
+	// ä»¥ä¸‹ä¸‰ç§æƒ…å†µä¸å‡ºç°
 	case Quaternary::BEGIN:
 	case Quaternary::END:
 	default:
@@ -327,220 +327,220 @@ void AssemblyMaker::TranslateQuaternary(const vector<Quaternary>::const_iterator
 }
 
 // dst = -src1[offset]
-// Ô´²Ù×÷Êı¿ÉÄÜÊÇÆÕÍ¨±äÁ¿¡¢Êı×é±äÁ¿»òÁÙÊ±±äÁ¿
-// ×¢Òâ£¬Èç¹ûÔ´²Ù×÷ÊıÊÇÁ¢¼´Êı£¬Ôò²»ĞèÒª×°ÔØÖÁEAXÔÙÈ¡·´£¬¶øÊÇÖ±½ÓÔÚ¸Ãº¯ÊıÌåÖĞÈ¡·´£¬ÔÙ´æ´¢ÖÁÄÚ´æ£¬ÕâÑù¿ÉÒÔÖ»ÓÃÒ»Ìõ»ã±àÖ¸Áî
-// È»¶ø£¬´ÏÃ÷µÄÎÒÒÑ¾­ÔÚÖĞ¼ä´úÂëÉú³ÉÊ±£¬ÓÅ»¯µôÁËÁ¢¼´ÊıµÄÈ¡·´£¬ËùÒÔÕâÀïµÄÔ´²Ù×÷Êı²»¿ÉÄÜÊÇÁ¢¼´Êı
+// æºæ“ä½œæ•°å¯èƒ½æ˜¯æ™®é€šå˜é‡ã€æ•°ç»„å˜é‡æˆ–ä¸´æ—¶å˜é‡
+// æ³¨æ„ï¼Œå¦‚æœæºæ“ä½œæ•°æ˜¯ç«‹å³æ•°ï¼Œåˆ™ä¸éœ€è¦è£…è½½è‡³EAXå†å–åï¼Œè€Œæ˜¯ç›´æ¥åœ¨è¯¥å‡½æ•°ä½“ä¸­å–åï¼Œå†å­˜å‚¨è‡³å†…å­˜ï¼Œè¿™æ ·å¯ä»¥åªç”¨ä¸€æ¡æ±‡ç¼–æŒ‡ä»¤
+// ç„¶è€Œï¼Œèªæ˜çš„æˆ‘å·²ç»åœ¨ä¸­é—´ä»£ç ç”Ÿæˆæ—¶ï¼Œä¼˜åŒ–æ‰äº†ç«‹å³æ•°çš„å–åï¼Œæ‰€ä»¥è¿™é‡Œçš„æºæ“ä½œæ•°ä¸å¯èƒ½æ˜¯ç«‹å³æ•°
 void AssemblyMaker::TranslateNeg(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	assert(Quaternary::IMMEDIATE_ADDRESSING != c_iter->method1_);	// ²»ĞÅÎÒÃÇÊÔÊÔ¿´£¿
-	// µ±Ô´²Ù×÷ÊıÓëÄ¿µÄ²Ù×÷ÊıÏàµÈÊ±£¬¿ÉÖ±½Ó¶ÔÄÚ´æ½øĞĞ²Ù×÷
+	assert(Quaternary::IMMEDIATE_ADDRESSING != c_iter->method1_);	// ä¸ä¿¡æˆ‘ä»¬è¯•è¯•çœ‹ï¼Ÿ
+	// å½“æºæ“ä½œæ•°ä¸ç›®çš„æ“ä½œæ•°ç›¸ç­‰æ—¶ï¼Œå¯ç›´æ¥å¯¹å†…å­˜è¿›è¡Œæ“ä½œ
 	if(c_iter->method1_ == c_iter->method3_ && c_iter->src1_ == c_iter->dst_)
 	{
-		// ´ËÊ±Á½¸ö²Ù×÷Êı¾ù²»¿ÉÄÜÊÇÊı×é£¬¹Êarray_offset²ÎÊı¸ø0
+		// æ­¤æ—¶ä¸¤ä¸ªæ“ä½œæ•°å‡ä¸å¯èƒ½æ˜¯æ•°ç»„ï¼Œæ•…array_offsetå‚æ•°ç»™0
 		OpGeneral(NEG, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	}
 	else
 	{
-		// ×°ÔØÔ´²Ù×÷ÊıÖÁEAX
+		// è£…è½½æºæ“ä½œæ•°è‡³EAX
 		OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, c_iter->method2_, c_iter->offset2_, para_num, var_space, level);
-		// È¡·´
+		// å–å
 		assemble_buffer << "\n    neg     eax";
-		// ½«EAX´æ»ØÄÚ´æ
+		// å°†EAXå­˜å›å†…å­˜
 		OpGeneralRegister(MOV, c_iter->method3_, c_iter->dst_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	}
 }
 
-// AddµÄ×óÓÒ²Ù×÷ÊıÖ»¿ÉÄÜÊÇ£ºÁ¢¼´Êı¡¢ÆÕÍ¨±äÁ¿¡¢ÁÙÊ±±äÁ¿£¬²»»áÊÇÊı×é
-// ÇÒ²»¿ÉÄÜÁ½¸öÍ¬Ê±ÊÇÁ¢¼´Êı£¨ÒÑÔÚexpressionµÄÖĞ¼ä´úÂëÉú³ÉÖĞÓÅ»¯£©
-// Ä¿µÄ²Ù×÷ÊıÖ»¿ÉÄÜÊÇÆÕÍ¨±äÁ¿»òÁÙÊ±±äÁ¿
-// TODO ÓÅ»¯£ºÄ³¸öÔ´²Ù×÷ÊıÓëÄ¿µÄ²Ù×÷ÊıÏàµÈ£¬ÇÒÁíÒ»¸öÔ´²Ù×÷ÊıÊÇÁ¢¼´ÊıÊ±£¬¿ÉÖ±½Ó¶ÔÄÚ´æ×ö¼Ó·¨ÔËËã
+// Addçš„å·¦å³æ“ä½œæ•°åªå¯èƒ½æ˜¯ï¼šç«‹å³æ•°ã€æ™®é€šå˜é‡ã€ä¸´æ—¶å˜é‡ï¼Œä¸ä¼šæ˜¯æ•°ç»„
+// ä¸”ä¸å¯èƒ½ä¸¤ä¸ªåŒæ—¶æ˜¯ç«‹å³æ•°ï¼ˆå·²åœ¨expressionçš„ä¸­é—´ä»£ç ç”Ÿæˆä¸­ä¼˜åŒ–ï¼‰
+// ç›®çš„æ“ä½œæ•°åªå¯èƒ½æ˜¯æ™®é€šå˜é‡æˆ–ä¸´æ—¶å˜é‡
+// TODO ä¼˜åŒ–ï¼šæŸä¸ªæºæ“ä½œæ•°ä¸ç›®çš„æ“ä½œæ•°ç›¸ç­‰ï¼Œä¸”å¦ä¸€ä¸ªæºæ“ä½œæ•°æ˜¯ç«‹å³æ•°æ—¶ï¼Œå¯ç›´æ¥å¯¹å†…å­˜åšåŠ æ³•è¿ç®—
 void AssemblyMaker::TranslateAdd(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	// µÚÒ»¸öÔ´²Ù×÷ÊıÓëÄ¿µÄ²Ù×÷ÊıÏàµÈ£¬ÇÒµÚ¶ş¸öÔ´²Ù×÷ÊıÊÇÁ¢¼´ÊıÊ±£¬Ö±½Ó¶ÔÄÚ´æ×ö¼Ó·¨ÔËËã
+	// ç¬¬ä¸€ä¸ªæºæ“ä½œæ•°ä¸ç›®çš„æ“ä½œæ•°ç›¸ç­‰ï¼Œä¸”ç¬¬äºŒä¸ªæºæ“ä½œæ•°æ˜¯ç«‹å³æ•°æ—¶ï¼Œç›´æ¥å¯¹å†…å­˜åšåŠ æ³•è¿ç®—
 	if(c_iter->method1_ == c_iter->method3_ && c_iter->src1_ == c_iter->dst_ && Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)
 	{
 		OpGeneralImmediate(ADD, c_iter->method3_, c_iter->dst_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level, c_iter->src2_);
 	}
-	// µÚ¶ş¸öÔ´²Ù×÷ÊıÓëÄ¿µÄ²Ù×÷ÊıÏàµÈ£¬ÇÒµÚÒ»¸öÔ´²Ù×÷ÊıÊÇÁ¢¼´ÊıÊ±£¬Ö±½Ó¶ÔÄÚ´æ×ö¼Ó·¨ÔËËã
+	// ç¬¬äºŒä¸ªæºæ“ä½œæ•°ä¸ç›®çš„æ“ä½œæ•°ç›¸ç­‰ï¼Œä¸”ç¬¬ä¸€ä¸ªæºæ“ä½œæ•°æ˜¯ç«‹å³æ•°æ—¶ï¼Œç›´æ¥å¯¹å†…å­˜åšåŠ æ³•è¿ç®—
 	else if(c_iter->method2_ == c_iter->method3_ && c_iter->src2_ == c_iter->dst_ && Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
 	{
 		OpGeneralImmediate(ADD, c_iter->method3_, c_iter->dst_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level, c_iter->src1_);
 	}
-	// ÆäÓàÇé¿ö£¬µ±µÚÒ»¸ö²Ù×÷ÊıÊÇÁ¢¼´ÊıÊ±
+	// å…¶ä½™æƒ…å†µï¼Œå½“ç¬¬ä¸€ä¸ªæ“ä½œæ•°æ˜¯ç«‹å³æ•°æ—¶
 	else 
 	{
 		 if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
 		{
-			// ¼ÓÔØµÚ¶ş¸ö²Ù×÷Êıµ½EAX
+			// åŠ è½½ç¬¬äºŒä¸ªæ“ä½œæ•°åˆ°EAX
 			OpRegisterGeneral(MOV, EAX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-			// ¼ÓÉÏµÚÒ»¸öÁ¢¼´Êı
+			// åŠ ä¸Šç¬¬ä¸€ä¸ªç«‹å³æ•°
 			OpRegisterGeneral(ADD, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 		}
-		else // µ±µÚÒ»¸ö²Ù×÷Êı²»ÊÇÁ¢¼´ÊıÊ±
+		else // å½“ç¬¬ä¸€ä¸ªæ“ä½œæ•°ä¸æ˜¯ç«‹å³æ•°æ—¶
 		{
-			// ¼ÓÔØµÚÒ»¸ö²Ù×÷Êıµ½EAX
+			// åŠ è½½ç¬¬ä¸€ä¸ªæ“ä½œæ•°åˆ°EAX
 			OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-			// ¼ÓÉÏµÚ¶ş¸ö²Ù×÷Êı
+			// åŠ ä¸Šç¬¬äºŒä¸ªæ“ä½œæ•°
 			OpRegisterGeneral(ADD, EAX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 		}
-		// ½«EAXÖĞµÄ½á¹û±£´æµ½Ä¿µÄ²Ù×÷Êı
+		// å°†EAXä¸­çš„ç»“æœä¿å­˜åˆ°ç›®çš„æ“ä½œæ•°
 		OpGeneralRegister(MOV, c_iter->method3_, c_iter->dst_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	}
 }
 
-// ¼õ·¨
-// Á½¸öÔ´²Ù×÷Êı¶¼²»¿ÉÄÜÊÇÊı×é£¨Ö¸Áî¸ñÊ½²»Ö§³Ö£©
-// Ò²¶¼²»¿ÉÄÜÊÇ³£Êı£¨ÖĞ¼ä´úÂëÉú³ÉÊ±ÔÚExpressionÏî±»ÓÅ»¯£©
-// TODO ÓÅ»¯£º±»¼õÊıÓëÄ¿µÄ²Ù×÷ÊıÏàµÈ£¬ÇÒ¼õÊıÊÇÁ¢¼´ÊıÊ±£¬¿ÉÖ±½Ó¶ÔÄÚ´æ×ö¼õ·¨ÔËËã
+// å‡æ³•
+// ä¸¤ä¸ªæºæ“ä½œæ•°éƒ½ä¸å¯èƒ½æ˜¯æ•°ç»„ï¼ˆæŒ‡ä»¤æ ¼å¼ä¸æ”¯æŒï¼‰
+// ä¹Ÿéƒ½ä¸å¯èƒ½æ˜¯å¸¸æ•°ï¼ˆä¸­é—´ä»£ç ç”Ÿæˆæ—¶åœ¨Expressioné¡¹è¢«ä¼˜åŒ–ï¼‰
+// TODO ä¼˜åŒ–ï¼šè¢«å‡æ•°ä¸ç›®çš„æ“ä½œæ•°ç›¸ç­‰ï¼Œä¸”å‡æ•°æ˜¯ç«‹å³æ•°æ—¶ï¼Œå¯ç›´æ¥å¯¹å†…å­˜åšå‡æ³•è¿ç®—
 void AssemblyMaker::TranslateSub(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	// µÚÒ»¸öÔ´²Ù×÷ÊıÓëÄ¿µÄ²Ù×÷ÊıÏàµÈ£¬ÇÒµÚ¶ş¸öÔ´²Ù×÷ÊıÊÇÁ¢¼´ÊıÊ±£¬Ö±½Ó¶ÔÄÚ´æ×ö¼õ·¨ÔËËã
+	// ç¬¬ä¸€ä¸ªæºæ“ä½œæ•°ä¸ç›®çš„æ“ä½œæ•°ç›¸ç­‰ï¼Œä¸”ç¬¬äºŒä¸ªæºæ“ä½œæ•°æ˜¯ç«‹å³æ•°æ—¶ï¼Œç›´æ¥å¯¹å†…å­˜åšå‡æ³•è¿ç®—
 	if(c_iter->method1_ == c_iter->method3_ && c_iter->src1_ == c_iter->dst_ && Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)
 	{
 		OpGeneralImmediate(SUB, c_iter->method3_, c_iter->dst_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level, c_iter->src2_);
 	}
 	else
 	{
-		// ×°ÔØ±»¼õÊıµ½EAX
+		// è£…è½½è¢«å‡æ•°åˆ°EAX
 		OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-		// ¼õÈ¥µÚ¶ş¸öÊı
+		// å‡å»ç¬¬äºŒä¸ªæ•°
 		OpRegisterGeneral(SUB, EAX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-		// ´æ´¢½á¹û
+		// å­˜å‚¨ç»“æœ
 		OpGeneralRegister(MOV, c_iter->method3_, c_iter->dst_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	}
 }
 
-// MulµÄ×óÓÒ²Ù×÷ÊıÖ»¿ÉÄÜÊÇ£ºÁ¢¼´Êı¡¢ÆÕÍ¨±äÁ¿¡¢ÁÙÊ±±äÁ¿£¬²»»áÊÇÊı×é
-// ÇÒ²»¿ÉÄÜÁ½¸öÍ¬Ê±ÊÇÁ¢¼´Êı£¨ÒÑÔÚtermµÄÖĞ¼ä´úÂëÉú³ÉÖĞÓÅ»¯£©
-// Ä¿µÄ²Ù×÷ÊıÖ»¿ÉÄÜÊÇÆÕÍ¨±äÁ¿»òÁÙÊ±±äÁ¿
+// Mulçš„å·¦å³æ“ä½œæ•°åªå¯èƒ½æ˜¯ï¼šç«‹å³æ•°ã€æ™®é€šå˜é‡ã€ä¸´æ—¶å˜é‡ï¼Œä¸ä¼šæ˜¯æ•°ç»„
+// ä¸”ä¸å¯èƒ½ä¸¤ä¸ªåŒæ—¶æ˜¯ç«‹å³æ•°ï¼ˆå·²åœ¨termçš„ä¸­é—´ä»£ç ç”Ÿæˆä¸­ä¼˜åŒ–ï¼‰
+// ç›®çš„æ“ä½œæ•°åªå¯èƒ½æ˜¯æ™®é€šå˜é‡æˆ–ä¸´æ—¶å˜é‡
 void AssemblyMaker::TranslateMul(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)	// µÚÒ»¸ö²Ù×÷ÊıÊÇÁ¢¼´ÊıµÄÇé¿ö
+	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)	// ç¬¬ä¸€ä¸ªæ“ä½œæ•°æ˜¯ç«‹å³æ•°çš„æƒ…å†µ
 	{
-		// ¼ÓÔØµÚÒ»¸ö²Ù×÷Êıµ½EAX£¨ÒòÎªÁ¢¼´Êı²»ÄÜ×÷IMULµÄ²Ù×÷Êı£©
+		// åŠ è½½ç¬¬ä¸€ä¸ªæ“ä½œæ•°åˆ°EAXï¼ˆå› ä¸ºç«‹å³æ•°ä¸èƒ½ä½œIMULçš„æ“ä½œæ•°ï¼‰
 		OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-		// ³ËÉÏµÚ¶ş¸ö²Ù×÷Êı
+		// ä¹˜ä¸Šç¬¬äºŒä¸ªæ“ä½œæ•°
 		OpGeneral(IMUL, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	}
 	else
 	{
-		// ¼ÓÔØµÚ¶ş¸ö²Ù×÷Êıµ½EAX
+		// åŠ è½½ç¬¬äºŒä¸ªæ“ä½œæ•°åˆ°EAX
 		OpRegisterGeneral(MOV, EAX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-		// ³ËÉÏµÚÒ»¸ö²Ù×÷Êı
+		// ä¹˜ä¸Šç¬¬ä¸€ä¸ªæ“ä½œæ•°
 		OpGeneral(IMUL, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	}
 
-	// ½«EAXÖĞµÄ½á¹û±£´æµ½Ä¿µÄ²Ù×÷Êı
+	// å°†EAXä¸­çš„ç»“æœä¿å­˜åˆ°ç›®çš„æ“ä½œæ•°
 	OpGeneralRegister(MOV, c_iter->method3_, c_iter->dst_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 }
 
-// DivµÄ×óÓÒ²Ù×÷ÊıÖ»¿ÉÄÜÊÇ£ºÁ¢¼´Êı¡¢ÆÕÍ¨±äÁ¿¡¢ÁÙÊ±±äÁ¿£¬²»»áÊÇÊı×é
-// ÇÒ²»¿ÉÄÜÁ½¸öÍ¬Ê±ÊÇÁ¢¼´Êı£¨ÒÑÔÚtermµÄÖĞ¼ä´úÂëÉú³ÉÖĞÓÅ»¯£©
-// Ä¿µÄ²Ù×÷ÊıÖ»¿ÉÄÜÊÇÆÕÍ¨±äÁ¿»òÁÙÊ±±äÁ¿
-// ÕâÀï±È½ÏÖØÒªµÄÊÇ£¬±»³ıÊıµÄ·ûºÅÀ©Õ¹¡£ÒòÎª±»³ıÊıÊÇÓÃEDXºÍEAX·Ö±ğ±íÊ¾µÄ¸ß32Î»ºÍµÍ32Î»£¬¹ÊÒªÓÃ·ûºÅÀ©Õ¹ÉèÖÃEDX
-// Í¬Ê±Òª¸Ä³ÉÓĞ·ûºÅµÄ³ı·¨£¬ÕâÑù²Å²»»áÔÚÊäÈë¸ºÊıÊ±Òç³ö
-// µ«³Ë·¨ÖĞµÄÓĞÎŞ·ûºÅµÄ³Ë·¨£¨mul, imul£©ËÆºõ¶¼²î²»¶à¡£Ó°ÏìµÄÓ¦¸ÃÊÇ½á¹ûÖĞµÄEDX£¨64Î»½á¹ûÖĞµÄ¸ß32Î»£©
+// Divçš„å·¦å³æ“ä½œæ•°åªå¯èƒ½æ˜¯ï¼šç«‹å³æ•°ã€æ™®é€šå˜é‡ã€ä¸´æ—¶å˜é‡ï¼Œä¸ä¼šæ˜¯æ•°ç»„
+// ä¸”ä¸å¯èƒ½ä¸¤ä¸ªåŒæ—¶æ˜¯ç«‹å³æ•°ï¼ˆå·²åœ¨termçš„ä¸­é—´ä»£ç ç”Ÿæˆä¸­ä¼˜åŒ–ï¼‰
+// ç›®çš„æ“ä½œæ•°åªå¯èƒ½æ˜¯æ™®é€šå˜é‡æˆ–ä¸´æ—¶å˜é‡
+// è¿™é‡Œæ¯”è¾ƒé‡è¦çš„æ˜¯ï¼Œè¢«é™¤æ•°çš„ç¬¦å·æ‰©å±•ã€‚å› ä¸ºè¢«é™¤æ•°æ˜¯ç”¨EDXå’ŒEAXåˆ†åˆ«è¡¨ç¤ºçš„é«˜32ä½å’Œä½32ä½ï¼Œæ•…è¦ç”¨ç¬¦å·æ‰©å±•è®¾ç½®EDX
+// åŒæ—¶è¦æ”¹æˆæœ‰ç¬¦å·çš„é™¤æ³•ï¼Œè¿™æ ·æ‰ä¸ä¼šåœ¨è¾“å…¥è´Ÿæ•°æ—¶æº¢å‡º
+// ä½†ä¹˜æ³•ä¸­çš„æœ‰æ— ç¬¦å·çš„ä¹˜æ³•ï¼ˆmul, imulï¼‰ä¼¼ä¹éƒ½å·®ä¸å¤šã€‚å½±å“çš„åº”è¯¥æ˜¯ç»“æœä¸­çš„EDXï¼ˆ64ä½ç»“æœä¸­çš„é«˜32ä½ï¼‰
 void AssemblyMaker::TranslateDiv(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	// ¼ÓÔØµÚÒ»¸ö²Ù×÷Êıµ½EAX
+	// åŠ è½½ç¬¬ä¸€ä¸ªæ“ä½œæ•°åˆ°EAX
 	OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-	// µÚ¶ş¸ö²Ù×÷Êı£¬Èç¹ûÊÇÁ¢¼´Êı£¬Òª¼ÓÔØµ½¼Ä´æÆ÷ÖĞ²Å¿ÉÒÔ³ı
+	// ç¬¬äºŒä¸ªæ“ä½œæ•°ï¼Œå¦‚æœæ˜¯ç«‹å³æ•°ï¼Œè¦åŠ è½½åˆ°å¯„å­˜å™¨ä¸­æ‰å¯ä»¥é™¤
 	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method2_)
 	{
 		OpRegisterGeneral(MOV, EBX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-		assemble_buffer << "\n    CDQ";				// Ê¹ÓÃEAX¶ÔEDX½øĞĞ·ûºÅÎ»À©Õ¹
-		assemble_buffer << "\n    idiv     ebx";	// ³ı¼Ä´æÆ÷
+		assemble_buffer << "\n    CDQ";				// ä½¿ç”¨EAXå¯¹EDXè¿›è¡Œç¬¦å·ä½æ‰©å±•
+		assemble_buffer << "\n    idiv     ebx";	// é™¤å¯„å­˜å™¨
 	}
-	else	// ²»ÊÇÁ¢¼´Êı£¬Ôò¿ÉÖ±½Ó³ı
+	else	// ä¸æ˜¯ç«‹å³æ•°ï¼Œåˆ™å¯ç›´æ¥é™¤
 	{
-		assemble_buffer << "\n    CDQ";				// EDXÏà¶ÔEAXµÄ·ûºÅÎ»À©Õ¹
+		assemble_buffer << "\n    CDQ";				// EDXç›¸å¯¹EAXçš„ç¬¦å·ä½æ‰©å±•
 		OpGeneral(IDIV, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	}
-	// ½«EAXÖĞµÄ½á¹û±£´æµ½Ä¿µÄ²Ù×÷Êı
+	// å°†EAXä¸­çš„ç»“æœä¿å­˜åˆ°ç›®çš„æ“ä½œæ•°
 	OpGeneralRegister(MOV, c_iter->method3_, c_iter->dst_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 }
 
-// ¸³ÖµÓï¾ä
-// Ô´²Ù×÷Êı¿ÉÒÔÊÇÁ¢¼´Êı¡¢ÆÕÍ¨±äÁ¿¡¢ÁÙÊ±±äÁ¿ºÍÊı×éÔªËØ
-// Ä¿µÄ²Ù×÷Êı¿ÉÒÔÊÇÆÕÍ¨±äÁ¿ºÍÁÙÊ±±äÁ¿
+// èµ‹å€¼è¯­å¥
+// æºæ“ä½œæ•°å¯ä»¥æ˜¯ç«‹å³æ•°ã€æ™®é€šå˜é‡ã€ä¸´æ—¶å˜é‡å’Œæ•°ç»„å…ƒç´ 
+// ç›®çš„æ“ä½œæ•°å¯ä»¥æ˜¯æ™®é€šå˜é‡å’Œä¸´æ—¶å˜é‡
 void AssemblyMaker::TranslateAssign(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	// Ô´²Ù×÷ÊıÊÇÁ¢¼´ÊıÊ±£¬¿ÉÖ±½Ó´æ´¢ÖÁÄÚ´æ
+	// æºæ“ä½œæ•°æ˜¯ç«‹å³æ•°æ—¶ï¼Œå¯ç›´æ¥å­˜å‚¨è‡³å†…å­˜
 	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
 	{
 		OpGeneralImmediate(MOV, c_iter->method3_, c_iter->dst_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level, c_iter->src1_);
 	}
 	else
 	{
-		// ½«Ô´²Ù×÷Êı×°ÔØµ½EAXÖĞ
+		// å°†æºæ“ä½œæ•°è£…è½½åˆ°EAXä¸­
 		OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, c_iter->method2_, c_iter->offset2_, para_num, var_space, level);
-		// ½«EAX´æ´¢µ½Ä¿µÄ²Ù×÷ÊıÖĞ
+		// å°†EAXå­˜å‚¨åˆ°ç›®çš„æ“ä½œæ•°ä¸­
 		OpGeneralRegister(MOV, c_iter->method3_, c_iter->dst_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);	// stupid bug fixed by mxf at 20:17 2/2 2016 (0 for parameter level)
 	}
 }
 
 
-// Êı×é¸³ÖµÓï¾ä
-// Ô´²Ù×÷Êı¿ÉÒÔÊÇÁ¢¼´Êı¡¢ÆÕÍ¨±äÁ¿¡¢ÁÙÊ±±äÁ¿
-// Ä¿µÄ²Ù×÷ÊıÎªÊı×é
+// æ•°ç»„èµ‹å€¼è¯­å¥
+// æºæ“ä½œæ•°å¯ä»¥æ˜¯ç«‹å³æ•°ã€æ™®é€šå˜é‡ã€ä¸´æ—¶å˜é‡
+// ç›®çš„æ“ä½œæ•°ä¸ºæ•°ç»„
 void AssemblyMaker::TranslateArrayAssign(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	// Ô´²Ù×÷ÊıÊÇÁ¢¼´ÊıÊ±£¬¿ÉÖ±½Ó´æ´¢ÖÁÄÚ´æ
+	// æºæ“ä½œæ•°æ˜¯ç«‹å³æ•°æ—¶ï¼Œå¯ç›´æ¥å­˜å‚¨è‡³å†…å­˜
 	if(Quaternary::IMMEDIATE_ADDRESSING == c_iter->method1_)
 	{
 		OpArrayImmediate(MOV, c_iter->dst_, c_iter->method2_, c_iter->offset2_, para_num, level, c_iter->src1_);
 	}
 	else
 	{
-		// ¼ÓÔØ±äÁ¿µ½EAX
-		// ÕâÀïµÄ²Ù×÷Êı²»¿ÉÄÜÊÇÊı×é£¬¹ÊÊı×éÏÂ±ê¿ÉÎªÈÎÒâÊı£¨ÕâÀï¸øÁã£©
+		// åŠ è½½å˜é‡åˆ°EAX
+		// è¿™é‡Œçš„æ“ä½œæ•°ä¸å¯èƒ½æ˜¯æ•°ç»„ï¼Œæ•…æ•°ç»„ä¸‹æ ‡å¯ä¸ºä»»æ„æ•°ï¼ˆè¿™é‡Œç»™é›¶ï¼‰
 		OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
-		// ½«EAXµÄÊı¾İ´æ´¢ÔÚÊı×éÀï
+		// å°†EAXçš„æ•°æ®å­˜å‚¨åœ¨æ•°ç»„é‡Œ
 		OpArrayRegister(MOV, c_iter->dst_, c_iter->method2_, c_iter->offset2_, para_num, level);
 	}
 }
 
-// ÎŞÌõ¼şÌø×ª
+// æ— æ¡ä»¶è·³è½¬
 void AssemblyMaker::TranslateJmp(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	assemble_buffer << "\n    jmp     " << GenerateLabelString(c_iter->dst_);
 }
-// ×óÓÒ²Ù×÷ÊıÏàµÈÊ±Ìø×ª
+// å·¦å³æ“ä½œæ•°ç›¸ç­‰æ—¶è·³è½¬
 void AssemblyMaker::TranslateJe(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	OpRegisterGeneral(CMP, EAX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	assemble_buffer << "\n    je     " << GenerateLabelString(c_iter->dst_);
 }
-// ×óÓÒ²Ù×÷Êı²»µÈÊ±Ìø×ª
+// å·¦å³æ“ä½œæ•°ä¸ç­‰æ—¶è·³è½¬
 void AssemblyMaker::TranslateJne(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	OpRegisterGeneral(CMP, EAX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	assemble_buffer << "\n    jne     " << GenerateLabelString(c_iter->dst_);
 }
-// ×ó>ÓÒÔòÌø×ª
+// å·¦>å³åˆ™è·³è½¬
 void AssemblyMaker::TranslateJg(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	OpRegisterGeneral(CMP, EAX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	assemble_buffer << "\n    jg     " << GenerateLabelString(c_iter->dst_);
 }
-// ×ó<=ÓÒÔòÌø×ª
+// å·¦<=å³åˆ™è·³è½¬
 void AssemblyMaker::TranslateJng(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	OpRegisterGeneral(CMP, EAX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	assemble_buffer << "\n    jng    " << GenerateLabelString(c_iter->dst_);
 }
-// ×ó<ÓÒÔòÌø×ª
+// å·¦<å³åˆ™è·³è½¬
 void AssemblyMaker::TranslateJl(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	OpRegisterGeneral(CMP, EAX, c_iter->method2_, c_iter->src2_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 	assemble_buffer << "\n    jl     " << GenerateLabelString(c_iter->dst_);
 }
-// ×ó>=ÓÒÔòÌø×ª
+// å·¦>=å³åˆ™è·³è½¬
 void AssemblyMaker::TranslateJnl(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	OpRegisterGeneral(MOV, EAX, c_iter->method1_, c_iter->src1_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
@@ -553,32 +553,32 @@ void AssemblyMaker::TranslateLabel(const vector<Quaternary>::const_iterator &c_i
 	assemble_buffer  << "\n" << GenerateLabelString(c_iter->dst_) << ":";
 }
 
-// ½«²ÎÊıÑ¹Õ»
-// ²ÎÊı¿ÉÄÜÊÇÁ¢¼´Êı¡¢ÆÕÍ¨±äÁ¿¡¢Êı×é¡¢ÁÙÊ±±äÁ¿
+// å°†å‚æ•°å‹æ ˆ
+// å‚æ•°å¯èƒ½æ˜¯ç«‹å³æ•°ã€æ™®é€šå˜é‡ã€æ•°ç»„ã€ä¸´æ—¶å˜é‡
 void AssemblyMaker::TranslateSetP(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	OpGeneral(PUSH, c_iter->method3_, c_iter->dst_, c_iter->method2_, c_iter->offset2_, para_num, var_space, level);
 }
 
-// ½«²ÎÊıµÄµØÖ·Ñ¹Õ»
-// ²ÎÊı¿ÉÄÜÊÇÁ¢¼´Êı¡¢ÆÕÍ¨±äÁ¿¡¢Êı×é¡¢ÁÙÊ±±äÁ¿
+// å°†å‚æ•°çš„åœ°å€å‹æ ˆ
+// å‚æ•°å¯èƒ½æ˜¯ç«‹å³æ•°ã€æ™®é€šå˜é‡ã€æ•°ç»„ã€ä¸´æ—¶å˜é‡
 void AssemblyMaker::TranslateSetRefP(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	// ÏÈ½«²ÎÊıµØÖ·¼ÓÔØµ½EAX
+	// å…ˆå°†å‚æ•°åœ°å€åŠ è½½åˆ°EAX
 	OpRegisterGeneral(LEA, EAX, c_iter->method3_, c_iter->dst_, c_iter->method2_, c_iter->offset2_, para_num, var_space, level);
-	// ÔÙ½«EAXÑ¹Õ»
+	// å†å°†EAXå‹æ ˆ
 	assemble_buffer << "\n    push    eax";
 }
 
-// ÕâÀïµÄÄÑ¶ÈÖ÷ÒªÔÚÓÚdisplayÇøµÄ¿ØÖÆ
-// ĞÂº¯ÊıµÄsubfunc_levelµÄÈ¡ÖµÎª[1, level + 1]
-// µ±subfunc_level <= levelÊ±£¬¸´ÖÆµ±Ç°º¯ÊıµÄdisplayÇøµÄÇ°subfunc_level¸ö±íÏî
-// µ±subfunc_level == level + 1Ê±£¬½«µ±Ç°º¯ÊıµÄdisplayÇø£¨¹²levelÏî£©¸´ÖÆ¸ø×Óº¯Êıºó£¬ÔÙ½«EBP×÷Îª×Óº¯ÊıĞÂµÄÒ»¸ödisplay±íÏî
+// è¿™é‡Œçš„éš¾åº¦ä¸»è¦åœ¨äºdisplayåŒºçš„æ§åˆ¶
+// æ–°å‡½æ•°çš„subfunc_levelçš„å–å€¼ä¸º[1, level + 1]
+// å½“subfunc_level <= levelæ—¶ï¼Œå¤åˆ¶å½“å‰å‡½æ•°çš„displayåŒºçš„å‰subfunc_levelä¸ªè¡¨é¡¹
+// å½“subfunc_level == level + 1æ—¶ï¼Œå°†å½“å‰å‡½æ•°çš„displayåŒºï¼ˆå…±levelé¡¹ï¼‰å¤åˆ¶ç»™å­å‡½æ•°åï¼Œå†å°†EBPä½œä¸ºå­å‡½æ•°æ–°çš„ä¸€ä¸ªdisplayè¡¨é¡¹
 void AssemblyMaker::TranslateCall(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	// Ò». »ñµÃ±»µ÷ÓÃº¯ÊıµÄlevel
+	// ä¸€. è·å¾—è¢«è°ƒç”¨å‡½æ•°çš„level
 	int subfunc_level = tokentable_.at(c_iter->dst_).level_;
-	// ¶ş. ¸ù¾İµ÷ÓÃÕßºÍ±»µ÷ÓÃÕßµÄlevel¸´ÖÆdisplayÇø
+	// äºŒ. æ ¹æ®è°ƒç”¨è€…å’Œè¢«è°ƒç”¨è€…çš„levelå¤åˆ¶displayåŒº
 	int offset = 0;
 	if(subfunc_level <= level)
 	{
@@ -599,45 +599,45 @@ void AssemblyMaker::TranslateCall(const vector<Quaternary>::const_iterator &c_it
 		}
 		assemble_buffer << "\n    mov     SS:[esp - " << 4 * subfunc_level <<"], ebp";
 	}
-	// Èı. µ÷ÕûÕ»¶¥Ö¸Õë
+	// ä¸‰. è°ƒæ•´æ ˆé¡¶æŒ‡é’ˆ
 	assemble_buffer << "\n    sub     esp, " << 4 * subfunc_level;
-	// Èı. callµ÷ÓÃ
+	// ä¸‰. callè°ƒç”¨
 	assemble_buffer << "\n    call    _" << tokentable_.at(c_iter->dst_).name_ << c_iter->dst_;
-	// ËÄ. »Ö¸´Õ»¶¥Ö¸Õë
+	// å››. æ¢å¤æ ˆé¡¶æŒ‡é’ˆ
 	int subfunc_para_num = tokentable_.at(c_iter->dst_).value_;
 	assemble_buffer  << "\n    add     esp, " << 4 * (subfunc_level + subfunc_para_num);
 }
 
-// ½«Ä¿µÄ²Ù×÷Êı×°ÈëEAX£¬²¢½øĞĞº¯Êı·µ»Ø
+// å°†ç›®çš„æ“ä½œæ•°è£…å…¥EAXï¼Œå¹¶è¿›è¡Œå‡½æ•°è¿”å›
 void AssemblyMaker::TranslateRet(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	OpRegisterGeneral(MOV, EAX, c_iter->method3_, c_iter->dst_, c_iter->method2_, c_iter->offset2_, para_num, var_space, level);
 	//LoadGeneral(c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level, EAX);
-	// ÕÒµ½º¯ÊıµÄ·µ»ØÓï¾äÇ°µÄ±êºÅ
+	// æ‰¾åˆ°å‡½æ•°çš„è¿”å›è¯­å¥å‰çš„æ ‡å·
 	string exit_label = FindExitLabel(c_iter);
 	assemble_buffer  << "\n    jmp     " << exit_label;
 }
 
 
-// ½«EAXµÄÊı¾İ´¢´æÆğÀ´
-// ÓÃÔÚº¯Êıµ÷ÓÃ·µ»Øºó£¬È¡µÃº¯ÊıµÄ·µ»ØÖµ
-// ´¢´æµÄÄ¿µÄÒ»°ãÊÇÁÙÊ±±äÁ¿£¬ÔÚÓÅ»¯¹ıºóÒ²¿ÉÄÜÊÇÆÕÍ¨±äÁ¿£¬µ«²»¿ÉÄÜÊÇÊı×é£¨Î´ÓèÒÔÊı×éÓÅ»¯£©»òÁ¢¼´Êı£¨·Ç·¨£©
+// å°†EAXçš„æ•°æ®å‚¨å­˜èµ·æ¥
+// ç”¨åœ¨å‡½æ•°è°ƒç”¨è¿”å›åï¼Œå–å¾—å‡½æ•°çš„è¿”å›å€¼
+// å‚¨å­˜çš„ç›®çš„ä¸€èˆ¬æ˜¯ä¸´æ—¶å˜é‡ï¼Œåœ¨ä¼˜åŒ–è¿‡åä¹Ÿå¯èƒ½æ˜¯æ™®é€šå˜é‡ï¼Œä½†ä¸å¯èƒ½æ˜¯æ•°ç»„ï¼ˆæœªäºˆä»¥æ•°ç»„ä¼˜åŒ–ï¼‰æˆ–ç«‹å³æ•°ï¼ˆéæ³•ï¼‰
 void AssemblyMaker::TranslateStore(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
 	OpGeneralRegister(MOV, c_iter->method3_, c_iter->dst_, Quaternary::NIL_ADDRESSING, 0, para_num, var_space, level);
 }
 
-// ÊäÈëµ½dst[offset]
-// ×¢£ºÎÄ·¨»¹Ã»ÓĞÖ§³Öµ½Êı×é£¬µ«¿ÉÒÔÔÚÕâÀïÏÈÖ§³Ö£¬×îºóÔÙÀ©Õ¹ÎÄ·¨
-// ÕâÀïÖ§³Ö£ºÆÕÍ¨±äÁ¿ºÍÊı×é±äÁ¿¡¾ÁÙÊ±±äÁ¿²»Ö§³Ö£¬ÒòÎª²»¿ÉÄÜÍùÁÙÊ±±äÁ¿ÖĞ¶ÁÊı¡¿
+// è¾“å…¥åˆ°dst[offset]
+// æ³¨ï¼šæ–‡æ³•è¿˜æ²¡æœ‰æ”¯æŒåˆ°æ•°ç»„ï¼Œä½†å¯ä»¥åœ¨è¿™é‡Œå…ˆæ”¯æŒï¼Œæœ€åå†æ‰©å±•æ–‡æ³•
+// è¿™é‡Œæ”¯æŒï¼šæ™®é€šå˜é‡å’Œæ•°ç»„å˜é‡ã€ä¸´æ—¶å˜é‡ä¸æ”¯æŒï¼Œå› ä¸ºä¸å¯èƒ½å¾€ä¸´æ—¶å˜é‡ä¸­è¯»æ•°ã€‘
 void AssemblyMaker::TranslateRead(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	// ½«Òª¶ÁÈ¡µÄ±äÁ¿µÄµØÖ·×°ÈëEAX
+	// å°†è¦è¯»å–çš„å˜é‡çš„åœ°å€è£…å…¥EAX
 	//LoadGeneral(c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level, EAX, true);
 	OpRegisterGeneral(LEA, EAX, c_iter->method3_, c_iter->dst_, c_iter->method2_, c_iter->offset2_, para_num, var_space, level);
-	// ½«µØÖ·Ñ¹Õ»
+	// å°†åœ°å€å‹æ ˆ
 	assemble_buffer << "\n    push    eax";
-	// ½«ÊäÈë¸ñÊ½×Ö·û´®Ñ¹Õ»
+	// å°†è¾“å…¥æ ¼å¼å­—ç¬¦ä¸²å‹æ ˆ
 	if(TokenTableItem::CHAR == tokentable_.at(c_iter->dst_).decoratetype_)
 	{
 		assemble_buffer << "\n    push    offset  _char_format_s";
@@ -650,13 +650,13 @@ void AssemblyMaker::TranslateRead(const vector<Quaternary>::const_iterator &c_it
 					<< "\n    add     esp, 8";
 }
 
-// Êä³ödst[offset]
+// è¾“å‡ºdst[offset]
 void AssemblyMaker::TranslateWrite(const vector<Quaternary>::const_iterator &c_iter, int para_num, int var_space, int level) throw()
 {
-	// ½«²Ù×÷ÊıÑ¹Õ»
+	// å°†æ“ä½œæ•°å‹æ ˆ
 	//PushGeneral(c_iter->method3_, c_iter->dst_, c_iter->offset2_, para_num, var_space, level);
-	OpGeneral(PUSH, c_iter->method3_, c_iter->dst_, c_iter->method2_, c_iter->offset2_, para_num, var_space, level);	// Á½Õß¶¼¿É
-	// ½«¸ñÊ½×Ö·û´®Ñ¹Õ»
+	OpGeneral(PUSH, c_iter->method3_, c_iter->dst_, c_iter->method2_, c_iter->offset2_, para_num, var_space, level);	// ä¸¤è€…éƒ½å¯
+	// å°†æ ¼å¼å­—ç¬¦ä¸²å‹æ ˆ
 	if(Quaternary::STRING_ADDRESSING == c_iter->method3_)
 	{
 		assemble_buffer << "\n    push    offset  _string_format";
@@ -669,12 +669,12 @@ void AssemblyMaker::TranslateWrite(const vector<Quaternary>::const_iterator &c_i
 	{
 		assemble_buffer << "\n    push    offset  _integer_format_p";
 	}
-	// µ÷ÓÃprintfº¯Êı
+	// è°ƒç”¨printfå‡½æ•°
 	assemble_buffer << "\n    call    printf"
 					<< "\n    add     esp, 8";
 }
 
-// µ¥²Ù×÷ÊıµÄÔËËã
+// å•æ“ä½œæ•°çš„è¿ç®—
 void AssemblyMaker::OpGeneral(enum SINGLEOPERATOR op, Quaternary::AddressingMethod addressingmethod, int index_or_value, Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num, int var_space, int level) throw()
 {
 	if(Quaternary::IMMEDIATE_ADDRESSING == addressingmethod)
@@ -707,52 +707,52 @@ void AssemblyMaker::OpGeneral(enum SINGLEOPERATOR op, Quaternary::AddressingMeth
 	}
 }
 
-// ¶Ô³£ÊıµÄ²Ù×÷
+// å¯¹å¸¸æ•°çš„æ“ä½œ
 void AssemblyMaker::OpImmediate(enum SINGLEOPERATOR op, int value) throw()
 {
 	assemble_buffer << "\n    " << SingleOperatorName[op] << "    " << value;
 }
 
-// ¶ÔÆÕÍ¨±äÁ¿µÄ²Ù×÷
-// µØÖ·¼ÆËã¹«Ê½£º
+// å¯¹æ™®é€šå˜é‡çš„æ“ä½œ
+// åœ°å€è®¡ç®—å…¬å¼ï¼š
 // para#n.addr = EBP + 4 * (1 + level + para_num - n)
 // var#n.addr = EBP - 4 * (n -para_num + 1)
 // display#n.addr = EBP + 4 * (1 + level - n)
 void AssemblyMaker::OpVar(enum SINGLEOPERATOR op, int tokentable_index, int para_num, int level) throw()
 {
-	// È·¶¨±äÁ¿µÄ²ã´Î
+	// ç¡®å®šå˜é‡çš„å±‚æ¬¡
 	int var_level = tokentable_.at(tokentable_index).level_;
-	// È·¶¨º¯ÊıµÄ²ã´Î£¨±È±äÁ¿²ã´ÎÉÙ1£©
+	// ç¡®å®šå‡½æ•°çš„å±‚æ¬¡ï¼ˆæ¯”å˜é‡å±‚æ¬¡å°‘1ï¼‰
 	int func_level = var_level - 1;
-	int n = tokentable_.at(tokentable_index).addr_;	// ¼ÆËã¸Ã±äÁ¿µÄÏà¶ÔµØÖ·
-	if(level == func_level)	// ÅĞ¶ÏÊÇ·ñÎª¾Ö²¿±äÁ¿
+	int n = tokentable_.at(tokentable_index).addr_;	// è®¡ç®—è¯¥å˜é‡çš„ç›¸å¯¹åœ°å€
+	if(level == func_level)	// åˆ¤æ–­æ˜¯å¦ä¸ºå±€éƒ¨å˜é‡
 	{
 		int offset = 0;
-		if(n < para_num)	// ËµÃ÷ÊÇ²ÎÊı
+		if(n < para_num)	// è¯´æ˜æ˜¯å‚æ•°
 		{
 			offset = 4 * (1 + level + para_num - n);
 			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebp + " << offset << "]";
 		}
-		else				// ËµÃ÷ÊÇ¾Ö²¿±äÁ¿
+		else				// è¯´æ˜æ˜¯å±€éƒ¨å˜é‡
 		{
 			offset = 4 * (n - para_num + 1);
 			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebp - " << offset << "]";
 		}
 	}
-	else	// Íâ²ã´ÎµÄ±äÁ¿
+	else	// å¤–å±‚æ¬¡çš„å˜é‡
 	{
-		// Ò». »ñµÃÍâ²ã´ÎµÄ²ÎÊı¸öÊı
+		// ä¸€. è·å¾—å¤–å±‚æ¬¡çš„å‚æ•°ä¸ªæ•°
 		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
-		// ¶ş. »ñµÃÍâ²ã´ÎµÄEBPµÄÖµ£¬¼ÓÔØµ½EBXÖĞ
+		// äºŒ. è·å¾—å¤–å±‚æ¬¡çš„EBPçš„å€¼ï¼ŒåŠ è½½åˆ°EBXä¸­
 		int offset = 4 * (1 + level - func_level);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
-		// Èı. ¼ÓÔØÍâ²ãµÄ±äÁ¿
-		if(n < extern_para_num)	// ËµÃ÷ÊÇÍâ²ã²ÎÊı
+		// ä¸‰. åŠ è½½å¤–å±‚çš„å˜é‡
+		if(n < extern_para_num)	// è¯´æ˜æ˜¯å¤–å±‚å‚æ•°
 		{
 			offset = 4 * (1 + func_level + extern_para_num - n);
 			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebx + " << offset << "]";
 		}
-		else				    // ËµÃ÷ÊÇÍâ²ã¾Ö²¿±äÁ¿
+		else				    // è¯´æ˜æ˜¯å¤–å±‚å±€éƒ¨å˜é‡
 		{
 			offset = 4 * (n - extern_para_num + 1);
 			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebx - " << offset << "]";
@@ -760,120 +760,120 @@ void AssemblyMaker::OpVar(enum SINGLEOPERATOR op, int tokentable_index, int para
 	}
 }
 
-// ¶ÔÒıÓÃ±äÁ¿µÄ²Ù×÷
-// µØÖ·¼ÆËã¹«Ê½£º
+// å¯¹å¼•ç”¨å˜é‡çš„æ“ä½œ
+// åœ°å€è®¡ç®—å…¬å¼ï¼š
 // para#n.addr = EBP + 4 * (1 + level + para_num - n)
 // display#n.addr = EBP + 4 * (1 + level - n)
 void AssemblyMaker::OpReference(enum SINGLEOPERATOR op, int tokentable_index, int para_num, int level) throw()
 {
-	// È·¶¨±äÁ¿µÄ²ã´Î
+	// ç¡®å®šå˜é‡çš„å±‚æ¬¡
 	int var_level = tokentable_.at(tokentable_index).level_;
-	// È·¶¨º¯ÊıµÄ²ã´Î£¨±È±äÁ¿²ã´ÎÉÙ1£©
+	// ç¡®å®šå‡½æ•°çš„å±‚æ¬¡ï¼ˆæ¯”å˜é‡å±‚æ¬¡å°‘1ï¼‰
 	int func_level = var_level - 1;
-	int n = tokentable_.at(tokentable_index).addr_;	// ¼ÆËã¸Ã±äÁ¿µÄ¾Ö²¿×÷ÓÃÓòÖĞµÄÏà¶ÔµØÖ·
+	int n = tokentable_.at(tokentable_index).addr_;	// è®¡ç®—è¯¥å˜é‡çš„å±€éƒ¨ä½œç”¨åŸŸä¸­çš„ç›¸å¯¹åœ°å€
 	int offset = 0;
-	if(level == func_level)	// ÅĞ¶ÏÊÇ·ñÎª¾Ö²¿²ÎÊı
+	if(level == func_level)	// åˆ¤æ–­æ˜¯å¦ä¸ºå±€éƒ¨å‚æ•°
 	{
-		// Ò». ¼ÓÔØ²ÎÊıµÄÖµ£¨¼´ÒıÓÃ±äÁ¿µÄµØÖ·£©µ½EBXÖĞ
+		// ä¸€. åŠ è½½å‚æ•°çš„å€¼ï¼ˆå³å¼•ç”¨å˜é‡çš„åœ°å€ï¼‰åˆ°EBXä¸­
 		offset = 4 * (1 + level + para_num - n);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
-		// ¶ş. ¶Ô²ÎÊıËùÒıÓÃµÄ±äÁ¿½øĞĞ²Ù×÷
+		// äºŒ. å¯¹å‚æ•°æ‰€å¼•ç”¨çš„å˜é‡è¿›è¡Œæ“ä½œ
 		assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebx]";
 	}
-	else	// Íâ²ã´ÎµÄ²ÎÊı
+	else	// å¤–å±‚æ¬¡çš„å‚æ•°
 	{
-		// Ò». »ñµÃÍâ²ã´ÎµÄEBPµÄÖµ£¬¼ÓÔØµ½EBXÖĞ
+		// ä¸€. è·å¾—å¤–å±‚æ¬¡çš„EBPçš„å€¼ï¼ŒåŠ è½½åˆ°EBXä¸­
 		int offset = 4 * (1 + level - func_level);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
-		// ¶ş. »ñµÃÍâ²ã´ÎµÄ²ÎÊı¸öÊı
+		// äºŒ. è·å¾—å¤–å±‚æ¬¡çš„å‚æ•°ä¸ªæ•°
 		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
-		// Èı. ¼ÓÔØÍâ²ãµÄ²ÎÊıµÄÖµ£¨¼´ÒıÓÃ±äÁ¿µÄµØÖ·£©µ½EBXÖĞ
+		// ä¸‰. åŠ è½½å¤–å±‚çš„å‚æ•°çš„å€¼ï¼ˆå³å¼•ç”¨å˜é‡çš„åœ°å€ï¼‰åˆ°EBXä¸­
 		offset = 4 * (1 + func_level + extern_para_num - n);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebx + " << offset << "]";
-		// ËÄ. ¶ÔÍâ²ãµÄ²ÎÊıËùÒıÓÃµÄ±äÁ¿½øĞĞ²Ù×÷
+		// å››. å¯¹å¤–å±‚çš„å‚æ•°æ‰€å¼•ç”¨çš„å˜é‡è¿›è¡Œæ“ä½œ
 		assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebx]";
 	}
 }
-// ¶ÔÊı×éÔªËØµÄ²Ù×÷
-// ×¢Òâ£ºÊı×é²»¿ÉÄÜÊÇº¯ÊıµÄ²ÎÊı£¬¹Ê±ÈLoadArrayÒªÉÙÒ»¸öÅĞ¶Ï
-// µØÖ·¼ÆËã¹«Ê½£º
+// å¯¹æ•°ç»„å…ƒç´ çš„æ“ä½œ
+// æ³¨æ„ï¼šæ•°ç»„ä¸å¯èƒ½æ˜¯å‡½æ•°çš„å‚æ•°ï¼Œæ•…æ¯”LoadArrayè¦å°‘ä¸€ä¸ªåˆ¤æ–­
+// åœ°å€è®¡ç®—å…¬å¼ï¼š
 // array#n.addr = EBP - 4 * (n - para_num + 1 + array_offset)
-// display#n.addr = EBP + 4 * (1 + level - n)	ÕâÀïµÄn¼´ÎªÍâ²ãº¯ÊıµÄ²ã´Î
+// display#n.addr = EBP + 4 * (1 + level - n)	è¿™é‡Œçš„nå³ä¸ºå¤–å±‚å‡½æ•°çš„å±‚æ¬¡
 void AssemblyMaker::OpArray(enum SINGLEOPERATOR op, int tokentable_index, Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num, int level) throw()
 {
-	// È·¶¨±äÁ¿µÄ²ã´Î
+	// ç¡®å®šå˜é‡çš„å±‚æ¬¡
 	int var_level = tokentable_.at(tokentable_index).level_;
-	// È·¶¨º¯ÊıµÄ²ã´Î£¨±È±äÁ¿²ã´ÎÉÙ1£©
+	// ç¡®å®šå‡½æ•°çš„å±‚æ¬¡ï¼ˆæ¯”å˜é‡å±‚æ¬¡å°‘1ï¼‰
 	int func_level = var_level - 1;
-	int n = tokentable_.at(tokentable_index).addr_;	// ¼ÆËã¸Ã±äÁ¿µÄÏà¶ÔµØÖ·
+	int n = tokentable_.at(tokentable_index).addr_;	// è®¡ç®—è¯¥å˜é‡çš„ç›¸å¯¹åœ°å€
 	int offset = 0;
-	if(level == func_level)	// ÅĞ¶ÏÊÇ·ñÎª¾Ö²¿±äÁ¿
+	if(level == func_level)	// åˆ¤æ–­æ˜¯å¦ä¸ºå±€éƒ¨å˜é‡
 	{
-		// Êı×éµÄÆ«ÒÆÁ¿µÄ¼ÆËã
-		// Èç¹ûÊı×éÏÂ±êÊÇÁ¢¼´ÊıÀàĞÍ£¬ÔòÆ«ÒÆÁ¿¾ÍÊÇarray_offset
+		// æ•°ç»„çš„åç§»é‡çš„è®¡ç®—
+		// å¦‚æœæ•°ç»„ä¸‹æ ‡æ˜¯ç«‹å³æ•°ç±»å‹ï¼Œåˆ™åç§»é‡å°±æ˜¯array_offset
 		if(Quaternary::IMMEDIATE_ADDRESSING == array_addr_method)
 		{
 			offset = 4 * (n - para_num + 1 + array_offset);
 			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebp - " << offset << "]";
 		}
-		else	// ·ñÔò£¬¾ÍÒªÈ¡µÃÊı×éÏÂ±ê£¨Ä³¸ö±äÁ¿£©µÄÖµ£¬ÔÚ»ã±à³ÌĞòÖĞ¼ÆËãÆäÆ«ÒÆÁ¿
+		else	// å¦åˆ™ï¼Œå°±è¦å–å¾—æ•°ç»„ä¸‹æ ‡ï¼ˆæŸä¸ªå˜é‡ï¼‰çš„å€¼ï¼Œåœ¨æ±‡ç¼–ç¨‹åºä¸­è®¡ç®—å…¶åç§»é‡
 		{
-			// 1. ÏÈ°ÑÊı×éÏÂ±êµÄ±äÁ¿µÄÖµ·ÅÈëECX
+			// 1. å…ˆæŠŠæ•°ç»„ä¸‹æ ‡çš„å˜é‡çš„å€¼æ”¾å…¥ECX
 			OpRegisterGeneral(MOV, ECX, array_addr_method, array_offset, Quaternary::NIL_ADDRESSING, 0, 0, 0, level);
-			// 2. ¼ÆËã³öÊµ¼ÊµÄÊı×éÔªËØµÄÏà¶ÔÆ«ÒÆ£¨Ïà¶ÔÓÚebp£©£¬·ÅÔÚECXÖĞ¡£´ËÊ±Êı×éÔªËØµÄ¾ø¶ÔÆ«ÒÆÎªebp-ecx
+			// 2. è®¡ç®—å‡ºå®é™…çš„æ•°ç»„å…ƒç´ çš„ç›¸å¯¹åç§»ï¼ˆç›¸å¯¹äºebpï¼‰ï¼Œæ”¾åœ¨ECXä¸­ã€‚æ­¤æ—¶æ•°ç»„å…ƒç´ çš„ç»å¯¹åç§»ä¸ºebp-ecx
 			assemble_buffer << "\n    add     ecx, " << (n - para_num + 1)
-							<< "\n    shl     ecx,    2"; // ³Ë4
-			// 3. ¼ÆËã³ö¾ø¶ÔÆ«ÒÆ£¬·ÅÔÚEAXÖĞ£¨-(eax-ebp)£©
+							<< "\n    shl     ecx,    2"; // ä¹˜4
+			// 3. è®¡ç®—å‡ºç»å¯¹åç§»ï¼Œæ”¾åœ¨EAXä¸­ï¼ˆ-(eax-ebp)ï¼‰
 			assemble_buffer << "\n    sub     ecx,    ebp"
 							<< "\n    neg     ecx";
-			// 3. Ö´ĞĞ¸ÃÖ´ĞĞµÄ²Ù×÷
+			// 3. æ‰§è¡Œè¯¥æ‰§è¡Œçš„æ“ä½œ
 			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ecx]";
 		}
 	}
-	else	// Íâ²ã´ÎµÄ±äÁ¿
+	else	// å¤–å±‚æ¬¡çš„å˜é‡
 	{
-		// Ò». »ñµÃÍâ²ã´ÎµÄEBPµÄÖµ£¬¼ÓÔØµ½EBXÖĞ
+		// ä¸€. è·å¾—å¤–å±‚æ¬¡çš„EBPçš„å€¼ï¼ŒåŠ è½½åˆ°EBXä¸­
 		offset = 4 * (1 + level - func_level);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
-		// ¶ş. Êı×éÔªËØµÄÆ«ÒÆÁ¿µÄ¼ÆËã
-		// Èç¹ûÊı×éÏÂ±êÊÇÁ¢¼´ÊıÀàĞÍ£¬ÔòÆ«ÒÆÁ¿¾ÍÊÇarray_offset
+		// äºŒ. æ•°ç»„å…ƒç´ çš„åç§»é‡çš„è®¡ç®—
+		// å¦‚æœæ•°ç»„ä¸‹æ ‡æ˜¯ç«‹å³æ•°ç±»å‹ï¼Œåˆ™åç§»é‡å°±æ˜¯array_offset
 		if(Quaternary::IMMEDIATE_ADDRESSING == array_addr_method)
 		{
 			offset = 4 * (n - para_num + 1 + array_offset);
 			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebx - " << offset << "]";
 		}
-		else	// ·ñÔò£¬¾ÍÒªÈ¡µÃÊı×éÏÂ±ê£¨Ä³¸ö±äÁ¿£©µÄÖµ£¬ÔÚ»ã±à³ÌĞòÖĞ¼ÆËãÆäÆ«ÒÆÁ¿
+		else	// å¦åˆ™ï¼Œå°±è¦å–å¾—æ•°ç»„ä¸‹æ ‡ï¼ˆæŸä¸ªå˜é‡ï¼‰çš„å€¼ï¼Œåœ¨æ±‡ç¼–ç¨‹åºä¸­è®¡ç®—å…¶åç§»é‡
 		{
-			// 1. ÏÈ°ÑÊı×éÏÂ±êµÄ±äÁ¿µÄÖµ·ÅÈëECX
+			// 1. å…ˆæŠŠæ•°ç»„ä¸‹æ ‡çš„å˜é‡çš„å€¼æ”¾å…¥ECX
 			OpRegisterGeneral(MOV, ECX, array_addr_method, array_offset, Quaternary::NIL_ADDRESSING, 0, 0, 0, level);
-			// 2. ¼ÆËã³öÊµ¼ÊµÄÊı×éÔªËØµÄÏà¶ÔÆ«ÒÆ£¨Ïà¶ÔÓÚebx£©£¬·ÅÔÚECXÖĞ¡£´ËÊ±Êı×éÔªËØµÄ¾ø¶ÔÆ«ÒÆÎªebx-ecx
+			// 2. è®¡ç®—å‡ºå®é™…çš„æ•°ç»„å…ƒç´ çš„ç›¸å¯¹åç§»ï¼ˆç›¸å¯¹äºebxï¼‰ï¼Œæ”¾åœ¨ECXä¸­ã€‚æ­¤æ—¶æ•°ç»„å…ƒç´ çš„ç»å¯¹åç§»ä¸ºebx-ecx
 			assemble_buffer << "\n    add     ecx, " << (n - para_num + 1)
-							<< "\n    shl     ecx,    2"; // ³Ë4
-			// 3. ¼ÆËã³ö¾ø¶ÔÆ«ÒÆ£¬·ÅÔÚEAXÖĞ£¨-(eax-ebx)£©
+							<< "\n    shl     ecx,    2"; // ä¹˜4
+			// 3. è®¡ç®—å‡ºç»å¯¹åç§»ï¼Œæ”¾åœ¨EAXä¸­ï¼ˆ-(eax-ebx)ï¼‰
 			assemble_buffer << "\n    sub     ecx, ebx"
 							<< "\n    neg     ecx";
-			// 3. Ö´ĞĞ¸ÃÖ´ĞĞµÄ²Ù×÷
+			// 3. æ‰§è¡Œè¯¥æ‰§è¡Œçš„æ“ä½œ
 			assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ecx]";
 		}
 	}
 }
 
-// ¶ÔÁÙÊ±±äÁ¿µÄ²Ù×÷
-// µØÖ·¼ÆËã¹«Ê½£º
+// å¯¹ä¸´æ—¶å˜é‡çš„æ“ä½œ
+// åœ°å€è®¡ç®—å…¬å¼ï¼š
 // temp#n.addr = EBP - 4 * (var_space + n + 1)
 void AssemblyMaker::OpTemp(enum SINGLEOPERATOR op, int index, int var_space) throw()
 {
-	// ÕâÀïµÄindex¾ÍÊÇÉÏÊ½ÖĞµÄn
+	// è¿™é‡Œçš„indexå°±æ˜¯ä¸Šå¼ä¸­çš„n
 	int offset = 4 * (var_space + index + 1);
 	assemble_buffer << "\n    " << SingleOperatorName[op] << "    dword ptr SS:[ebp - " << offset << "]";
 }
 
 
 
-// ½«¼Ä´æÆ÷EAXµÄÊı¾İ´æ´¢µ½ÄÚ´æÖĞ
-// ¿ÉÄÜµÄÄÚ´æÀàĞÍÎª£ºÆÕÍ¨±äÁ¿¡¢Êı×é±äÁ¿¡¢ÁÙÊ±±äÁ¿
-// ¸ù¾İÈ¡Ö··½Ê½µÄ²»Í¬£¬µ÷ÓÃ²»Í¬µÄ´æ´¢º¯Êı
-// µÚ¶ş¸ö²ÎÊı¿ÉÄÜ±íÊ¾·ûºÅ±íÖĞµÄindex£¬Ò²¿ÉÄÜ±íÊ¾ÁÙÊ±±äÁ¿µÄindex£¬¹ÊÖ»ÃüÃûÎªindex
+// å°†å¯„å­˜å™¨EAXçš„æ•°æ®å­˜å‚¨åˆ°å†…å­˜ä¸­
+// å¯èƒ½çš„å†…å­˜ç±»å‹ä¸ºï¼šæ™®é€šå˜é‡ã€æ•°ç»„å˜é‡ã€ä¸´æ—¶å˜é‡
+// æ ¹æ®å–å€æ–¹å¼çš„ä¸åŒï¼Œè°ƒç”¨ä¸åŒçš„å­˜å‚¨å‡½æ•°
+// ç¬¬äºŒä¸ªå‚æ•°å¯èƒ½è¡¨ç¤ºç¬¦å·è¡¨ä¸­çš„indexï¼Œä¹Ÿå¯èƒ½è¡¨ç¤ºä¸´æ—¶å˜é‡çš„indexï¼Œæ•…åªå‘½åä¸ºindex
 void AssemblyMaker::OpGeneralRegister(enum DOUBLEOPERATOR op, Quaternary::AddressingMethod addressingmethod, int index, Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num, int var_space, int level, enum REGISTER reg) throw()
 {
 	if(Quaternary::VARIABLE_ADDRESSING == addressingmethod)
@@ -898,10 +898,10 @@ void AssemblyMaker::OpGeneralRegister(enum DOUBLEOPERATOR op, Quaternary::Addres
 	}
 }
 
-// ½«Á¢¼´Êı´æ´¢µ½ÄÚ´æÖĞ
-// ¿ÉÄÜµÄÄÚ´æÀàĞÍÎª£ºÆÕÍ¨±äÁ¿¡¢Êı×é±äÁ¿¡¢ÁÙÊ±±äÁ¿
-// ¸ù¾İÈ¡Ö··½Ê½µÄ²»Í¬£¬µ÷ÓÃ²»Í¬µÄ´æ´¢º¯Êı
-// µÚ¶ş¸ö²ÎÊı¿ÉÄÜ±íÊ¾·ûºÅ±íÖĞµÄindex£¬Ò²¿ÉÄÜ±íÊ¾ÁÙÊ±±äÁ¿µÄindex£¬¹ÊÖ»ÃüÃûÎªindex
+// å°†ç«‹å³æ•°å­˜å‚¨åˆ°å†…å­˜ä¸­
+// å¯èƒ½çš„å†…å­˜ç±»å‹ä¸ºï¼šæ™®é€šå˜é‡ã€æ•°ç»„å˜é‡ã€ä¸´æ—¶å˜é‡
+// æ ¹æ®å–å€æ–¹å¼çš„ä¸åŒï¼Œè°ƒç”¨ä¸åŒçš„å­˜å‚¨å‡½æ•°
+// ç¬¬äºŒä¸ªå‚æ•°å¯èƒ½è¡¨ç¤ºç¬¦å·è¡¨ä¸­çš„indexï¼Œä¹Ÿå¯èƒ½è¡¨ç¤ºä¸´æ—¶å˜é‡çš„indexï¼Œæ•…åªå‘½åä¸ºindex
 void AssemblyMaker::OpGeneralImmediate(enum DOUBLEOPERATOR op, Quaternary::AddressingMethod addressingmethod, int index, Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num, int var_space, int level, int immediate_value) throw()
 {
 	if(Quaternary::VARIABLE_ADDRESSING == addressingmethod)
@@ -926,46 +926,46 @@ void AssemblyMaker::OpGeneralImmediate(enum DOUBLEOPERATOR op, Quaternary::Addre
 	}
 }
 
-// ½«Êı¾İ´Ó¼Ä´æÆ÷EAX´æ´¢µ½±äÁ¿ÖĞ
-// µØÖ·¼ÆËã¹«Ê½£º
+// å°†æ•°æ®ä»å¯„å­˜å™¨EAXå­˜å‚¨åˆ°å˜é‡ä¸­
+// åœ°å€è®¡ç®—å…¬å¼ï¼š
 // para#n.addr = EBP + 4 * (1 + level + para_num - n)
 // var#n.addr = EBP - 4 * (n -para_num + 1)
 // display#n.addr = EBP + 4 * (1 + level - n)
 void AssemblyMaker::OpVarRegister(enum DOUBLEOPERATOR op, int tokentable_index, int para_num, int level, enum REGISTER reg) throw()
 {
-	// È·¶¨±äÁ¿µÄ²ã´Î
+	// ç¡®å®šå˜é‡çš„å±‚æ¬¡
 	int var_level = tokentable_.at(tokentable_index).level_;
-	// È·¶¨º¯ÊıµÄ²ã´Î£¨±È±äÁ¿²ã´ÎÉÙ1£©
+	// ç¡®å®šå‡½æ•°çš„å±‚æ¬¡ï¼ˆæ¯”å˜é‡å±‚æ¬¡å°‘1ï¼‰
 	int func_level = var_level - 1;
-	int n = tokentable_.at(tokentable_index).addr_;	// ¼ÆËã¸Ã±äÁ¿µÄÏà¶ÔµØÖ·
-	if(level == func_level)	// ÅĞ¶Ï±äÁ¿ÊÇ·ñÎªº¯ÊıµÄ¾Ö²¿±äÁ¿
+	int n = tokentable_.at(tokentable_index).addr_;	// è®¡ç®—è¯¥å˜é‡çš„ç›¸å¯¹åœ°å€
+	if(level == func_level)	// åˆ¤æ–­å˜é‡æ˜¯å¦ä¸ºå‡½æ•°çš„å±€éƒ¨å˜é‡
 	{
 		int offset = 0;
-		if(n < para_num)	// ËµÃ÷ÊÇ²ÎÊı
+		if(n < para_num)	// è¯´æ˜æ˜¯å‚æ•°
 		{
 			offset = 4 * (1 + level + para_num - n);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebp + " << offset << "], " << RegisterName[reg];
 		}
-		else				// ËµÃ÷ÊÇ¾Ö²¿±äÁ¿
+		else				// è¯´æ˜æ˜¯å±€éƒ¨å˜é‡
 		{
 			offset = 4 * (n - para_num + 1);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebp - " << offset << "], " << RegisterName[reg];
 		}
 	}
-	else	// Íâ²ã´ÎµÄ±äÁ¿
+	else	// å¤–å±‚æ¬¡çš„å˜é‡
 	{
-		// Ò». »ñµÃÍâ²ã´ÎµÄ²ÎÊı¸öÊı
+		// ä¸€. è·å¾—å¤–å±‚æ¬¡çš„å‚æ•°ä¸ªæ•°
 		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
-		// ¶ş. »ñµÃÍâ²ã´ÎµÄEBPµÄÖµ£¬¼ÓÔØµ½EBXÖĞ
+		// äºŒ. è·å¾—å¤–å±‚æ¬¡çš„EBPçš„å€¼ï¼ŒåŠ è½½åˆ°EBXä¸­
 		int offset = 4 * (1 + level - func_level);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
-		// Èı. ¼ÓÔØÍâ²ãµÄ±äÁ¿
-		if(n < extern_para_num)	// ËµÃ÷ÊÇÍâ²ã²ÎÊı
+		// ä¸‰. åŠ è½½å¤–å±‚çš„å˜é‡
+		if(n < extern_para_num)	// è¯´æ˜æ˜¯å¤–å±‚å‚æ•°
 		{
 			int offset = 4 * (1 + func_level + extern_para_num - n);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebx + " << offset << "], " << RegisterName[reg];
 		}
-		else				    // ËµÃ÷ÊÇÍâ²ã¾Ö²¿±äÁ¿
+		else				    // è¯´æ˜æ˜¯å¤–å±‚å±€éƒ¨å˜é‡
 		{
 			int offset = 4 * (n - extern_para_num + 1);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebx - " << offset << "], " << RegisterName[reg];
@@ -973,46 +973,46 @@ void AssemblyMaker::OpVarRegister(enum DOUBLEOPERATOR op, int tokentable_index, 
 	}
 }
 
-// ½«Á¢¼´Êı´æ´¢µ½±äÁ¿ÖĞ
-// µØÖ·¼ÆËã¹«Ê½£º
+// å°†ç«‹å³æ•°å­˜å‚¨åˆ°å˜é‡ä¸­
+// åœ°å€è®¡ç®—å…¬å¼ï¼š
 // para#n.addr = EBP + 4 * (1 + level + para_num - n)
 // var#n.addr = EBP - 4 * (n -para_num + 1)
 // display#n.addr = EBP + 4 * (1 + level - n)
 void AssemblyMaker::OpVarImmediate(enum DOUBLEOPERATOR op, int tokentable_index, int para_num, int level, int immediate_value) throw()
 {
-	// È·¶¨±äÁ¿µÄ²ã´Î
+	// ç¡®å®šå˜é‡çš„å±‚æ¬¡
 	int var_level = tokentable_.at(tokentable_index).level_;
-	// È·¶¨º¯ÊıµÄ²ã´Î£¨±È±äÁ¿²ã´ÎÉÙ1£©
+	// ç¡®å®šå‡½æ•°çš„å±‚æ¬¡ï¼ˆæ¯”å˜é‡å±‚æ¬¡å°‘1ï¼‰
 	int func_level = var_level - 1;
-	int n = tokentable_.at(tokentable_index).addr_;	// ¼ÆËã¸Ã±äÁ¿µÄÏà¶ÔµØÖ·
-	if(level == func_level)	// ÅĞ¶Ï±äÁ¿ÊÇ·ñÎªº¯ÊıµÄ¾Ö²¿±äÁ¿
+	int n = tokentable_.at(tokentable_index).addr_;	// è®¡ç®—è¯¥å˜é‡çš„ç›¸å¯¹åœ°å€
+	if(level == func_level)	// åˆ¤æ–­å˜é‡æ˜¯å¦ä¸ºå‡½æ•°çš„å±€éƒ¨å˜é‡
 	{
 		int offset = 0;
-		if(n < para_num)	// ËµÃ÷ÊÇ²ÎÊı
+		if(n < para_num)	// è¯´æ˜æ˜¯å‚æ•°
 		{
 			offset = 4 * (1 + level + para_num - n);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ebp + " << offset << "], " << immediate_value;
 		}
-		else				// ËµÃ÷ÊÇ¾Ö²¿±äÁ¿
+		else				// è¯´æ˜æ˜¯å±€éƒ¨å˜é‡
 		{
 			offset = 4 * (n - para_num + 1);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ebp - " << offset << "], " << immediate_value;
 		}
 	}
-	else	// Íâ²ã´ÎµÄ±äÁ¿
+	else	// å¤–å±‚æ¬¡çš„å˜é‡
 	{
-		// Ò». »ñµÃÍâ²ã´ÎµÄ²ÎÊı¸öÊı
+		// ä¸€. è·å¾—å¤–å±‚æ¬¡çš„å‚æ•°ä¸ªæ•°
 		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
-		// ¶ş. »ñµÃÍâ²ã´ÎµÄEBPµÄÖµ£¬¼ÓÔØµ½EBXÖĞ
+		// äºŒ. è·å¾—å¤–å±‚æ¬¡çš„EBPçš„å€¼ï¼ŒåŠ è½½åˆ°EBXä¸­
 		int offset = 4 * (1 + level - func_level);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
-		// Èı. ¼ÓÔØÍâ²ãµÄ±äÁ¿
-		if(n < extern_para_num)	// ËµÃ÷ÊÇÍâ²ã²ÎÊı
+		// ä¸‰. åŠ è½½å¤–å±‚çš„å˜é‡
+		if(n < extern_para_num)	// è¯´æ˜æ˜¯å¤–å±‚å‚æ•°
 		{
 			int offset = 4 * (1 + func_level + extern_para_num - n);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ebx + " << offset << "], " << immediate_value;
 		}
-		else				    // ËµÃ÷ÊÇÍâ²ã¾Ö²¿±äÁ¿
+		else				    // è¯´æ˜æ˜¯å¤–å±‚å±€éƒ¨å˜é‡
 		{
 			int offset = 4 * (n - extern_para_num + 1);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ebx - " << offset << "], " << immediate_value;
@@ -1020,223 +1020,223 @@ void AssemblyMaker::OpVarImmediate(enum DOUBLEOPERATOR op, int tokentable_index,
 	}
 }
 
-// ½«Êı¾İ´Ó¼Ä´æÆ÷EAX´æ´¢µ½ÒıÓÃ±äÁ¿ÖĞ
-// µØÖ·¼ÆËã¹«Ê½£º
+// å°†æ•°æ®ä»å¯„å­˜å™¨EAXå­˜å‚¨åˆ°å¼•ç”¨å˜é‡ä¸­
+// åœ°å€è®¡ç®—å…¬å¼ï¼š
 // para#n.addr = EBP + 4 * (1 + level + para_num - n)
 // var#n.addr = EBP - 4 * (n -para_num + 1)
 // display#n.addr = EBP + 4 * (1 + level - n)
 void AssemblyMaker::OpReferenceRegister(enum DOUBLEOPERATOR op, int tokentable_index, int para_num, int level, enum REGISTER reg) throw()
 {
-	// È·¶¨±äÁ¿µÄ²ã´Î
+	// ç¡®å®šå˜é‡çš„å±‚æ¬¡
 	int var_level = tokentable_.at(tokentable_index).level_;
-	// È·¶¨º¯ÊıµÄ²ã´Î£¨±È±äÁ¿²ã´ÎÉÙ1£©
+	// ç¡®å®šå‡½æ•°çš„å±‚æ¬¡ï¼ˆæ¯”å˜é‡å±‚æ¬¡å°‘1ï¼‰
 	int func_level = var_level - 1;
-	int n = tokentable_.at(tokentable_index).addr_;	// ¼ÆËã¸Ã±äÁ¿µÄ¾Ö²¿×÷ÓÃÓòÖĞµÄÏà¶ÔµØÖ·
+	int n = tokentable_.at(tokentable_index).addr_;	// è®¡ç®—è¯¥å˜é‡çš„å±€éƒ¨ä½œç”¨åŸŸä¸­çš„ç›¸å¯¹åœ°å€
 	int offset = 0;
-	if(level == func_level)	// ÅĞ¶ÏÊÇ·ñÎª¾Ö²¿²ÎÊı
+	if(level == func_level)	// åˆ¤æ–­æ˜¯å¦ä¸ºå±€éƒ¨å‚æ•°
 	{
-		// Ò». ¼ÓÔØ²ÎÊıµÄÖµ£¨¼´ÒıÓÃ±äÁ¿µÄµØÖ·£©µ½EBXÖĞ
+		// ä¸€. åŠ è½½å‚æ•°çš„å€¼ï¼ˆå³å¼•ç”¨å˜é‡çš„åœ°å€ï¼‰åˆ°EBXä¸­
 		offset = 4 * (1 + level + para_num - n);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
-		// ¶ş. ¶Ô²ÎÊıËùÒıÓÃµÄ±äÁ¿½øĞĞ²Ù×÷
+		// äºŒ. å¯¹å‚æ•°æ‰€å¼•ç”¨çš„å˜é‡è¿›è¡Œæ“ä½œ
 		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebx], " << RegisterName[reg];
 	}
-	else	// Íâ²ã´ÎµÄ²ÎÊı
+	else	// å¤–å±‚æ¬¡çš„å‚æ•°
 	{
-		// Ò». »ñµÃÍâ²ã´ÎµÄEBPµÄÖµ£¬¼ÓÔØµ½EBXÖĞ
+		// ä¸€. è·å¾—å¤–å±‚æ¬¡çš„EBPçš„å€¼ï¼ŒåŠ è½½åˆ°EBXä¸­
 		int offset = 4 * (1 + level - func_level);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
-		// ¶ş. »ñµÃÍâ²ã´ÎµÄ²ÎÊı¸öÊı
+		// äºŒ. è·å¾—å¤–å±‚æ¬¡çš„å‚æ•°ä¸ªæ•°
 		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
-		// Èı. ¼ÓÔØÍâ²ãµÄ²ÎÊıµÄÖµ£¨¼´ÒıÓÃ±äÁ¿µÄµØÖ·£©µ½EBXÖĞ
+		// ä¸‰. åŠ è½½å¤–å±‚çš„å‚æ•°çš„å€¼ï¼ˆå³å¼•ç”¨å˜é‡çš„åœ°å€ï¼‰åˆ°EBXä¸­
 		offset = 4 * (1 + func_level + extern_para_num - n);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebx + " << offset << "]";
-		// ËÄ. ¶ÔÍâ²ãµÄ²ÎÊıËùÒıÓÃµÄ±äÁ¿½øĞĞ²Ù×÷
+		// å››. å¯¹å¤–å±‚çš„å‚æ•°æ‰€å¼•ç”¨çš„å˜é‡è¿›è¡Œæ“ä½œ
 		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebx], " << RegisterName[reg];
 	}
 }
 
-// ½«Á¢¼´Êı´æ´¢µ½ÒıÓÃ±äÁ¿ÖĞ
-// µØÖ·¼ÆËã¹«Ê½£º
+// å°†ç«‹å³æ•°å­˜å‚¨åˆ°å¼•ç”¨å˜é‡ä¸­
+// åœ°å€è®¡ç®—å…¬å¼ï¼š
 // para#n.addr = EBP + 4 * (1 + level + para_num - n)
 // var#n.addr = EBP - 4 * (n -para_num + 1)
 // display#n.addr = EBP + 4 * (1 + level - n)
 void AssemblyMaker::OpReferenceImmediate(enum DOUBLEOPERATOR op, int tokentable_index, int para_num, int level, int immediate_value) throw()
 {
-	// È·¶¨±äÁ¿µÄ²ã´Î
+	// ç¡®å®šå˜é‡çš„å±‚æ¬¡
 	int var_level = tokentable_.at(tokentable_index).level_;
-	// È·¶¨º¯ÊıµÄ²ã´Î£¨±È±äÁ¿²ã´ÎÉÙ1£©
+	// ç¡®å®šå‡½æ•°çš„å±‚æ¬¡ï¼ˆæ¯”å˜é‡å±‚æ¬¡å°‘1ï¼‰
 	int func_level = var_level - 1;
-	int n = tokentable_.at(tokentable_index).addr_;	// ¼ÆËã¸Ã±äÁ¿µÄ¾Ö²¿×÷ÓÃÓòÖĞµÄÏà¶ÔµØÖ·
+	int n = tokentable_.at(tokentable_index).addr_;	// è®¡ç®—è¯¥å˜é‡çš„å±€éƒ¨ä½œç”¨åŸŸä¸­çš„ç›¸å¯¹åœ°å€
 	int offset = 0;
-	if(level == func_level)	// ÅĞ¶ÏÊÇ·ñÎª¾Ö²¿²ÎÊı
+	if(level == func_level)	// åˆ¤æ–­æ˜¯å¦ä¸ºå±€éƒ¨å‚æ•°
 	{
-		// Ò». ¼ÓÔØ²ÎÊıµÄÖµ£¨¼´ÒıÓÃ±äÁ¿µÄµØÖ·£©µ½EBXÖĞ
+		// ä¸€. åŠ è½½å‚æ•°çš„å€¼ï¼ˆå³å¼•ç”¨å˜é‡çš„åœ°å€ï¼‰åˆ°EBXä¸­
 		offset = 4 * (1 + level + para_num - n);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
-		// ¶ş. ¶Ô²ÎÊıËùÒıÓÃµÄ±äÁ¿½øĞĞ²Ù×÷
+		// äºŒ. å¯¹å‚æ•°æ‰€å¼•ç”¨çš„å˜é‡è¿›è¡Œæ“ä½œ
 		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ebx], " << immediate_value;
 	}
-	else	// Íâ²ã´ÎµÄ²ÎÊı
+	else	// å¤–å±‚æ¬¡çš„å‚æ•°
 	{
-		// Ò». »ñµÃÍâ²ã´ÎµÄEBPµÄÖµ£¬¼ÓÔØµ½EBXÖĞ
+		// ä¸€. è·å¾—å¤–å±‚æ¬¡çš„EBPçš„å€¼ï¼ŒåŠ è½½åˆ°EBXä¸­
 		int offset = 4 * (1 + level - func_level);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
-		// ¶ş. »ñµÃÍâ²ã´ÎµÄ²ÎÊı¸öÊı
+		// äºŒ. è·å¾—å¤–å±‚æ¬¡çš„å‚æ•°ä¸ªæ•°
 		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
-		// Èı. ¼ÓÔØÍâ²ãµÄ²ÎÊıµÄÖµ£¨¼´ÒıÓÃ±äÁ¿µÄµØÖ·£©µ½EBXÖĞ
+		// ä¸‰. åŠ è½½å¤–å±‚çš„å‚æ•°çš„å€¼ï¼ˆå³å¼•ç”¨å˜é‡çš„åœ°å€ï¼‰åˆ°EBXä¸­
 		offset = 4 * (1 + func_level + extern_para_num - n);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebx + " << offset << "]";
-		// ËÄ. ¶ÔÍâ²ãµÄ²ÎÊıËùÒıÓÃµÄ±äÁ¿½øĞĞ²Ù×÷
+		// å››. å¯¹å¤–å±‚çš„å‚æ•°æ‰€å¼•ç”¨çš„å˜é‡è¿›è¡Œæ“ä½œ
 		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ebx], " << immediate_value;
 	}
 }
 
-// ×¢Òâ£ºarray²»¿ÉÄÜÊÇ²ÎÊı
-// µØÖ·¼ÆËã¹«Ê½£º
+// æ³¨æ„ï¼šarrayä¸å¯èƒ½æ˜¯å‚æ•°
+// åœ°å€è®¡ç®—å…¬å¼ï¼š
 // array#n.addr = EBP - 4 * (n - para_num + 1 + array_offset)
 // display#n.addr = EBP + 4 * (1 + level - n)
 void AssemblyMaker::OpArrayRegister(enum DOUBLEOPERATOR op, int tokentable_index, Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num, int level, enum REGISTER reg) throw()
 {
-	// È·¶¨±äÁ¿µÄ²ã´Î
+	// ç¡®å®šå˜é‡çš„å±‚æ¬¡
 	int var_level = tokentable_.at(tokentable_index).level_;
-	// È·¶¨º¯ÊıµÄ²ã´Î£¨±È±äÁ¿²ã´ÎÉÙ1£©
+	// ç¡®å®šå‡½æ•°çš„å±‚æ¬¡ï¼ˆæ¯”å˜é‡å±‚æ¬¡å°‘1ï¼‰
 	int func_level = var_level - 1;
-	int n = tokentable_.at(tokentable_index).addr_;	// ¼ÆËã¸Ã±äÁ¿µÄÏà¶ÔµØÖ·
+	int n = tokentable_.at(tokentable_index).addr_;	// è®¡ç®—è¯¥å˜é‡çš„ç›¸å¯¹åœ°å€
 	int offset = 0;
-	if(level == func_level)	// ÅĞ¶ÏÊÇ·ñÎª¾Ö²¿±äÁ¿
+	if(level == func_level)	// åˆ¤æ–­æ˜¯å¦ä¸ºå±€éƒ¨å˜é‡
 	{
-		// Êı×éµÄÆ«ÒÆÁ¿µÄ¼ÆËã
-		// Èç¹ûÊı×éÏÂ±êÊÇÁ¢¼´ÊıÀàĞÍ£¬ÔòÆ«ÒÆÁ¿¾ÍÊÇarray_offset
+		// æ•°ç»„çš„åç§»é‡çš„è®¡ç®—
+		// å¦‚æœæ•°ç»„ä¸‹æ ‡æ˜¯ç«‹å³æ•°ç±»å‹ï¼Œåˆ™åç§»é‡å°±æ˜¯array_offset
 		if(Quaternary::IMMEDIATE_ADDRESSING == array_addr_method)
 		{
 			offset = 4 * (n - para_num + 1 + array_offset);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebp - " << offset << "], " << RegisterName[reg];
 		}
-		else	// ·ñÔò£¬¾ÍÒªÈ¡µÃÊı×éÏÂ±ê£¨Ä³¸ö±äÁ¿£©µÄÖµ£¬ÔÚ»ã±à³ÌĞòÖĞ¼ÆËãÆäÆ«ÒÆÁ¿
+		else	// å¦åˆ™ï¼Œå°±è¦å–å¾—æ•°ç»„ä¸‹æ ‡ï¼ˆæŸä¸ªå˜é‡ï¼‰çš„å€¼ï¼Œåœ¨æ±‡ç¼–ç¨‹åºä¸­è®¡ç®—å…¶åç§»é‡
 		{
-			// 1. ÏÈ°ÑÊı×éÏÂ±êµÄ±äÁ¿µÄÖµ·ÅÈëECX
+			// 1. å…ˆæŠŠæ•°ç»„ä¸‹æ ‡çš„å˜é‡çš„å€¼æ”¾å…¥ECX
 			OpRegisterGeneral(MOV, ECX, array_addr_method, array_offset, Quaternary::NIL_ADDRESSING, 0, 0, 0, level);
-			// 2. ¼ÆËã³öÊµ¼ÊµÄÊı×éÔªËØµÄÏà¶ÔÆ«ÒÆ£¨Ïà¶ÔÓÚebp£©£¬·ÅÔÚECXÖĞ¡£´ËÊ±Êı×éÔªËØµÄ¾ø¶ÔÆ«ÒÆÎªebp-ecx
+			// 2. è®¡ç®—å‡ºå®é™…çš„æ•°ç»„å…ƒç´ çš„ç›¸å¯¹åç§»ï¼ˆç›¸å¯¹äºebpï¼‰ï¼Œæ”¾åœ¨ECXä¸­ã€‚æ­¤æ—¶æ•°ç»„å…ƒç´ çš„ç»å¯¹åç§»ä¸ºebp-ecx
 			assemble_buffer << "\n    add     ecx, " << (n - para_num + 1)
-							<< "\n    shl     ecx,    2";	// ³Ë4
-			// 3. ¼ÆËã³ö¾ø¶ÔÆ«ÒÆ£¬·ÅÔÚEBXÖĞ£¨-(eax-ebp)£©
+							<< "\n    shl     ecx,    2";	// ä¹˜4
+			// 3. è®¡ç®—å‡ºç»å¯¹åç§»ï¼Œæ”¾åœ¨EBXä¸­ï¼ˆ-(eax-ebp)ï¼‰
 			assemble_buffer << "\n    sub     ecx,    ebp"
 							<< "\n    neg     ecx";
-			// 3. Ö´ĞĞ¸ÃÖ´ĞĞµÄ²Ù×÷
+			// 3. æ‰§è¡Œè¯¥æ‰§è¡Œçš„æ“ä½œ
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ecx], " << RegisterName[reg];
 		}
 	}
-	else	// Íâ²ã´ÎµÄ±äÁ¿
+	else	// å¤–å±‚æ¬¡çš„å˜é‡
 	{
-		// Ò». »ñµÃÍâ²ã´ÎµÄEBPµÄÖµ£¬¼ÓÔØµ½EBXÖĞ
+		// ä¸€. è·å¾—å¤–å±‚æ¬¡çš„EBPçš„å€¼ï¼ŒåŠ è½½åˆ°EBXä¸­
 		offset = 4 * (1 + level - func_level);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
-		// ¶ş. Êı×éÔªËØµÄÆ«ÒÆÁ¿µÄ¼ÆËã
-		// Èç¹ûÊı×éÏÂ±êÊÇÁ¢¼´ÊıÀàĞÍ£¬ÔòÆ«ÒÆÁ¿¾ÍÊÇarray_offset
+		// äºŒ. æ•°ç»„å…ƒç´ çš„åç§»é‡çš„è®¡ç®—
+		// å¦‚æœæ•°ç»„ä¸‹æ ‡æ˜¯ç«‹å³æ•°ç±»å‹ï¼Œåˆ™åç§»é‡å°±æ˜¯array_offset
 		if(Quaternary::IMMEDIATE_ADDRESSING == array_addr_method)
 		{
 			offset = 4 * (n - para_num + 1 + array_offset);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebx - " << offset << "], " << RegisterName[reg];
 		}
-		else	// ·ñÔò£¬¾ÍÒªÈ¡µÃÊı×éÏÂ±ê£¨Ä³¸ö±äÁ¿£©µÄÖµ£¬ÔÚ»ã±à³ÌĞòÖĞ¼ÆËãÆäÆ«ÒÆÁ¿
+		else	// å¦åˆ™ï¼Œå°±è¦å–å¾—æ•°ç»„ä¸‹æ ‡ï¼ˆæŸä¸ªå˜é‡ï¼‰çš„å€¼ï¼Œåœ¨æ±‡ç¼–ç¨‹åºä¸­è®¡ç®—å…¶åç§»é‡
 		{
-			// 1. ÏÈ°ÑÊı×éÏÂ±êµÄ±äÁ¿µÄÖµ·ÅÈëECX
+			// 1. å…ˆæŠŠæ•°ç»„ä¸‹æ ‡çš„å˜é‡çš„å€¼æ”¾å…¥ECX
 			OpRegisterGeneral(MOV, ECX, array_addr_method, array_offset, Quaternary::NIL_ADDRESSING, 0, 0, 0, level);
-			// 2. ¼ÆËã³öÊµ¼ÊµÄÊı×éÔªËØµÄÏà¶ÔÆ«ÒÆ£¨Ïà¶ÔÓÚebx£©£¬·ÅÔÚEAXÖĞ¡£´ËÊ±Êı×éÔªËØµÄ¾ø¶ÔÆ«ÒÆÎªebx-eax
+			// 2. è®¡ç®—å‡ºå®é™…çš„æ•°ç»„å…ƒç´ çš„ç›¸å¯¹åç§»ï¼ˆç›¸å¯¹äºebxï¼‰ï¼Œæ”¾åœ¨EAXä¸­ã€‚æ­¤æ—¶æ•°ç»„å…ƒç´ çš„ç»å¯¹åç§»ä¸ºebx-eax
 			assemble_buffer << "\n    add     ecx, " << (n - para_num + 1)
-							<< "\n    shl     ecx,    2";	// ³Ë4
-			// 3. ¼ÆËã³ö¾ø¶ÔÆ«ÒÆ£¬·ÅÔÚEAXÖĞ£¨-(eax-ebx)£©
+							<< "\n    shl     ecx,    2";	// ä¹˜4
+			// 3. è®¡ç®—å‡ºç»å¯¹åç§»ï¼Œæ”¾åœ¨EAXä¸­ï¼ˆ-(eax-ebx)ï¼‰
 			assemble_buffer << "\n    sub     ecx, ebx"
 							<< "\n    neg     ecx";
-			// 3. Ö´ĞĞ¸ÃÖ´ĞĞµÄ²Ù×÷
+			// 3. æ‰§è¡Œè¯¥æ‰§è¡Œçš„æ“ä½œ
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ecx], " << RegisterName[reg];
 		}
 	}
 }
 
-// ×¢Òâ£ºarray²»¿ÉÄÜÊÇ²ÎÊı
-// µØÖ·¼ÆËã¹«Ê½£º
+// æ³¨æ„ï¼šarrayä¸å¯èƒ½æ˜¯å‚æ•°
+// åœ°å€è®¡ç®—å…¬å¼ï¼š
 // array#n.addr = EBP - 4 * (n - para_num + 1 + array_offset)
 // display#n.addr = EBP + 4 * (1 + level - n)
 void AssemblyMaker::OpArrayImmediate(enum DOUBLEOPERATOR op, int tokentable_index, Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num, int level, int immediate_value) throw()
 {
-	// È·¶¨±äÁ¿µÄ²ã´Î
+	// ç¡®å®šå˜é‡çš„å±‚æ¬¡
 	int var_level = tokentable_.at(tokentable_index).level_;
-	// È·¶¨º¯ÊıµÄ²ã´Î£¨±È±äÁ¿²ã´ÎÉÙ1£©
+	// ç¡®å®šå‡½æ•°çš„å±‚æ¬¡ï¼ˆæ¯”å˜é‡å±‚æ¬¡å°‘1ï¼‰
 	int func_level = var_level - 1;
-	int n = tokentable_.at(tokentable_index).addr_;	// ¼ÆËã¸Ã±äÁ¿µÄÏà¶ÔµØÖ·
+	int n = tokentable_.at(tokentable_index).addr_;	// è®¡ç®—è¯¥å˜é‡çš„ç›¸å¯¹åœ°å€
 	int offset = 0;
-	if(level == func_level)	// ÅĞ¶ÏÊÇ·ñÎª¾Ö²¿±äÁ¿
+	if(level == func_level)	// åˆ¤æ–­æ˜¯å¦ä¸ºå±€éƒ¨å˜é‡
 	{
-		// Êı×éµÄÆ«ÒÆÁ¿µÄ¼ÆËã
-		// Èç¹ûÊı×éÏÂ±êÊÇÁ¢¼´ÊıÀàĞÍ£¬ÔòÆ«ÒÆÁ¿¾ÍÊÇarray_offset
+		// æ•°ç»„çš„åç§»é‡çš„è®¡ç®—
+		// å¦‚æœæ•°ç»„ä¸‹æ ‡æ˜¯ç«‹å³æ•°ç±»å‹ï¼Œåˆ™åç§»é‡å°±æ˜¯array_offset
 		if(Quaternary::IMMEDIATE_ADDRESSING == array_addr_method)
 		{
 			offset = 4 * (n - para_num + 1 + array_offset);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ebp - " << offset << "], " << immediate_value;
 		}
-		else	// ·ñÔò£¬¾ÍÒªÈ¡µÃÊı×éÏÂ±ê£¨Ä³¸ö±äÁ¿£©µÄÖµ£¬ÔÚ»ã±à³ÌĞòÖĞ¼ÆËãÆäÆ«ÒÆÁ¿
+		else	// å¦åˆ™ï¼Œå°±è¦å–å¾—æ•°ç»„ä¸‹æ ‡ï¼ˆæŸä¸ªå˜é‡ï¼‰çš„å€¼ï¼Œåœ¨æ±‡ç¼–ç¨‹åºä¸­è®¡ç®—å…¶åç§»é‡
 		{
-			// 1. ÏÈ°ÑÊı×éÏÂ±êµÄ±äÁ¿µÄÖµ·ÅÈëECX
+			// 1. å…ˆæŠŠæ•°ç»„ä¸‹æ ‡çš„å˜é‡çš„å€¼æ”¾å…¥ECX
 			OpRegisterGeneral(MOV, ECX, array_addr_method, array_offset, Quaternary::NIL_ADDRESSING, 0, 0, 0, level);
-			// 2. ¼ÆËã³öÊµ¼ÊµÄÊı×éÔªËØµÄÏà¶ÔÆ«ÒÆ£¨Ïà¶ÔÓÚebp£©£¬·ÅÔÚECXÖĞ¡£´ËÊ±Êı×éÔªËØµÄ¾ø¶ÔÆ«ÒÆÎªebp-ecx
+			// 2. è®¡ç®—å‡ºå®é™…çš„æ•°ç»„å…ƒç´ çš„ç›¸å¯¹åç§»ï¼ˆç›¸å¯¹äºebpï¼‰ï¼Œæ”¾åœ¨ECXä¸­ã€‚æ­¤æ—¶æ•°ç»„å…ƒç´ çš„ç»å¯¹åç§»ä¸ºebp-ecx
 			assemble_buffer << "\n    add     ecx, " << (n - para_num + 1)
-							<< "\n    shl     ecx,    2";	// ³Ë4
-			// 3. ¼ÆËã³ö¾ø¶ÔÆ«ÒÆ£¬·ÅÔÚEBXÖĞ£¨-(eax-ebp)£©
+							<< "\n    shl     ecx,    2";	// ä¹˜4
+			// 3. è®¡ç®—å‡ºç»å¯¹åç§»ï¼Œæ”¾åœ¨EBXä¸­ï¼ˆ-(eax-ebp)ï¼‰
 			assemble_buffer << "\n    sub     ecx,    ebp"
 							<< "\n    neg     ecx";
-			// 3. Ö´ĞĞ¸ÃÖ´ĞĞµÄ²Ù×÷
+			// 3. æ‰§è¡Œè¯¥æ‰§è¡Œçš„æ“ä½œ
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr dword ptr SS:[ecx], " << immediate_value;
 		}
 	}
-	else	// Íâ²ã´ÎµÄ±äÁ¿
+	else	// å¤–å±‚æ¬¡çš„å˜é‡
 	{
-		// Ò». »ñµÃÍâ²ã´ÎµÄEBPµÄÖµ£¬¼ÓÔØµ½EBXÖĞ
+		// ä¸€. è·å¾—å¤–å±‚æ¬¡çš„EBPçš„å€¼ï¼ŒåŠ è½½åˆ°EBXä¸­
 		offset = 4 * (1 + level - func_level);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
-		// ¶ş. Êı×éÔªËØµÄÆ«ÒÆÁ¿µÄ¼ÆËã
-		// Èç¹ûÊı×éÏÂ±êÊÇÁ¢¼´ÊıÀàĞÍ£¬ÔòÆ«ÒÆÁ¿¾ÍÊÇarray_offset
+		// äºŒ. æ•°ç»„å…ƒç´ çš„åç§»é‡çš„è®¡ç®—
+		// å¦‚æœæ•°ç»„ä¸‹æ ‡æ˜¯ç«‹å³æ•°ç±»å‹ï¼Œåˆ™åç§»é‡å°±æ˜¯array_offset
 		if(Quaternary::IMMEDIATE_ADDRESSING == array_addr_method)
 		{
 			offset = 4 * (n - para_num + 1 + array_offset);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ebx - " << offset << "], " << immediate_value;
 		}
-		else	// ·ñÔò£¬¾ÍÒªÈ¡µÃÊı×éÏÂ±ê£¨Ä³¸ö±äÁ¿£©µÄÖµ£¬ÔÚ»ã±à³ÌĞòÖĞ¼ÆËãÆäÆ«ÒÆÁ¿
+		else	// å¦åˆ™ï¼Œå°±è¦å–å¾—æ•°ç»„ä¸‹æ ‡ï¼ˆæŸä¸ªå˜é‡ï¼‰çš„å€¼ï¼Œåœ¨æ±‡ç¼–ç¨‹åºä¸­è®¡ç®—å…¶åç§»é‡
 		{
-			// 1. ÏÈ°ÑÊı×éÏÂ±êµÄ±äÁ¿µÄÖµ·ÅÈëECX
+			// 1. å…ˆæŠŠæ•°ç»„ä¸‹æ ‡çš„å˜é‡çš„å€¼æ”¾å…¥ECX
 			OpRegisterGeneral(MOV, ECX, array_addr_method, array_offset, Quaternary::NIL_ADDRESSING, 0, 0, 0, level);
-			// 2. ¼ÆËã³öÊµ¼ÊµÄÊı×éÔªËØµÄÏà¶ÔÆ«ÒÆ£¨Ïà¶ÔÓÚebx£©£¬·ÅÔÚEAXÖĞ¡£´ËÊ±Êı×éÔªËØµÄ¾ø¶ÔÆ«ÒÆÎªebx-eax
+			// 2. è®¡ç®—å‡ºå®é™…çš„æ•°ç»„å…ƒç´ çš„ç›¸å¯¹åç§»ï¼ˆç›¸å¯¹äºebxï¼‰ï¼Œæ”¾åœ¨EAXä¸­ã€‚æ­¤æ—¶æ•°ç»„å…ƒç´ çš„ç»å¯¹åç§»ä¸ºebx-eax
 			assemble_buffer << "\n    add     ecx, " << (n - para_num + 1)
-							<< "\n    shl     ecx,    2";	// ³Ë4
-			// 3. ¼ÆËã³ö¾ø¶ÔÆ«ÒÆ£¬·ÅÔÚEAXÖĞ£¨-(eax-ebx)£©
+							<< "\n    shl     ecx,    2";	// ä¹˜4
+			// 3. è®¡ç®—å‡ºç»å¯¹åç§»ï¼Œæ”¾åœ¨EAXä¸­ï¼ˆ-(eax-ebx)ï¼‰
 			assemble_buffer << "\n    sub     ecx, ebx"
 							<< "\n    neg     ecx";
-			// 3. Ö´ĞĞ¸ÃÖ´ĞĞµÄ²Ù×÷
+			// 3. æ‰§è¡Œè¯¥æ‰§è¡Œçš„æ“ä½œ
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    dword ptr SS:[ecx], " << immediate_value;
 		}
 	}
 }
 
-// µØÖ·¼ÆËã¹«Ê½£º
+// åœ°å€è®¡ç®—å…¬å¼ï¼š
 // temp#n.addr = EBP - 4 * (var_space + n + 1)
 void AssemblyMaker::OpTempRegister(enum DOUBLEOPERATOR op, int index, int var_space, enum REGISTER reg) throw()
 {
-	// ÕâÀïµÄindex¾ÍÊÇÉÏÊ½ÖĞµÄn
+	// è¿™é‡Œçš„indexå°±æ˜¯ä¸Šå¼ä¸­çš„n
 	int offset = 4 * (var_space + index + 1);
 	assemble_buffer << "\n    " << DoubleOperatorName[op] << "    SS:[ebp - " << offset << "], " << RegisterName[reg];
 }
 
-// µØÖ·¼ÆËã¹«Ê½£º
+// åœ°å€è®¡ç®—å…¬å¼ï¼š
 // temp#n.addr = EBP - 4 * (var_space + n + 1)
 void AssemblyMaker::OpTempImmediate(enum DOUBLEOPERATOR op, int index, int var_space, int immediate_value) throw()
 {
-	// ÕâÀïµÄindex¾ÍÊÇÉÏÊ½ÖĞµÄn
+	// è¿™é‡Œçš„indexå°±æ˜¯ä¸Šå¼ä¸­çš„n
 	int offset = 4 * (var_space + index + 1);
 	assemble_buffer << "\n    " << DoubleOperatorName[op] << "     dword ptr SS:[ebp - " << offset << "], " << immediate_value;
 }
 
-// Ë«²Ù×÷ÊıµÄÔËËã£¨µÚÒ»¸ö²Ù×÷ÊıÊÇ¼Ä´æÆ÷£¬µÚ¶ş¸ö²Ù×÷ÊıÊÇ¸÷ÖÖÀàĞÍµÄÄÚ´æ±äÁ¿»òÁ¢¼´Êı£©
+// åŒæ“ä½œæ•°çš„è¿ç®—ï¼ˆç¬¬ä¸€ä¸ªæ“ä½œæ•°æ˜¯å¯„å­˜å™¨ï¼Œç¬¬äºŒä¸ªæ“ä½œæ•°æ˜¯å„ç§ç±»å‹çš„å†…å­˜å˜é‡æˆ–ç«‹å³æ•°ï¼‰
 void AssemblyMaker::OpRegisterGeneral(enum DOUBLEOPERATOR op, enum REGISTER reg, Quaternary::AddressingMethod addressingmethod, int index_or_value, Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num, int var_space, int level) throw()
 {
 	if(Quaternary::IMMEDIATE_ADDRESSING == addressingmethod)
@@ -1269,53 +1269,53 @@ void AssemblyMaker::OpRegisterGeneral(enum DOUBLEOPERATOR op, enum REGISTER reg,
 	}
 }
 
-// ¶Ô³£ÊıµÄ²Ù×÷
+// å¯¹å¸¸æ•°çš„æ“ä½œ
 void AssemblyMaker::OpRegisterImmediate(enum DOUBLEOPERATOR op, enum REGISTER reg, int value) throw()
 {
-	//TODO Í¨¹ıÊä³ö¸ñÊ½¿ØÖÆÀ´ÓÅ»¯Ğ§ÂÊ
+	//TODO é€šè¿‡è¾“å‡ºæ ¼å¼æ§åˆ¶æ¥ä¼˜åŒ–æ•ˆç‡
 	assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ", "<< value;
 }
 
-// ¶ÔÆÕÍ¨±äÁ¿µÄ²Ù×÷
-// µØÖ·¼ÆËã¹«Ê½£º
+// å¯¹æ™®é€šå˜é‡çš„æ“ä½œ
+// åœ°å€è®¡ç®—å…¬å¼ï¼š
 // para#n.addr = EBP + 4 * (1 + level + para_num - n)
 // var#n.addr = EBP - 4 * (n -para_num + 1)
 // display#n.addr = EBP + 4 * (1 + level - n)
 void AssemblyMaker::OpRegisterVar(enum DOUBLEOPERATOR op, enum REGISTER reg, int tokentable_index, int para_num, int level) throw()
 {
-	// È·¶¨±äÁ¿µÄ²ã´Î
+	// ç¡®å®šå˜é‡çš„å±‚æ¬¡
 	int var_level = tokentable_.at(tokentable_index).level_;
-	// È·¶¨º¯ÊıµÄ²ã´Î£¨±È±äÁ¿²ã´ÎÉÙ1£©
+	// ç¡®å®šå‡½æ•°çš„å±‚æ¬¡ï¼ˆæ¯”å˜é‡å±‚æ¬¡å°‘1ï¼‰
 	int func_level = var_level - 1;
-	int n = tokentable_.at(tokentable_index).addr_;	// ¼ÆËã¸Ã±äÁ¿µÄÏà¶ÔµØÖ·
-	if(level == func_level)	// ÅĞ¶ÏÊÇ·ñÎª¾Ö²¿±äÁ¿
+	int n = tokentable_.at(tokentable_index).addr_;	// è®¡ç®—è¯¥å˜é‡çš„ç›¸å¯¹åœ°å€
+	if(level == func_level)	// åˆ¤æ–­æ˜¯å¦ä¸ºå±€éƒ¨å˜é‡
 	{
 		int offset = 0;
-		if(n < para_num)	// ËµÃ÷ÊÇ²ÎÊı
+		if(n < para_num)	// è¯´æ˜æ˜¯å‚æ•°
 		{
 			offset = 4 * (1 + level + para_num - n);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebp + " << offset << "]";
 		}
-		else				// ËµÃ÷ÊÇ¾Ö²¿±äÁ¿
+		else				// è¯´æ˜æ˜¯å±€éƒ¨å˜é‡
 		{
 			offset = 4 * (n - para_num + 1);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebp - " << offset << "]";
 		}
 	}
-	else	// Íâ²ã´ÎµÄ±äÁ¿
+	else	// å¤–å±‚æ¬¡çš„å˜é‡
 	{
-		// Ò». »ñµÃÍâ²ã´ÎµÄ²ÎÊı¸öÊı
+		// ä¸€. è·å¾—å¤–å±‚æ¬¡çš„å‚æ•°ä¸ªæ•°
 		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
-		// ¶ş. »ñµÃÍâ²ã´ÎµÄEBPµÄÖµ£¬¼ÓÔØµ½EBXÖĞ
+		// äºŒ. è·å¾—å¤–å±‚æ¬¡çš„EBPçš„å€¼ï¼ŒåŠ è½½åˆ°EBXä¸­
 		int offset = 4 * (1 + level - func_level);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
-		// Èı. ¼ÓÔØÍâ²ãµÄ±äÁ¿
-		if(n < extern_para_num)	// ËµÃ÷ÊÇÍâ²ã²ÎÊı
+		// ä¸‰. åŠ è½½å¤–å±‚çš„å˜é‡
+		if(n < extern_para_num)	// è¯´æ˜æ˜¯å¤–å±‚å‚æ•°
 		{
 			int offset = 4 * (1 + func_level + extern_para_num - n);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebx + " << offset << "]";
 		}
-		else				    // ËµÃ÷ÊÇÍâ²ã¾Ö²¿±äÁ¿
+		else				    // è¯´æ˜æ˜¯å¤–å±‚å±€éƒ¨å˜é‡
 		{
 			int offset = 4 * (n - extern_para_num + 1);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebx - " << offset << "]";
@@ -1323,137 +1323,137 @@ void AssemblyMaker::OpRegisterVar(enum DOUBLEOPERATOR op, enum REGISTER reg, int
 	}
 }
 
-// ¶ÔÒıÓÃ±äÁ¿µÄ²Ù×÷
-// µØÖ·¼ÆËã¹«Ê½£º
+// å¯¹å¼•ç”¨å˜é‡çš„æ“ä½œ
+// åœ°å€è®¡ç®—å…¬å¼ï¼š
 // para#n.addr = EBP + 4 * (1 + level + para_num - n)
 // display#n.addr = EBP + 4 * (1 + level - n)
 void AssemblyMaker::OpRegisterReference(enum DOUBLEOPERATOR op, enum REGISTER reg, int tokentable_index, int para_num, int level) throw()
 {
-	// È·¶¨±äÁ¿µÄ²ã´Î
+	// ç¡®å®šå˜é‡çš„å±‚æ¬¡
 	int var_level = tokentable_.at(tokentable_index).level_;
-	// È·¶¨º¯ÊıµÄ²ã´Î£¨±È±äÁ¿²ã´ÎÉÙ1£©
+	// ç¡®å®šå‡½æ•°çš„å±‚æ¬¡ï¼ˆæ¯”å˜é‡å±‚æ¬¡å°‘1ï¼‰
 	int func_level = var_level - 1;
-	int n = tokentable_.at(tokentable_index).addr_;	// ¼ÆËã¸Ã±äÁ¿µÄ¾Ö²¿×÷ÓÃÓòÖĞµÄÏà¶ÔµØÖ·
+	int n = tokentable_.at(tokentable_index).addr_;	// è®¡ç®—è¯¥å˜é‡çš„å±€éƒ¨ä½œç”¨åŸŸä¸­çš„ç›¸å¯¹åœ°å€
 	int offset = 0;
-	if(level == func_level)	// ÅĞ¶ÏÊÇ·ñÎª¾Ö²¿²ÎÊı
+	if(level == func_level)	// åˆ¤æ–­æ˜¯å¦ä¸ºå±€éƒ¨å‚æ•°
 	{
-		// Ò». ¼ÓÔØ²ÎÊıµÄÖµ£¨¼´ÒıÓÃ±äÁ¿µÄµØÖ·£©µ½EBXÖĞ
+		// ä¸€. åŠ è½½å‚æ•°çš„å€¼ï¼ˆå³å¼•ç”¨å˜é‡çš„åœ°å€ï¼‰åˆ°EBXä¸­
 		offset = 4 * (1 + level + para_num - n);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
-		// ¶ş. ¶Ô²ÎÊıËùÒıÓÃµÄ±äÁ¿½øĞĞ²Ù×÷
+		// äºŒ. å¯¹å‚æ•°æ‰€å¼•ç”¨çš„å˜é‡è¿›è¡Œæ“ä½œ
 		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebx]";
 	}
-	else	// Íâ²ã´ÎµÄ²ÎÊı
+	else	// å¤–å±‚æ¬¡çš„å‚æ•°
 	{
-		// Ò». »ñµÃÍâ²ã´ÎµÄEBPµÄÖµ£¬¼ÓÔØµ½EBXÖĞ
+		// ä¸€. è·å¾—å¤–å±‚æ¬¡çš„EBPçš„å€¼ï¼ŒåŠ è½½åˆ°EBXä¸­
 		int offset = 4 * (1 + level - func_level);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
-		// ¶ş. »ñµÃÍâ²ã´ÎµÄ²ÎÊı¸öÊı
+		// äºŒ. è·å¾—å¤–å±‚æ¬¡çš„å‚æ•°ä¸ªæ•°
 		int extern_para_num = tokentable_.GetParameterNum(tokentable_index);
-		// Èı. ¼ÓÔØÍâ²ãµÄ²ÎÊıµÄÖµ£¨¼´ÒıÓÃ±äÁ¿µÄµØÖ·£©µ½EBXÖĞ
+		// ä¸‰. åŠ è½½å¤–å±‚çš„å‚æ•°çš„å€¼ï¼ˆå³å¼•ç”¨å˜é‡çš„åœ°å€ï¼‰åˆ°EBXä¸­
 		offset = 4 * (1 + func_level + extern_para_num - n);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebx + " << offset << "]";
-		// ËÄ. ¶ÔÍâ²ãµÄ²ÎÊıËùÒıÓÃµÄ±äÁ¿½øĞĞ²Ù×÷
+		// å››. å¯¹å¤–å±‚çš„å‚æ•°æ‰€å¼•ç”¨çš„å˜é‡è¿›è¡Œæ“ä½œ
 		assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebx]";
 	}
 }
 
-// ¶ÔÊı×éÔªËØµÄ²Ù×÷
-// ×¢Òâ£ºÊı×é²»¿ÉÄÜÊÇº¯ÊıµÄ²ÎÊı£¬¹Ê±ÈLoadArrayÒªÉÙÒ»¸öÅĞ¶Ï
-// µØÖ·¼ÆËã¹«Ê½£º
+// å¯¹æ•°ç»„å…ƒç´ çš„æ“ä½œ
+// æ³¨æ„ï¼šæ•°ç»„ä¸å¯èƒ½æ˜¯å‡½æ•°çš„å‚æ•°ï¼Œæ•…æ¯”LoadArrayè¦å°‘ä¸€ä¸ªåˆ¤æ–­
+// åœ°å€è®¡ç®—å…¬å¼ï¼š
 // array#n.addr = EBP - 4 * (n - para_num + 1 + array_offset)
-// display#n.addr = EBP + 4 * (1 + level - n)	ÕâÀïµÄn¼´ÎªÍâ²ãº¯ÊıµÄ²ã´Î
+// display#n.addr = EBP + 4 * (1 + level - n)	è¿™é‡Œçš„nå³ä¸ºå¤–å±‚å‡½æ•°çš„å±‚æ¬¡
 void AssemblyMaker::OpRegisterArray(enum DOUBLEOPERATOR op, enum REGISTER reg, int tokentable_index, Quaternary::AddressingMethod array_addr_method, int array_offset, int para_num, int level) throw()
 {
-	// È·¶¨±äÁ¿µÄ²ã´Î
+	// ç¡®å®šå˜é‡çš„å±‚æ¬¡
 	int var_level = tokentable_.at(tokentable_index).level_;
-	// È·¶¨º¯ÊıµÄ²ã´Î£¨±È±äÁ¿²ã´ÎÉÙ1£©
+	// ç¡®å®šå‡½æ•°çš„å±‚æ¬¡ï¼ˆæ¯”å˜é‡å±‚æ¬¡å°‘1ï¼‰
 	int func_level = var_level - 1;
-	int n = tokentable_.at(tokentable_index).addr_;	// ¼ÆËã¸Ã±äÁ¿µÄÏà¶ÔµØÖ·
+	int n = tokentable_.at(tokentable_index).addr_;	// è®¡ç®—è¯¥å˜é‡çš„ç›¸å¯¹åœ°å€
 	int offset = 0;
-	if(level == func_level)	// ÅĞ¶ÏÊÇ·ñÎª¾Ö²¿±äÁ¿
+	if(level == func_level)	// åˆ¤æ–­æ˜¯å¦ä¸ºå±€éƒ¨å˜é‡
 	{
-		// Êı×éµÄÆ«ÒÆÁ¿µÄ¼ÆËã
-		// Èç¹ûÊı×éÏÂ±êÊÇÁ¢¼´ÊıÀàĞÍ£¬ÔòÆ«ÒÆÁ¿¾ÍÊÇarray_offset
+		// æ•°ç»„çš„åç§»é‡çš„è®¡ç®—
+		// å¦‚æœæ•°ç»„ä¸‹æ ‡æ˜¯ç«‹å³æ•°ç±»å‹ï¼Œåˆ™åç§»é‡å°±æ˜¯array_offset
 		if(Quaternary::IMMEDIATE_ADDRESSING == array_addr_method)
 		{
 			offset = 4 * (n - para_num + 1 + array_offset);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebp - " << offset << "]";
 		}
-		else	// ·ñÔò£¬¾ÍÒªÈ¡µÃÊı×éÏÂ±ê£¨Ä³¸ö±äÁ¿£©µÄÖµ£¬ÔÚ»ã±à³ÌĞòÖĞ¼ÆËãÆäÆ«ÒÆÁ¿
+		else	// å¦åˆ™ï¼Œå°±è¦å–å¾—æ•°ç»„ä¸‹æ ‡ï¼ˆæŸä¸ªå˜é‡ï¼‰çš„å€¼ï¼Œåœ¨æ±‡ç¼–ç¨‹åºä¸­è®¡ç®—å…¶åç§»é‡
 		{
-			// 1. ÏÈ°ÑÊı×éÏÂ±êµÄ±äÁ¿µÄÖµ·ÅÈëECX
+			// 1. å…ˆæŠŠæ•°ç»„ä¸‹æ ‡çš„å˜é‡çš„å€¼æ”¾å…¥ECX
 			OpRegisterGeneral(MOV, ECX, array_addr_method, array_offset, Quaternary::NIL_ADDRESSING, 0, 0, 0, level);
-			// 2. ¼ÆËã³öÊµ¼ÊµÄÊı×éÔªËØµÄÏà¶ÔÆ«ÒÆ£¨Ïà¶ÔÓÚebp£©£¬·ÅÔÚECXÖĞ¡£´ËÊ±Êı×éÔªËØµÄ¾ø¶ÔÆ«ÒÆÎªebp-ecx
+			// 2. è®¡ç®—å‡ºå®é™…çš„æ•°ç»„å…ƒç´ çš„ç›¸å¯¹åç§»ï¼ˆç›¸å¯¹äºebpï¼‰ï¼Œæ”¾åœ¨ECXä¸­ã€‚æ­¤æ—¶æ•°ç»„å…ƒç´ çš„ç»å¯¹åç§»ä¸ºebp-ecx
 			assemble_buffer << "\n    add     ecx, " << (n - para_num + 1)
-							<< "\n    shl     ecx,    2";	// ³Ë4
-			// 3. ¼ÆËã³ö¾ø¶ÔÆ«ÒÆ£¬·ÅÔÚEBXÖĞ£¨-(eax-ebp)£©
+							<< "\n    shl     ecx,    2";	// ä¹˜4
+			// 3. è®¡ç®—å‡ºç»å¯¹åç§»ï¼Œæ”¾åœ¨EBXä¸­ï¼ˆ-(eax-ebp)ï¼‰
 			assemble_buffer << "\n    sub     ecx,    ebp"
 							<< "\n    neg     ecx";
-			// 3. Ö´ĞĞ¸ÃÖ´ĞĞµÄ²Ù×÷
+			// 3. æ‰§è¡Œè¯¥æ‰§è¡Œçš„æ“ä½œ
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    dword ptr SS:[ecx]";
 		}
 	}
-	else	// Íâ²ã´ÎµÄ±äÁ¿
+	else	// å¤–å±‚æ¬¡çš„å˜é‡
 	{
-		// Ò». »ñµÃÍâ²ã´ÎµÄEBPµÄÖµ£¬¼ÓÔØµ½EBXÖĞ
+		// ä¸€. è·å¾—å¤–å±‚æ¬¡çš„EBPçš„å€¼ï¼ŒåŠ è½½åˆ°EBXä¸­
 		offset = 4 * (1 + level - func_level);
 		assemble_buffer << "\n    mov     ebx,    SS:[ebp + " << offset << "]";
-		// ¶ş. Êı×éÔªËØµÄÆ«ÒÆÁ¿µÄ¼ÆËã
-		// Èç¹ûÊı×éÏÂ±êÊÇÁ¢¼´ÊıÀàĞÍ£¬ÔòÆ«ÒÆÁ¿¾ÍÊÇarray_offset
+		// äºŒ. æ•°ç»„å…ƒç´ çš„åç§»é‡çš„è®¡ç®—
+		// å¦‚æœæ•°ç»„ä¸‹æ ‡æ˜¯ç«‹å³æ•°ç±»å‹ï¼Œåˆ™åç§»é‡å°±æ˜¯array_offset
 		if(Quaternary::IMMEDIATE_ADDRESSING == array_addr_method)
 		{
 			offset = 4 * (n - para_num + 1 + array_offset);
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebx - " << offset << "]";
 		}
-		else	// ·ñÔò£¬¾ÍÒªÈ¡µÃÊı×éÏÂ±ê£¨Ä³¸ö±äÁ¿£©µÄÖµ£¬ÔÚ»ã±à³ÌĞòÖĞ¼ÆËãÆäÆ«ÒÆÁ¿
+		else	// å¦åˆ™ï¼Œå°±è¦å–å¾—æ•°ç»„ä¸‹æ ‡ï¼ˆæŸä¸ªå˜é‡ï¼‰çš„å€¼ï¼Œåœ¨æ±‡ç¼–ç¨‹åºä¸­è®¡ç®—å…¶åç§»é‡
 		{
-			// 1. ÏÈ°ÑÊı×éÏÂ±êµÄ±äÁ¿µÄÖµ·ÅÈëECX
+			// 1. å…ˆæŠŠæ•°ç»„ä¸‹æ ‡çš„å˜é‡çš„å€¼æ”¾å…¥ECX
 			OpRegisterGeneral(MOV, ECX, array_addr_method, array_offset, Quaternary::NIL_ADDRESSING, 0, 0, 0, level);
-			// 2. ¼ÆËã³öÊµ¼ÊµÄÊı×éÔªËØµÄÏà¶ÔÆ«ÒÆ£¨Ïà¶ÔÓÚebx£©£¬·ÅÔÚEAXÖĞ¡£´ËÊ±Êı×éÔªËØµÄ¾ø¶ÔÆ«ÒÆÎªebx-eax
+			// 2. è®¡ç®—å‡ºå®é™…çš„æ•°ç»„å…ƒç´ çš„ç›¸å¯¹åç§»ï¼ˆç›¸å¯¹äºebxï¼‰ï¼Œæ”¾åœ¨EAXä¸­ã€‚æ­¤æ—¶æ•°ç»„å…ƒç´ çš„ç»å¯¹åç§»ä¸ºebx-eax
 			assemble_buffer << "\n    add     ecx, " << (n - para_num + 1)
-							<< "\n    shl     ecx,    2";	// ³Ë4
-			// 3. ¼ÆËã³ö¾ø¶ÔÆ«ÒÆ£¬·ÅÔÚEAXÖĞ£¨-(eax-ebx)£©
+							<< "\n    shl     ecx,    2";	// ä¹˜4
+			// 3. è®¡ç®—å‡ºç»å¯¹åç§»ï¼Œæ”¾åœ¨EAXä¸­ï¼ˆ-(eax-ebx)ï¼‰
 			assemble_buffer << "\n    sub     ecx, ebx"
 							<< "\n    neg     ecx";
-			// 3. Ö´ĞĞ¸ÃÖ´ĞĞµÄ²Ù×÷
+			// 3. æ‰§è¡Œè¯¥æ‰§è¡Œçš„æ“ä½œ
 			assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    dword ptr SS:[ecx]";
 		}
 	}
 }
 
-// ¶ÔÁÙÊ±±äÁ¿µÄ²Ù×÷
-// µØÖ·¼ÆËã¹«Ê½£º
+// å¯¹ä¸´æ—¶å˜é‡çš„æ“ä½œ
+// åœ°å€è®¡ç®—å…¬å¼ï¼š
 // temp#n.addr = EBP - 4 * (var_space + n + 1)
 void AssemblyMaker::OpRegisterTemp(enum DOUBLEOPERATOR op, enum REGISTER reg, int index, int var_space) throw()
 {
-	// ÕâÀïµÄindex¾ÍÊÇÉÏÊ½ÖĞµÄn
+	// è¿™é‡Œçš„indexå°±æ˜¯ä¸Šå¼ä¸­çš„n
 	int offset = 4 * (var_space + index + 1);
 	assemble_buffer << "\n    " << DoubleOperatorName[op] << "    " << RegisterName[reg] << ",    SS:[ebp - " << offset << "]";
 }
 
 
-// ¸ù¾İËÄÔªÊ½±íÖĞÄ³ÏîµÄµü´úÆ÷£¬ÕÒµ½ËüËùÔÚµÄº¯ÊıµÄ·µ»ØÓï¾ä¿éÇ°µÄ±êºÅ
-// ÕâÀïÓĞÁ½ÖÖÕÒ·¨£¬Ò»ÖÖÏòÉÏ²éÕÒµ½BEGINÓï¾ä£¬»ñµÃº¯Êı¶ÔÓ¦µÄ·ûºÅ±íÎ»ÖÃ£¬ÕâÒªÇóENDÓï¾äÖĞ°üº¬º¯Êı¶ÔÓ¦µÄ·ûºÅ±íÎ»ÖÃ
-// ÁíÒ»ÖÖÏòÏÂ²éÕÒµ½ENDÓï¾ä£¬Õâ¾ÍÒªÇóENDÓï¾äÖĞ°üº¬º¯Êı¶ÔÓ¦µÄ·ûºÅ±íÎ»ÖÃ
-// Á½ÖÖ·½·¨µÄÒªÇó¶¼·ûºÏ£¬È»¶øµÚ¶şÖÖ¸ü¼òµ¥£¬¹Ê²ÉÓÃµÚ¶şÖÖ
+// æ ¹æ®å››å…ƒå¼è¡¨ä¸­æŸé¡¹çš„è¿­ä»£å™¨ï¼Œæ‰¾åˆ°å®ƒæ‰€åœ¨çš„å‡½æ•°çš„è¿”å›è¯­å¥å—å‰çš„æ ‡å·
+// è¿™é‡Œæœ‰ä¸¤ç§æ‰¾æ³•ï¼Œä¸€ç§å‘ä¸ŠæŸ¥æ‰¾åˆ°BEGINè¯­å¥ï¼Œè·å¾—å‡½æ•°å¯¹åº”çš„ç¬¦å·è¡¨ä½ç½®ï¼Œè¿™è¦æ±‚ENDè¯­å¥ä¸­åŒ…å«å‡½æ•°å¯¹åº”çš„ç¬¦å·è¡¨ä½ç½®
+// å¦ä¸€ç§å‘ä¸‹æŸ¥æ‰¾åˆ°ENDè¯­å¥ï¼Œè¿™å°±è¦æ±‚ENDè¯­å¥ä¸­åŒ…å«å‡½æ•°å¯¹åº”çš„ç¬¦å·è¡¨ä½ç½®
+// ä¸¤ç§æ–¹æ³•çš„è¦æ±‚éƒ½ç¬¦åˆï¼Œç„¶è€Œç¬¬äºŒç§æ›´ç®€å•ï¼Œæ•…é‡‡ç”¨ç¬¬äºŒç§
 string AssemblyMaker::FindExitLabel(vector<Quaternary>::const_iterator c_iter) throw()
 {
-	// Ò». ÕÒµ½º¯ÊıÔÚËÄÔªÊ½±íÖĞµÄENDÓï¾ä
+	// ä¸€. æ‰¾åˆ°å‡½æ•°åœ¨å››å…ƒå¼è¡¨ä¸­çš„ENDè¯­å¥
 	while(Quaternary::END != c_iter->op_)
 	{
 		++c_iter;
 	}
-	// ¶ş. ÕÒµ½º¯ÊıÔÚ·ûºÅ±íÖĞµÄÏÂ±ê
+	// äºŒ. æ‰¾åˆ°å‡½æ•°åœ¨ç¬¦å·è¡¨ä¸­çš„ä¸‹æ ‡
 	int tokentable_index = c_iter->dst_;
-	// Èı. ÕÒµ½º¯ÊıµÄÃû×Ö
+	// ä¸‰. æ‰¾åˆ°å‡½æ•°çš„åå­—
 	std::ostringstream buffer;
-	// ËÄ. ·µ»Øº¯ÊıµÄ·µ»ØÓï¾ä¿éÇ°µÄ±êºÅ
+	// å››. è¿”å›å‡½æ•°çš„è¿”å›è¯­å¥å—å‰çš„æ ‡å·
 	buffer << tokentable_.at(tokentable_index).name_ << tokentable_index << "_Exit";
 	return buffer.str();
 }
 
-// Í¨¹ılabel±êºÅÉú³Élabel×Ö·û´®
+// é€šè¿‡labelæ ‡å·ç”Ÿæˆlabelå­—ç¬¦ä¸²
 string AssemblyMaker::GenerateLabelString(int label_index)	
 {
 	std::ostringstream buffer;
@@ -1461,7 +1461,7 @@ string AssemblyMaker::GenerateLabelString(int label_index)
 	return buffer.str();
 }
 
-// ¼Ä´æÆ÷Ãû
+// å¯„å­˜å™¨å
 const char * const AssemblyMaker::RegisterName[4] = {"eax", "ebx", "ecx", "edx"};
 const char * const AssemblyMaker::SingleOperatorName[4] = {"neg ", "push", "imul", "idiv"};
 const char * const AssemblyMaker::DoubleOperatorName[5] = {"mov ", "add ", "sub ", "lea ", "cmp "};

@@ -15,12 +15,12 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	// ·ÖÎöÆ÷µÄ×´Ì¬
+	// åˆ†æå™¨çš„çŠ¶æ€
 	bool lex_legitimate = false;
 	bool syntax_legitimate = false;
 	bool assemble_legitimate = false;
 
-	// ÊäÈëÊä³öÎÄ¼şÃû
+	// è¾“å…¥è¾“å‡ºæ–‡ä»¶å
 	//const string kCodeFileName = "TestCase\\example.cpp";
 	const string kCodeFileName = "TestCase\\00_generaltest.cpp";
 	//const string kCodeFileName = "TestCase\\01_write.cpp";
@@ -40,8 +40,8 @@ int main(int argc, char *argv[])
 	const string kSyntaxFileName = "TestCase\\result4_syntaxprocess.txt";
 	const string kQuaternaryCodeFileName = "TestCase\\result5_midcode.txt";
 	const string kAssemblyCodeFileName = "TestCase\\result_final_assembly.asm";
-	// É¾³ıÔ­ÓĞµÄÎÄ¼ş
-	string delete_command = "del ";	// µ±ÒªÉ¾³ıµÄÎÄ¼ş²»´æÔÚÊ±£¬@²¢Ã»ÓĞ¹Ø±Õ´íÎóÌáÊ¾
+	// åˆ é™¤åŸæœ‰çš„æ–‡ä»¶
+	string delete_command = "del ";	// å½“è¦åˆ é™¤çš„æ–‡ä»¶ä¸å­˜åœ¨æ—¶ï¼Œ@å¹¶æ²¡æœ‰å…³é—­é”™è¯¯æç¤º
 	system((delete_command + kTokenFileName).c_str());
 	system((delete_command + kTokenTableFileName).c_str());
 	system((delete_command + kStringTableFileName).c_str());
@@ -49,68 +49,68 @@ int main(int argc, char *argv[])
 	system((delete_command + kQuaternaryCodeFileName).c_str());
 	system((delete_command + kAssemblyCodeFileName).c_str());
 
-	// ´Ê·¨·ÖÎö
+	// è¯æ³•åˆ†æ
 	LexicalAnalyzer lex_analyzer(kCodeFileName);
 	if(!lex_analyzer.IsBound())
 	{
 		cout << "Cannot open source file " << kCodeFileName << endl;
 		return EXIT_FAILURE;
 	}
-	lex_legitimate = lex_analyzer.Parse();	// ½øĞĞ´Ê·¨·ÖÎö²¢·µ»Ø×´Ì¬
-	lex_analyzer.Print(kTokenFileName);		// Êä³öµ½ÎÄ¼ş
-	if(!lex_legitimate)						// ³ö´íÌáÊ¾
+	lex_legitimate = lex_analyzer.Parse();	// è¿›è¡Œè¯æ³•åˆ†æå¹¶è¿”å›çŠ¶æ€
+	lex_analyzer.Print(kTokenFileName);		// è¾“å‡ºåˆ°æ–‡ä»¶
+	if(!lex_legitimate)						// å‡ºé”™æç¤º
 	{
-		cout << "´Ê·¨·ÖÎö³ö´í£¡" << endl;
+		cout << "è¯æ³•åˆ†æå‡ºé”™ï¼" << endl;
 		return -1;
 	}
 
-	// µÃµ½×Ö·û´®±í£¬½¨Á¢·ûºÅ±íºÍËÄÔªÊ½±í
-	vector<string> stringtable = lex_analyzer.getStringTable();						// ×Ö·û´®±í
-	TokenTable tokentable;															// ·ûºÅ±í
-	vector<Quaternary> quaternarytable;												// ËÄÔªÊ½±í
+	// å¾—åˆ°å­—ç¬¦ä¸²è¡¨ï¼Œå»ºç«‹ç¬¦å·è¡¨å’Œå››å…ƒå¼è¡¨
+	vector<string> stringtable = lex_analyzer.getStringTable();						// å­—ç¬¦ä¸²è¡¨
+	TokenTable tokentable;															// ç¬¦å·è¡¨
+	vector<Quaternary> quaternarytable;												// å››å…ƒå¼è¡¨
 
-	// Óï·¨·ÖÎö
+	// è¯­æ³•åˆ†æ
 	SyntaxAnalyzer syntax_analyzer(lex_analyzer, 
-		stringtable, tokentable, quaternarytable);// ÓÃ´Ê·¨·ÖÎöÆ÷¡¢·ûºÅ±í¡¢×Ö·û´®±íºÍËÄÔªÊ½±í¶ÔÓï·¨·ÖÎöÆ÷½øĞĞ³õÊ¼»¯
-	syntax_legitimate = syntax_analyzer.Parse();									// ½øĞĞÓï·¨·ÖÎö²¢·µ»Ø×´Ì¬
-	syntax_analyzer.Print(kSyntaxFileName);											// Êä³öÓï·¨·ÖÎö¹ı³Ì
-	tokentable.Print(kTokenTableFileName);											// Êä³ö·ûºÅ±í
-	PrintStringVector(stringtable, kStringTableFileName);							// Êä³ö×Ö·û´®±í
-	PrintQuaternaryVector(quaternarytable, tokentable, kQuaternaryCodeFileName);	// Êä³öËÄÔªÊ½
-//	PrintQuaternaryVector(quaternarytable, tokentable, cout);						// Êä³öËÄÔªÊ½
-	if(!syntax_legitimate)// ³ö´íÌáÊ¾
+		stringtable, tokentable, quaternarytable);// ç”¨è¯æ³•åˆ†æå™¨ã€ç¬¦å·è¡¨ã€å­—ç¬¦ä¸²è¡¨å’Œå››å…ƒå¼è¡¨å¯¹è¯­æ³•åˆ†æå™¨è¿›è¡Œåˆå§‹åŒ–
+	syntax_legitimate = syntax_analyzer.Parse();									// è¿›è¡Œè¯­æ³•åˆ†æå¹¶è¿”å›çŠ¶æ€
+	syntax_analyzer.Print(kSyntaxFileName);											// è¾“å‡ºè¯­æ³•åˆ†æè¿‡ç¨‹
+	tokentable.Print(kTokenTableFileName);											// è¾“å‡ºç¬¦å·è¡¨
+	PrintStringVector(stringtable, kStringTableFileName);							// è¾“å‡ºå­—ç¬¦ä¸²è¡¨
+	PrintQuaternaryVector(quaternarytable, tokentable, kQuaternaryCodeFileName);	// è¾“å‡ºå››å…ƒå¼
+//	PrintQuaternaryVector(quaternarytable, tokentable, cout);						// è¾“å‡ºå››å…ƒå¼
+	if(!syntax_legitimate)// å‡ºé”™æç¤º
 	{
-		cout << "Óï·¨·ÖÎö³ö´í£¡" << endl;
+		cout << "è¯­æ³•åˆ†æå‡ºé”™ï¼" << endl;
 		return -1;
 	}
 
-	// Ä¿±ê´úÂëÉú³É
-	// ÓÃËÄÔªÊ½±í¡¢·ûºÅ±í¡¢×Ö·û´®±í³õÊ¼»¯»ã±àÆ÷
+	// ç›®æ ‡ä»£ç ç”Ÿæˆ
+	// ç”¨å››å…ƒå¼è¡¨ã€ç¬¦å·è¡¨ã€å­—ç¬¦ä¸²è¡¨åˆå§‹åŒ–æ±‡ç¼–å™¨
 	AssemblyMaker assembly_maker(quaternarytable, tokentable, stringtable);
 	assemble_legitimate = assembly_maker.Assemble();
 	assembly_maker.Print(kAssemblyCodeFileName);
-	//³ö´í¼ì²é
-	if(!assemble_legitimate)// ÕâÀïºÃÏñ²»Ó¦¸ÃÓĞ´í
+	//å‡ºé”™æ£€æŸ¥
+	if(!assemble_legitimate)// è¿™é‡Œå¥½åƒä¸åº”è¯¥æœ‰é”™
 	{
-		cout << "»ã±à¹ı³Ì³ö´í£¡" << endl;
+		cout << "æ±‡ç¼–è¿‡ç¨‹å‡ºé”™ï¼" << endl;
 		return -1;
 	}
 
-	// »ã±à¹ı³Ì
-	// ÏÈÈ·¶¨²»´øºó×ºµÄ»ã±àÎÄ¼şÃû
+	// æ±‡ç¼–è¿‡ç¨‹
+	// å…ˆç¡®å®šä¸å¸¦åç¼€çš„æ±‡ç¼–æ–‡ä»¶å
 	string object_path_file = kAssemblyCodeFileName.substr(0, kAssemblyCodeFileName.find_last_of('.'));
 	string object_single_file = object_path_file.substr(object_path_file.find('\\') + 1, object_path_file.length() - object_path_file.find('\\') - 1);
-	// É¾³ıÔ­ÓĞÎÄ¼ş
+	// åˆ é™¤åŸæœ‰æ–‡ä»¶
 	system((delete_command + object_single_file + ".obj").c_str());
 	system((delete_command + object_single_file + ".exe").c_str());
-	// »ã±à
+	// æ±‡ç¼–
 	string ml_command = "masm32\\bin\\ml.exe /c /coff ";
 	string link_command = "masm32\\bin\\link.exe /SUBSYSTEM:CONSOLE /OPT:NOREF ";
 	system((ml_command + object_path_file + ".asm").c_str());
 	system((link_command + object_single_file + ".obj").c_str());
-	// ÔËĞĞ
+	// è¿è¡Œ
 	system((object_single_file + ".exe").c_str());
-	//system("masm32\\bin\\ml.exe /c /coff TestCase/result6_assembly.asm TestCase/result60_assembly.obj");	// ÕâÀïµÄÖ´ĞĞÓ¦ÓÃ³ÌĞòµÄÄ¿Â¼Ò»¶¨ÒªÓÃÓÒĞ±¸Ü
+	//system("masm32\\bin\\ml.exe /c /coff TestCase/result6_assembly.asm TestCase/result60_assembly.obj");	// è¿™é‡Œçš„æ‰§è¡Œåº”ç”¨ç¨‹åºçš„ç›®å½•ä¸€å®šè¦ç”¨å³æ–œæ 
 	//system("masm32\\bin\\link.exe /SUBSYSTEM:CONSOLE /OPT:NOREF result6_assembly.obj");
 	//system("result6_assembly.exe");
 	return 0;

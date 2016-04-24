@@ -7,8 +7,8 @@
 #include <sstream>
 
 /*
-// ÓÃ³ö´íÐÅÏ¢¡¢³ö´íµ¥´ÊÀ´³õÊ¼»¯Ò»¸öÒì³£¶ÔÏó
-// µ÷ÓÃwhat()»ñÈ¡Òì³£µÄËµÃ÷ÐÅÏ¢
+// ç”¨å‡ºé”™ä¿¡æ¯ã€å‡ºé”™å•è¯æ¥åˆå§‹åŒ–ä¸€ä¸ªå¼‚å¸¸å¯¹è±¡
+// è°ƒç”¨what()èŽ·å–å¼‚å¸¸çš„è¯´æ˜Žä¿¡æ¯
 class SyntaxTokenException : public std::exception
 {
 public:

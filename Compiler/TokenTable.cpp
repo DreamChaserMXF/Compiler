@@ -9,8 +9,8 @@
 TokenTable::TokenTable() throw() : rows_(), subroutine_tokentableindex_stack_(), addr_(0), subroutine_tokentableaddr_stack_()
 { 
 	
-	subroutine_tokentableindex_stack_.push(0);// ÕâĞĞÓĞ±ØÒª£¬ÒòÎªÔÚSearchDefinitionInCurrentLevelµÄÊ±ºòÒªÓÃµ½topÔªËØ
-	subroutine_tokentableaddr_stack_.push(0); // ÕâĞĞËÆºõÃ»ÓĞ±ØÒª
+	subroutine_tokentableindex_stack_.push(0);// è¿™è¡Œæœ‰å¿…è¦ï¼Œå› ä¸ºåœ¨SearchDefinitionInCurrentLevelçš„æ—¶å€™è¦ç”¨åˆ°topå…ƒç´ 
+	subroutine_tokentableaddr_stack_.push(0); // è¿™è¡Œä¼¼ä¹æ²¡æœ‰å¿…è¦
 }
 
 TokenTableItem TokenTable::at(int index) const throw(std::out_of_range)
@@ -24,12 +24,12 @@ void TokenTable::Locate() throw()
 	subroutine_tokentableaddr_stack_.push(addr_);
 	addr_ = 0;
 }
-// É¾³ıµ±Ç°×Ó³ÌĞò(³ı²ÎÊıÍâ)ÔÚ·ûºÅ±íÖĞµÄ¼ÇÂ¼(ÖØ¶¨Î»)
-// ÒÔºó¿ÉÄÜÒª¸ü¸Ä£¬Ê¹ÆäĞ§¹ûÎª²»É¾³ı¼ÇÂ¼Ö»¸ü¸Ävalid×Ö¶Î
+// åˆ é™¤å½“å‰å­ç¨‹åº(é™¤å‚æ•°å¤–)åœ¨ç¬¦å·è¡¨ä¸­çš„è®°å½•(é‡å®šä½)
+// ä»¥åå¯èƒ½è¦æ›´æ”¹ï¼Œä½¿å…¶æ•ˆæœä¸ºä¸åˆ é™¤è®°å½•åªæ›´æ”¹validå­—æ®µ
 void TokenTable::Relocate() throw()
 {
-	// ´Óµ±Ç°·Ö³ÌĞòµÄÈë¿Ú´¦¿ªÊ¼²éÕÒ£¬½«²ÎÊıÉùÃ÷Ö®ºóµÄ¼ÇÂ¼È«²¿É¾³ı
-	// PSÁíÒ»ÖÖÊµÏÖ·½·¨ÊÇÓÃreverse_iterator£¬µ«ĞèÒª´«µİcurrentLevel×÷²ÎÊı£¬¹ÊÓÃÕıÏòµü´úÆ÷µÄ·½·¨
+	// ä»å½“å‰åˆ†ç¨‹åºçš„å…¥å£å¤„å¼€å§‹æŸ¥æ‰¾ï¼Œå°†å‚æ•°å£°æ˜ä¹‹åçš„è®°å½•å…¨éƒ¨åˆ é™¤
+	// PSå¦ä¸€ç§å®ç°æ–¹æ³•æ˜¯ç”¨reverse_iteratorï¼Œä½†éœ€è¦ä¼ é€’currentLevelä½œå‚æ•°ï¼Œæ•…ç”¨æ­£å‘è¿­ä»£å™¨çš„æ–¹æ³•
 	iterator iter = rows_.begin() + subroutine_tokentableindex_stack_.top();
 	while(iter != rows_.end() && TokenTableItem::PARAMETER == iter->itemtype_)
 	{
@@ -40,13 +40,13 @@ void TokenTable::Relocate() throw()
 		iter->valid_ = false;
 		++iter;
 	}
-	// ÖØ¶¨Î»·Ö³ÌĞòÈë¿ÚÏÂ±êÕ»
+	// é‡å®šä½åˆ†ç¨‹åºå…¥å£ä¸‹æ ‡æ ˆ
 	subroutine_tokentableindex_stack_.pop();
 	addr_ = subroutine_tokentableaddr_stack_.top();
 	subroutine_tokentableaddr_stack_.pop();
 }
 
-// ²éÕÒÔÚµ±Ç°×Ó³ÌĞòÖĞÊÇ·ñ´æÔÚ¶¨Òå£¨ÓÃÓÚ³£/±äÁ¿¶¨ÒåÓï¾ä£©
+// æŸ¥æ‰¾åœ¨å½“å‰å­ç¨‹åºä¸­æ˜¯å¦å­˜åœ¨å®šä¹‰ï¼ˆç”¨äºå¸¸/å˜é‡å®šä¹‰è¯­å¥ï¼‰
 bool TokenTable::SearchDefinitionInCurrentLevel(const string &name) throw()
 {
 	iterator iter = rows_.begin() + subroutine_tokentableindex_stack_.top();
@@ -62,11 +62,11 @@ bool TokenTable::SearchDefinitionInCurrentLevel(const string &name) throw()
 }
 
 
-// ²éÕÒtokenµÄ¶¨Òå´¦
-// ÖØÔØÊÇÒòÎªconstº¯ÊıºÍ·Çconstº¯Êı·µ»ØµÄµü´úÆ÷ÀàĞÍ²»Í¬
+// æŸ¥æ‰¾tokençš„å®šä¹‰å¤„
+// é‡è½½æ˜¯å› ä¸ºconstå‡½æ•°å’Œéconstå‡½æ•°è¿”å›çš„è¿­ä»£å™¨ç±»å‹ä¸åŒ
 TokenTable::iterator TokenTable::SearchDefinition(const Token &token) throw()
 {
-	// ÏÈÔÚµ±Ç°²ãÑ°ÕÒ¶¨Òå
+	// å…ˆåœ¨å½“å‰å±‚å¯»æ‰¾å®šä¹‰
 	iterator iter = rows_.begin() + subroutine_tokentableindex_stack_.top();
 	if(iter != rows_.end())
 	{
@@ -81,16 +81,16 @@ TokenTable::iterator TokenTable::SearchDefinition(const Token &token) throw()
 			++iter;
 		}
 	}
-	if(iter != rows_.end())	// ÕÒµ½¶¨Òå
+	if(iter != rows_.end())	// æ‰¾åˆ°å®šä¹‰
 	{
 		return iter;
 	}
-	else					// ÔÚÖ®Ç°²ãÑ°ÕÒ¶¨Òå
+	else					// åœ¨ä¹‹å‰å±‚å¯»æ‰¾å®šä¹‰
 	{
-		reverse_iterator r_iter(rows_.begin() + subroutine_tokentableindex_stack_.top());	//ÄæÏòµü´úÆ÷
-		if(r_iter != rows_.rend())			// Èç¹ûÖ®Ç°²ã²»ÊÇ¶¥²ã
+		reverse_iterator r_iter(rows_.begin() + subroutine_tokentableindex_stack_.top());	//é€†å‘è¿­ä»£å™¨
+		if(r_iter != rows_.rend())			// å¦‚æœä¹‹å‰å±‚ä¸æ˜¯é¡¶å±‚
 		{
-			int last_level = r_iter->level_;	// ÉÏÒ»²ã´ÎÎªµ±Ç°²ãÈë¿ÚµÄ¹ı³Ì»òº¯ÊıµÄ²ã´Î
+			int last_level = r_iter->level_;	// ä¸Šä¸€å±‚æ¬¡ä¸ºå½“å‰å±‚å…¥å£çš„è¿‡ç¨‹æˆ–å‡½æ•°çš„å±‚æ¬¡
 			while(r_iter != rows_.rend()
 				&& (   false == r_iter->valid_ 
 					|| r_iter->level_ > last_level
@@ -98,14 +98,14 @@ TokenTable::iterator TokenTable::SearchDefinition(const Token &token) throw()
 					)
 				)
 			{
-				// ifÓï¾ä¿éµÄÄ¿µÄÊÇ£¬Ê¹µÃÓĞĞ§µÄlast_levelÖ»ÄÜ²»¶Ï¼õÉÙ
-				// Æ©Èç  proc1(a){}; proc2(b){proc3(){a=1}};
-				// proc1ÔÚµÚ0²ã£¬²ÎÊıaÔÚµÚ1²ã
-				// proc2ÔÚµÚ0²ã£¬²ÎÊıbÔÚµÚ1²ã
-				// proc3ÔÚµÚ1²ã£¬¹ı³ÌÌåÄÚaÔÚµÚ2²ã
-				// ÔÚ²éÕÒÊ±£¬last_levelÏÈ¸³Îª1£¬´Óproc3ÏòÉÏ²éÕÒ
-				// È»¶øproc1µÄ²ÎÊıaÒ²ÔÚµÚ1²ã£¬µ«×÷ÓÃÓòÓëproc3ÖĞµÄa²¢²»ÖØºÏ¡£µ¼ÖÂÈô²»¸üĞÂlast_level£¬Ôò¿ÉÄÜ´æÔÚbug
-				// ½â¾ö°ì·¨ÊÇ£¬µ±ÏòÉÏ¼ìË÷µ½proc2Ê±£¬±ã°Ñlast_level¸üĞÂÎªproc2µÄlevel£¬¼´0
+				// ifè¯­å¥å—çš„ç›®çš„æ˜¯ï¼Œä½¿å¾—æœ‰æ•ˆçš„last_levelåªèƒ½ä¸æ–­å‡å°‘
+				// è­¬å¦‚  proc1(a){}; proc2(b){proc3(){a=1}};
+				// proc1åœ¨ç¬¬0å±‚ï¼Œå‚æ•°aåœ¨ç¬¬1å±‚
+				// proc2åœ¨ç¬¬0å±‚ï¼Œå‚æ•°båœ¨ç¬¬1å±‚
+				// proc3åœ¨ç¬¬1å±‚ï¼Œè¿‡ç¨‹ä½“å†…aåœ¨ç¬¬2å±‚
+				// åœ¨æŸ¥æ‰¾æ—¶ï¼Œlast_levelå…ˆèµ‹ä¸º1ï¼Œä»proc3å‘ä¸ŠæŸ¥æ‰¾
+				// ç„¶è€Œproc1çš„å‚æ•°aä¹Ÿåœ¨ç¬¬1å±‚ï¼Œä½†ä½œç”¨åŸŸä¸proc3ä¸­çš„aå¹¶ä¸é‡åˆã€‚å¯¼è‡´è‹¥ä¸æ›´æ–°last_levelï¼Œåˆ™å¯èƒ½å­˜åœ¨bug
+				// è§£å†³åŠæ³•æ˜¯ï¼Œå½“å‘ä¸Šæ£€ç´¢åˆ°proc2æ—¶ï¼Œä¾¿æŠŠlast_levelæ›´æ–°ä¸ºproc2çš„levelï¼Œå³0
 				if(true == r_iter->valid_ && r_iter->level_ < last_level)	// bug fixed[if(true == iter->valid_ && r_iter->level_ < last_level)]
 				{
 					last_level = r_iter->level_;
@@ -113,23 +113,23 @@ TokenTable::iterator TokenTable::SearchDefinition(const Token &token) throw()
 				++r_iter;
 			}
 		}
-		if(r_iter != rows_.rend())	// ²éÕÒµ½ÁË¶¨Òå
+		if(r_iter != rows_.rend())	// æŸ¥æ‰¾åˆ°äº†å®šä¹‰
 		{
 			iter = r_iter.base() - 1;
 			return iter;
 		}
-		else	// Ö®Ç°²ã¾ÍÊÇ¶¥²ã£¬»òÃ»ÓĞ²éÕÒµ½¶¨Òå
+		else	// ä¹‹å‰å±‚å°±æ˜¯é¡¶å±‚ï¼Œæˆ–æ²¡æœ‰æŸ¥æ‰¾åˆ°å®šä¹‰
 		{
 			return rows_.end();
 		}
 	}
 }
 
-// ²éÕÒnameµÄ¶¨Òå´¦
-// ÖØÔØÊÇÒòÎªconstº¯ÊıºÍ·Çconstº¯Êı·µ»ØµÄµü´úÆ÷ÀàĞÍ²»Í¬
+// æŸ¥æ‰¾nameçš„å®šä¹‰å¤„
+// é‡è½½æ˜¯å› ä¸ºconstå‡½æ•°å’Œéconstå‡½æ•°è¿”å›çš„è¿­ä»£å™¨ç±»å‹ä¸åŒ
 TokenTable::const_iterator TokenTable::SearchDefinition(const Token &token) const throw()
 {
-	// ÏÈÔÚµ±Ç°²ãÑ°ÕÒ¶¨Òå
+	// å…ˆåœ¨å½“å‰å±‚å¯»æ‰¾å®šä¹‰
 	const_iterator iter = rows_.begin() + subroutine_tokentableindex_stack_.top();
 	if(iter != rows_.end())
 	{
@@ -144,16 +144,16 @@ TokenTable::const_iterator TokenTable::SearchDefinition(const Token &token) cons
 			++iter;
 		}
 	}
-	if(iter != rows_.end())	// ÕÒµ½¶¨Òå
+	if(iter != rows_.end())	// æ‰¾åˆ°å®šä¹‰
 	{
 		return iter;
 	}
-	else					// ÔÚÖ®Ç°²ãÑ°ÕÒ¶¨Òå
+	else					// åœ¨ä¹‹å‰å±‚å¯»æ‰¾å®šä¹‰
 	{
-		const_reverse_iterator r_iter(rows_.begin() + subroutine_tokentableindex_stack_.top());	//ÄæÏòµü´úÆ÷
-		if(r_iter != rows_.rend())			// Èç¹ûÖ®Ç°²ã²»ÊÇ¶¥²ã
+		const_reverse_iterator r_iter(rows_.begin() + subroutine_tokentableindex_stack_.top());	//é€†å‘è¿­ä»£å™¨
+		if(r_iter != rows_.rend())			// å¦‚æœä¹‹å‰å±‚ä¸æ˜¯é¡¶å±‚
 		{
-			int last_level = r_iter->level_;	// ÉÏÒ»²ã´ÎÎªµ±Ç°²ãÈë¿ÚµÄ¹ı³Ì»òº¯ÊıµÄ²ã´Î
+			int last_level = r_iter->level_;	// ä¸Šä¸€å±‚æ¬¡ä¸ºå½“å‰å±‚å…¥å£çš„è¿‡ç¨‹æˆ–å‡½æ•°çš„å±‚æ¬¡
 			while(r_iter != rows_.rend()
 				&& (   false == r_iter->valid_ 
 					|| r_iter->level_ > last_level
@@ -161,14 +161,14 @@ TokenTable::const_iterator TokenTable::SearchDefinition(const Token &token) cons
 					)
 				)
 			{
-				// ifÓï¾ä¿éµÄÄ¿µÄÊÇ£¬Ê¹µÃÓĞĞ§µÄlast_levelÖ»ÄÜ²»¶Ï¼õÉÙ
-				// Æ©Èç  proc1(a){}; proc2(b){proc3(){a=1}};
-				// proc1ÔÚµÚ0²ã£¬²ÎÊıaÔÚµÚ1²ã
-				// proc2ÔÚµÚ0²ã£¬²ÎÊıbÔÚµÚ1²ã
-				// proc3ÔÚµÚ1²ã£¬¹ı³ÌÌåÄÚaÔÚµÚ2²ã
-				// ÔÚ²éÕÒÊ±£¬last_levelÏÈ¸³Îª1£¬´Óproc3ÏòÉÏ²éÕÒ
-				// È»¶øproc1µÄ²ÎÊıaÒ²ÔÚµÚ1²ã£¬µ«×÷ÓÃÓòÓëproc3ÖĞµÄa²¢²»ÖØºÏ¡£µ¼ÖÂÈô²»¸üĞÂlast_level£¬Ôò¿ÉÄÜ´æÔÚbug
-				// ½â¾ö°ì·¨ÊÇ£¬µ±ÏòÉÏ¼ìË÷µ½proc2Ê±£¬±ã°Ñlast_level¸üĞÂÎªproc2µÄlevel£¬¼´0
+				// ifè¯­å¥å—çš„ç›®çš„æ˜¯ï¼Œä½¿å¾—æœ‰æ•ˆçš„last_levelåªèƒ½ä¸æ–­å‡å°‘
+				// è­¬å¦‚  proc1(a){}; proc2(b){proc3(){a=1}};
+				// proc1åœ¨ç¬¬0å±‚ï¼Œå‚æ•°aåœ¨ç¬¬1å±‚
+				// proc2åœ¨ç¬¬0å±‚ï¼Œå‚æ•°båœ¨ç¬¬1å±‚
+				// proc3åœ¨ç¬¬1å±‚ï¼Œè¿‡ç¨‹ä½“å†…aåœ¨ç¬¬2å±‚
+				// åœ¨æŸ¥æ‰¾æ—¶ï¼Œlast_levelå…ˆèµ‹ä¸º1ï¼Œä»proc3å‘ä¸ŠæŸ¥æ‰¾
+				// ç„¶è€Œproc1çš„å‚æ•°aä¹Ÿåœ¨ç¬¬1å±‚ï¼Œä½†ä½œç”¨åŸŸä¸proc3ä¸­çš„aå¹¶ä¸é‡åˆã€‚å¯¼è‡´è‹¥ä¸æ›´æ–°last_levelï¼Œåˆ™å¯èƒ½å­˜åœ¨bug
+				// è§£å†³åŠæ³•æ˜¯ï¼Œå½“å‘ä¸Šæ£€ç´¢åˆ°proc2æ—¶ï¼Œä¾¿æŠŠlast_levelæ›´æ–°ä¸ºproc2çš„levelï¼Œå³0
 				if(true == iter->valid_ && r_iter->level_ < last_level)
 				{
 					last_level = r_iter->level_;
@@ -176,12 +176,12 @@ TokenTable::const_iterator TokenTable::SearchDefinition(const Token &token) cons
 				++r_iter;
 			}
 		}
-		if(r_iter != rows_.rend())	// ²éÕÒµ½ÁË¶¨Òå
+		if(r_iter != rows_.rend())	// æŸ¥æ‰¾åˆ°äº†å®šä¹‰
 		{
 			iter = r_iter.base() - 1;
 			return iter;
 		}
-		else	// Ö®Ç°²ã¾ÍÊÇ¶¥²ã£¬»òÃ»ÓĞ²éÕÒµ½¶¨Òå
+		else	// ä¹‹å‰å±‚å°±æ˜¯é¡¶å±‚ï¼Œæˆ–æ²¡æœ‰æŸ¥æ‰¾åˆ°å®šä¹‰
 		{
 			return rows_.end();
 		}
@@ -204,9 +204,9 @@ size_t TokenTable::size() const throw()
 	return rows_.size();
 }
 
-// Í¨¹ı¹ı³Ì/º¯ÊıµÄµü´úÆ÷£¬·µ»Ø¹ı³Ì/º¯ÊıµÄ²ÎÊıµÄÊôĞÔ
-// ÆäÖĞÊôĞÔµÄÓĞĞ§ÏîÖ»ÓĞdecoratetype_ºÍisref_
-// iterÖ¸Ïò·ûºÅ±íÖĞµÄ¹ı³Ì/º¯ÊıÏî
+// é€šè¿‡è¿‡ç¨‹/å‡½æ•°çš„è¿­ä»£å™¨ï¼Œè¿”å›è¿‡ç¨‹/å‡½æ•°çš„å‚æ•°çš„å±æ€§
+// å…¶ä¸­å±æ€§çš„æœ‰æ•ˆé¡¹åªæœ‰decoratetype_å’Œisref_
+// iteræŒ‡å‘ç¬¦å·è¡¨ä¸­çš„è¿‡ç¨‹/å‡½æ•°é¡¹
 vector<ExpressionAttribute> TokenTable::GetProcFuncParameterAttributes(const_iterator iter) throw()
 {
 	assert(iter != rows_.end());
@@ -270,12 +270,12 @@ void TokenTable::AddArrayItem(Token arrayIdentifier, TokenTableItem::DecorateTyp
 {
 	TokenTableItem item(arrayIdentifier.value_.identifier, TokenTableItem::ARRAY, decoratetype_, false, arrayLength, level, arrayIdentifier.lineNumber_, addr_);
 	rows_.push_back(item);
-	// ·ûºÅ±íÖĞÔö¼ÓÒ»¸öÊı×é£¬addr_Òª¼ÓÉÏÊı×éµÄ³¤¶ÈÒÔÊ¾Êı×éµÄ´æÔÚ
+	// ç¬¦å·è¡¨ä¸­å¢åŠ ä¸€ä¸ªæ•°ç»„ï¼Œaddr_è¦åŠ ä¸Šæ•°ç»„çš„é•¿åº¦ä»¥ç¤ºæ•°ç»„çš„å­˜åœ¨
 	addr_ += arrayLength;
 }
 int TokenTable::AddProcedureItem(Token procedureIdentifier, int level) throw()
 {
-	// ÓÉÓÚ¹ı³ÌÔÚÔËĞĞÕ»ÖĞ²»Õ¼¿Õ¼ä£¬¹Êaddr_±£³Ö²»±ä
+	// ç”±äºè¿‡ç¨‹åœ¨è¿è¡Œæ ˆä¸­ä¸å ç©ºé—´ï¼Œæ•…addr_ä¿æŒä¸å˜
 	TokenTableItem item(procedureIdentifier.value_.identifier, TokenTableItem::PROCEDURE, TokenTableItem::VOID, false, 0, level, procedureIdentifier.lineNumber_, addr_);
 	rows_.push_back(item);
 	return rows_.size() - 1;
@@ -286,7 +286,7 @@ int TokenTable::AddFunctionItem(Token functionIdentifier, int level) throw()
 	rows_.push_back(item);
 	return rows_.size() - 1;
 }
-// ÉèÖÃ¹ı³Ì/º¯ÊıµÄ²ÎÊı¸öÊı
+// è®¾ç½®è¿‡ç¨‹/å‡½æ•°çš„å‚æ•°ä¸ªæ•°
 void TokenTable::SetParameterCount(const string &proc_func_name, int parameterCount) throw()
 {
 	reverse_iterator iter = rows_.rbegin();
@@ -314,12 +314,12 @@ void TokenTable::AddParameterItem(Token parameterIdentifier, TokenTableItem::Dec
 	rows_.push_back(item);
 }
 
-// ·µ»Ø¹ı³Ì/º¯ÊıµÄ¾Ö²¿±äÁ¿ËùÕ¼µÄ¿Õ¼ä£¨µ¥Î»£º4bytes£©
-// c_iterÎª¹ı³Ì/º¯ÊıÔÚ·ûºÅ±íÖĞµÄÎ»ÖÃµÄÏÂÒ»¸öÎ»ÖÃ
-// Ö®ËùÒÔÕâÃ´ÒªÇó£¬ÊÇÒòÎªÖ÷º¯ÊıÔÚ·ûºÅ±íÖĞÃ»ÓĞÎ»ÖÃ£¬Ö»ÄÜÌá¹©ÏÂÒ»¸öÎ»ÖÃ
+// è¿”å›è¿‡ç¨‹/å‡½æ•°çš„å±€éƒ¨å˜é‡æ‰€å çš„ç©ºé—´ï¼ˆå•ä½ï¼š4bytesï¼‰
+// c_iterä¸ºè¿‡ç¨‹/å‡½æ•°åœ¨ç¬¦å·è¡¨ä¸­çš„ä½ç½®çš„ä¸‹ä¸€ä¸ªä½ç½®
+// ä¹‹æ‰€ä»¥è¿™ä¹ˆè¦æ±‚ï¼Œæ˜¯å› ä¸ºä¸»å‡½æ•°åœ¨ç¬¦å·è¡¨ä¸­æ²¡æœ‰ä½ç½®ï¼Œåªèƒ½æä¾›ä¸‹ä¸€ä¸ªä½ç½®
 int TokenTable::GetVariableSpace(TokenTable::const_iterator c_iter) const throw()
 {
-	// ÏÈÓÃwhileÌø¹ıµ±Ç°¹ı³Ì/º¯ÊıµÄ²ÎÊı¼°³£Á¿
+	// å…ˆç”¨whileè·³è¿‡å½“å‰è¿‡ç¨‹/å‡½æ•°çš„å‚æ•°åŠå¸¸é‡
 	while( rows_.end() != c_iter
 		&& (TokenTableItem::PARAMETER == c_iter->itemtype_
 			|| TokenTableItem::CONST == c_iter->itemtype_)
@@ -327,30 +327,30 @@ int TokenTable::GetVariableSpace(TokenTable::const_iterator c_iter) const throw(
 	{
 		++c_iter;
 	}
-	// Èç¹û¸Ã¹ı³Ì/º¯ÊıÃ»ÓĞ¾Ö²¿±äÁ¿
+	// å¦‚æœè¯¥è¿‡ç¨‹/å‡½æ•°æ²¡æœ‰å±€éƒ¨å˜é‡
 	if(rows_.end() == c_iter
 		|| TokenTableItem::PROCEDURE == c_iter->itemtype_
 		|| TokenTableItem::FUNCTION == c_iter->itemtype_)
 	{
 		return 0;
 	}
-	// ÏÖÔÚ¿Ï¶¨ÓĞ±äÁ¿ÁË
-	// È¡µÃµÚÒ»¸ö±äÁ¿µÄµØÖ·
+	// ç°åœ¨è‚¯å®šæœ‰å˜é‡äº†
+	// å–å¾—ç¬¬ä¸€ä¸ªå˜é‡çš„åœ°å€
 	int first_var_addr = c_iter->addr_;
-	// ÓÃwhileÌø¹ıµ±Ç°¹ı³Ì/º¯ÊıµÄ¾Ö²¿±äÁ¿
+	// ç”¨whileè·³è¿‡å½“å‰è¿‡ç¨‹/å‡½æ•°çš„å±€éƒ¨å˜é‡
 	while( rows_.end() != c_iter
 		&& TokenTableItem::PROCEDURE != c_iter->itemtype_
 		&& TokenTableItem::FUNCTION != c_iter->itemtype_)
 	{
 		++c_iter;
 	}
-	// ÕÒ³ö×îºóÒ»¸ö±äÁ¿£¬µÃµ½ÆäµØÖ·£¬ÔÙ¼ÆËã¾Ö²¿±äÁ¿¿Õ¼ä£¨Ä©±äÁ¿µØÖ·-Ê×±äÁ¿µØÖ·+Ä©±äÁ¿³¤¶È£©
+	// æ‰¾å‡ºæœ€åä¸€ä¸ªå˜é‡ï¼Œå¾—åˆ°å…¶åœ°å€ï¼Œå†è®¡ç®—å±€éƒ¨å˜é‡ç©ºé—´ï¼ˆæœ«å˜é‡åœ°å€-é¦–å˜é‡åœ°å€+æœ«å˜é‡é•¿åº¦ï¼‰
 	const TokenTableItem &item = ((rows_.end() == c_iter) ? rows_.back() : *(c_iter - 1));
-	// ×îºóÒ»¸ö±äÁ¿¿ÉÄÜÊÇÊı×é»òÆÕÍ¨±äÁ¿£¬ËùÒÔÓĞÁ½ÖÖ²»Í¬µÄ¿Õ¼ä¼ÆËã·½Ê½
+	// æœ€åä¸€ä¸ªå˜é‡å¯èƒ½æ˜¯æ•°ç»„æˆ–æ™®é€šå˜é‡ï¼Œæ‰€ä»¥æœ‰ä¸¤ç§ä¸åŒçš„ç©ºé—´è®¡ç®—æ–¹å¼
 	return item.addr_ - first_var_addr + ((TokenTableItem::ARRAY == item.itemtype_) ? item.value_ : 1);
 }
 
-// ¸ø¶¨·ûºÅ±íÖĞÄ³¸ö±äÁ¿µÄÎ»ÖÃ£¬È·¶¨ÆäËùÔÚµÄº¯ÊıµÄ²ÎÊıµÄ¸öÊı
+// ç»™å®šç¬¦å·è¡¨ä¸­æŸä¸ªå˜é‡çš„ä½ç½®ï¼Œç¡®å®šå…¶æ‰€åœ¨çš„å‡½æ•°çš„å‚æ•°çš„ä¸ªæ•°
 int TokenTable::GetParameterNum(int var_index) const throw()
 {
 	do
@@ -359,12 +359,12 @@ int TokenTable::GetParameterNum(int var_index) const throw()
 	}while(var_index >= 0
 		&& TokenTableItem::PROCEDURE != rows_[var_index].itemtype_
 		&& TokenTableItem::FUNCTION != rows_[var_index].itemtype_);
-	// ÔÚ·ûºÅ±íÖĞÊÇÕÒ²»µ½Ö÷º¯ÊıµÄÃû³ÆµÄ£¬´ËÊ±Ö±½Ó·µ»Ø0
+	// åœ¨ç¬¦å·è¡¨ä¸­æ˜¯æ‰¾ä¸åˆ°ä¸»å‡½æ•°çš„åç§°çš„ï¼Œæ­¤æ—¶ç›´æ¥è¿”å›0
 	if(-1 == var_index)
 	{
 		return 0;
 	}
-	else	// Õı³£Çé¿ö
+	else	// æ­£å¸¸æƒ…å†µ
 	{
 		return rows_[var_index].value_;
 	}

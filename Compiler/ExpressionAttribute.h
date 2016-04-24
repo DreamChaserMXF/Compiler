@@ -3,11 +3,11 @@
 
 #include "Quaternary.h"
 
-// ÓÃÀ´±íÊ¾Ò»¸ö±í´ïÊ½µÄÊôĞÔ
-// addressingmethod_±íÊ¾¸Ã±í´ïÊ½×îÖÕ´æ´¢ÎªÁ¢¼´Êı¡¢³£Á¿¡¢·ûºÅ±í±äÁ¿¡¢»¹ÊÇÁÙÊ±±äÁ¿
-// value_±íÊ¾addressingmethod_ÏÂ¶ÔÓ¦µÄÖµ
-// µ±addressingmethod_ÎªARRAY_ADDRESSINGµÄÊ±ºò£¬offset±íÊ¾Êı×éÔªËØµÄÆ«ÒÆÁ¿£¨¼´ÏÂ±ê£©£¬offset_addressingmethod_±íÊ¾Æ«ÒÆÁ¿µÄÈ¡Ö··½Ê½
-// decoratetype±íÊ¾¸Ã±í´ïÊ½µÄĞŞÊÎÀàĞÍ
+// ç”¨æ¥è¡¨ç¤ºä¸€ä¸ªè¡¨è¾¾å¼çš„å±æ€§
+// addressingmethod_è¡¨ç¤ºè¯¥è¡¨è¾¾å¼æœ€ç»ˆå­˜å‚¨ä¸ºç«‹å³æ•°ã€å¸¸é‡ã€ç¬¦å·è¡¨å˜é‡ã€è¿˜æ˜¯ä¸´æ—¶å˜é‡
+// value_è¡¨ç¤ºaddressingmethod_ä¸‹å¯¹åº”çš„å€¼
+// å½“addressingmethod_ä¸ºARRAY_ADDRESSINGçš„æ—¶å€™ï¼Œoffsetè¡¨ç¤ºæ•°ç»„å…ƒç´ çš„åç§»é‡ï¼ˆå³ä¸‹æ ‡ï¼‰ï¼Œoffset_addressingmethod_è¡¨ç¤ºåç§»é‡çš„å–å€æ–¹å¼
+// decoratetypeè¡¨ç¤ºè¯¥è¡¨è¾¾å¼çš„ä¿®é¥°ç±»å‹
 class ExpressionAttribute
 {
 public:

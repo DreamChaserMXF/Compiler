@@ -3,8 +3,8 @@
 	
 #include "Token.h"
 
-// ÓÃ³ö´íÐÅÏ¢¡¢³ö´íµ¥´ÊÀ´³õÊ¼»¯Ò»¸ö·ûºÅ±íÒì³£¶ÔÏó
-// µ÷ÓÃwhat()»ñÈ¡Òì³£µÄËµÃ÷ÐÅÏ¢
+// ç”¨å‡ºé”™ä¿¡æ¯ã€å‡ºé”™å•è¯æ¥åˆå§‹åŒ–ä¸€ä¸ªç¬¦å·è¡¨å¼‚å¸¸å¯¹è±¡
+// è°ƒç”¨what()èŽ·å–å¼‚å¸¸çš„è¯´æ˜Žä¿¡æ¯
 class TokenTableException : public std::exception
 {
 public:

@@ -13,8 +13,8 @@ public:
 	LexExceptionDEPRECATED(const char *errMsg):exception(errMsg){}
 };
 
-// ÓÃ³ö´íÐÅÏ¢¡¢³ö´í×Ö·û¼°³ö´íÐÐºÅÀ´³õÊ¼»¯Ò»¸öÒì³£¶ÔÏó
-// µ÷ÓÃwhat()»ñÈ¡Òì³£µÄËµÃ÷ÐÅÏ¢
+// ç”¨å‡ºé”™ä¿¡æ¯ã€å‡ºé”™å­—ç¬¦åŠå‡ºé”™è¡Œå·æ¥åˆå§‹åŒ–ä¸€ä¸ªå¼‚å¸¸å¯¹è±¡
+// è°ƒç”¨what()èŽ·å–å¼‚å¸¸çš„è¯´æ˜Žä¿¡æ¯
 class LexException : public std::exception
 {
 public:

@@ -22,74 +22,74 @@ public:
 private:
 	SyntaxAnalyzer(const SyntaxAnalyzer&) throw();
 	
-	void PrintFunctionFrame(const char *func_name, size_t depth) throw();// Êä³öº¯ÊıÖ¡ĞÅÏ¢£¬depthÊÇÓï·¨·ÖÎöÊ±µÄº¯Êıµ÷ÓÃÉî¶È
+	void PrintFunctionFrame(const char *func_name, size_t depth) throw();// è¾“å‡ºå‡½æ•°å¸§ä¿¡æ¯ï¼Œdepthæ˜¯è¯­æ³•åˆ†ææ—¶çš„å‡½æ•°è°ƒç”¨æ·±åº¦
 
-	void Routine(size_t depth) throw();				// ³ÌĞò
-	void SubRoutine(size_t depth) throw();				// ·Ö³ÌĞò
+	void Routine(size_t depth) throw();				// ç¨‹åº
+	void SubRoutine(size_t depth) throw();				// åˆ†ç¨‹åº
 
-	void ConstantPart(size_t depth) throw();			// ³£Á¿ËµÃ÷²¿·Ö
-	void constantDefination(size_t depth) throw();		// ³£Á¿¶¨Òå
+	void ConstantPart(size_t depth) throw();			// å¸¸é‡è¯´æ˜éƒ¨åˆ†
+	void constantDefination(size_t depth) throw();		// å¸¸é‡å®šä¹‰
 
-	void VariablePart(size_t depth) throw();			// ±äÁ¿ËµÃ÷²¿·Ö
-	void VariableDefinition(size_t depth) throw();		// ±äÁ¿¶¨Òå
-	void TypeSpecification(size_t depth) throw();		// ÀàĞÍ
+	void VariablePart(size_t depth) throw();			// å˜é‡è¯´æ˜éƒ¨åˆ†
+	void VariableDefinition(size_t depth) throw();		// å˜é‡å®šä¹‰
+	void TypeSpecification(size_t depth) throw();		// ç±»å‹
 
-	void ProcedurePart(size_t depth) throw();			// ¹ı³ÌËµÃ÷²¿·Ö
-	int  ProcedureHead(size_t depth) throw();			// ¹ı³ÌÊ×²¿
-	void FunctionPart(size_t depth) throw();			// º¯ÊıËµÃ÷²¿·Ö
-	int FunctionHead(size_t depth) throw();			// º¯ÊıÊ×²¿
-	int ParameterList(size_t depth) throw();			// ĞÎ²Î±í ·µ»ØĞÎ²Î¸öÊı
-	int ParameterTerm(size_t depth) throw();			// ĞÎ²Î¶Î ·µ»ØĞÎ²Î¸öÊı
-	vector<ExpressionAttribute> ArgumentList(const vector<ExpressionAttribute> &parameter_attributes, size_t depth) throw();// Êµ²Î±í
+	void ProcedurePart(size_t depth) throw();			// è¿‡ç¨‹è¯´æ˜éƒ¨åˆ†
+	int  ProcedureHead(size_t depth) throw();			// è¿‡ç¨‹é¦–éƒ¨
+	void FunctionPart(size_t depth) throw();			// å‡½æ•°è¯´æ˜éƒ¨åˆ†
+	int FunctionHead(size_t depth) throw();			// å‡½æ•°é¦–éƒ¨
+	int ParameterList(size_t depth) throw();			// å½¢å‚è¡¨ è¿”å›å½¢å‚ä¸ªæ•°
+	int ParameterTerm(size_t depth) throw();			// å½¢å‚æ®µ è¿”å›å½¢å‚ä¸ªæ•°
+	vector<ExpressionAttribute> ArgumentList(const vector<ExpressionAttribute> &parameter_attributes, size_t depth) throw();// å®å‚è¡¨
 
-	void StatementBlockPart(size_t depth) throw();		// ¸´ºÏÓï¾ä²¿·Ö
-	void Statement(size_t depth) throw();				// Óï¾ä
+	void StatementBlockPart(size_t depth) throw();		// å¤åˆè¯­å¥éƒ¨åˆ†
+	void Statement(size_t depth) throw();				// è¯­å¥
 
-	void AssigningStatement(const Token &idToken, TokenTable::iterator &iter, size_t depth) throw();	// ¸³ÖµÓï¾ä
+	void AssigningStatement(const Token &idToken, TokenTable::iterator &iter, size_t depth) throw();	// èµ‹å€¼è¯­å¥
 
-	ExpressionAttribute Expression(size_t depth) throw();	// ±í´ïÊ½£¬·µ»Ø±í´ïÊ½µÄÀàĞÍ
-	ExpressionAttribute Term(size_t depth) throw();		// Ïî
-	ExpressionAttribute Factor(size_t depth) throw();		// Òò×Ó
+	ExpressionAttribute Expression(size_t depth) throw();	// è¡¨è¾¾å¼ï¼Œè¿”å›è¡¨è¾¾å¼çš„ç±»å‹
+	ExpressionAttribute Term(size_t depth) throw();		// é¡¹
+	ExpressionAttribute Factor(size_t depth) throw();		// å› å­
 
-	void IfStatement(size_t depth) throw();			// Ìõ¼şÓï¾ä
-	void Condition(int endlabel, size_t depth) throw();// Ìõ¼ş
+	void IfStatement(size_t depth) throw();			// æ¡ä»¶è¯­å¥
+	void Condition(int endlabel, size_t depth) throw();// æ¡ä»¶
 
-	void CaseStatement(size_t depth) throw();			// Çé¿öÓï¾ä
-	vector<int> CaseElement(int caselabel, int endlabel, size_t depth) throw();	// Çé¿ö±íÔªËØ
+	void CaseStatement(size_t depth) throw();			// æƒ…å†µè¯­å¥
+	vector<int> CaseElement(int caselabel, int endlabel, size_t depth) throw();	// æƒ…å†µè¡¨å…ƒç´ 
 
-	void ReadStatement(size_t depth) throw();			// ¶ÁÓï¾ä
-	void WriteStatement(size_t depth) throw();			// Ğ´Óï¾ä
+	void ReadStatement(size_t depth) throw();			// è¯»è¯­å¥
+	void WriteStatement(size_t depth) throw();			// å†™è¯­å¥
 
-	void WhileLoopStatement(size_t depth) throw();		// whileÑ­»·Óï¾ä
-	void ForLoopStatement(size_t depth) throw();		// forÑ­»·Óï¾ä
+	void WhileLoopStatement(size_t depth) throw();		// whileå¾ªç¯è¯­å¥
+	void ForLoopStatement(size_t depth) throw();		// forå¾ªç¯è¯­å¥
 	void ContinueStatement(size_t depth) throw();		// continue
 	void BreakStatement(size_t depth) throw();			// break
 
-	//void ProcedureCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth) throw();	// ¹ı³Ìµ÷ÓÃÓï¾ä
-	//void FunctionCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth) throw();	// º¯Êıµ÷ÓÃÓï¾ä
-	void ProcFuncCallStatement(const Token token_, const vector<ExpressionAttribute> &parameter_attributes, size_t depth) throw();	// º¯Êıµ÷ÓÃÓï¾ä
+	//void ProcedureCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth) throw();	// è¿‡ç¨‹è°ƒç”¨è¯­å¥
+	//void FunctionCallStatement(const Token token_, const vector<TokenTableItem::DecorateType> &parameter_decorate_types, size_t depth) throw();	// å‡½æ•°è°ƒç”¨è¯­å¥
+	void ProcFuncCallStatement(const Token token_, const vector<ExpressionAttribute> &parameter_attributes, size_t depth) throw();	// å‡½æ•°è°ƒç”¨è¯­å¥
 
 	void SimplifyArrayOperand(ExpressionAttribute &attribute) throw();
 
-	// Êı¾İ³ÉÔ±
-	LexicalAnalyzer &lexical_analyzer_;		// °ó¶¨µÄ´Ê·¨·ÖÎöÆ÷
-	TokenTable &tokentable_;				// °ó¶¨µÄ·ûºÅ±í
-	const vector<string> &stringtable_;		// °ó¶¨µÄ³£Á¿×Ö·û±í
-	vector<Quaternary> &quaternarytable_;	// ËÄÔªÊ½±í
+	// æ•°æ®æˆå‘˜
+	LexicalAnalyzer &lexical_analyzer_;		// ç»‘å®šçš„è¯æ³•åˆ†æå™¨
+	TokenTable &tokentable_;				// ç»‘å®šçš„ç¬¦å·è¡¨
+	const vector<string> &stringtable_;		// ç»‘å®šçš„å¸¸é‡å­—ç¬¦è¡¨
+	vector<Quaternary> &quaternarytable_;	// å››å…ƒå¼è¡¨
 
-	Token token_;							// µ±Ç°½âÎöµÄtoken_
-	int level_;								// µ±Ç°µÄ·Ö³ÌĞò²ã´Î¡£³õÊ¼ÖµÎª1¡£Ö÷º¯Êı²ã´ÎÎª0¡£¡¶Ïê¼ûAppendix 1Éè¼Æ±¸×¢ 15¡·
-	int tempvar_index_;						// ½«ÒªÊ¹ÓÃµÄÏÂÒ»¸öÁÙÊ±±äÁ¿µÄÏÂ±ê
-//	int max_local_temp_count_;				// ×î´óµÄÁÙÊ±±äÁ¿¸öÊı(¹¹Ôìº¯ÊıºÍÃ¿´ÎENDËÄÔªÊ½Éú³ÉÊ±ÖĞ¶¼Òª³õÊ¼»¯Îª0)
-	int label_index_;						// ½«ÒªÊ¹ÓÃµÄÏÂÒ»¸ölabelµÄÏÂ±ê
-	stack<int> continue_label_;	// continueÓï¾äµÄÌø×ª±êºÅÕ»
-	stack<int> break_label_;		// brealÓï¾äµÄÌø×ª±êºÅÕ»
+	Token token_;							// å½“å‰è§£æçš„token_
+	int level_;								// å½“å‰çš„åˆ†ç¨‹åºå±‚æ¬¡ã€‚åˆå§‹å€¼ä¸º1ã€‚ä¸»å‡½æ•°å±‚æ¬¡ä¸º0ã€‚ã€Šè¯¦è§Appendix 1è®¾è®¡å¤‡æ³¨ 15ã€‹
+	int tempvar_index_;						// å°†è¦ä½¿ç”¨çš„ä¸‹ä¸€ä¸ªä¸´æ—¶å˜é‡çš„ä¸‹æ ‡
+//	int max_local_temp_count_;				// æœ€å¤§çš„ä¸´æ—¶å˜é‡ä¸ªæ•°(æ„é€ å‡½æ•°å’Œæ¯æ¬¡ENDå››å…ƒå¼ç”Ÿæˆæ—¶ä¸­éƒ½è¦åˆå§‹åŒ–ä¸º0)
+	int label_index_;						// å°†è¦ä½¿ç”¨çš„ä¸‹ä¸€ä¸ªlabelçš„ä¸‹æ ‡
+	stack<int> continue_label_;	// continueè¯­å¥çš„è·³è½¬æ ‡å·æ ˆ
+	stack<int> break_label_;		// brealè¯­å¥çš„è·³è½¬æ ‡å·æ ˆ
 
-	bool is_successful_;					// Óï·¨·ÖÎöÊÇ·ñ³É¹¦
+	bool is_successful_;					// è¯­æ³•åˆ†ææ˜¯å¦æˆåŠŸ
 
-	std::ostringstream syntax_info_buffer_;	// Óï·¨·ÖÎö¹ı³ÌµÄÊä³ö
-	std::string syntax_assist_buffer_;		// ¸¨ÖúÊä³öÓï·¨·ÖÎö¹ı³ÌµÄ±äÁ¿
-	vector<Token> tokenbuffer_;				// ²åÈë·ûºÅ±íÊ±ÓÃÓÚ±£´æ¶à¸öÏà¹ØµÄtoken_
+	std::ostringstream syntax_info_buffer_;	// è¯­æ³•åˆ†æè¿‡ç¨‹çš„è¾“å‡º
+	std::string syntax_assist_buffer_;		// è¾…åŠ©è¾“å‡ºè¯­æ³•åˆ†æè¿‡ç¨‹çš„å˜é‡
+	vector<Token> tokenbuffer_;				// æ’å…¥ç¬¦å·è¡¨æ—¶ç”¨äºä¿å­˜å¤šä¸ªç›¸å…³çš„token_
 };
 
 #endif

@@ -22,10 +22,10 @@ void Quaternary::UpdateTempVarSpace(std::vector<Quaternary> &quaternarytable) th
 	assert(Quaternary::BEGIN == iter->op_);
 	FindTempVar(iter);
 }
-// ´ÓÒ»¸öº¯ÊıµÄBEGINÓï¾äµÄµü´úÆ÷¿ªÊ¼£¬Ñ°ÕÒÕâ¸öº¯ÊıÓÃµ½µÄÁÙÊ±±äÁ¿µÄ¸öÊı£¬²¢¸üĞÂµ½BEGINÓï¾äÖĞ
-// ×îºó·µ»ØÖ¸Ïò¸Ãº¯Êı½áÊøºóµÄÏÂÒ»ÌõÓï¾äµÄµü´úÆ÷
-// Èç¹ûÕâ¸öº¯ÊıÓĞÇ¶Ì×µÄº¯Êı£¬Ôò¶ÔÇ¶Ì×º¯ÊıµÄBEGINÓï¾ä½øĞĞÍ¬ÑùµÄ¸üĞÂ
-// ×¢Òâ£¬¸Ãº¯ÊıÒªÇóËÄÔªÊ½ÖĞµÄBEGINÓëENDÒ»¶¨ÒªÆ¥Åä
+// ä»ä¸€ä¸ªå‡½æ•°çš„BEGINè¯­å¥çš„è¿­ä»£å™¨å¼€å§‹ï¼Œå¯»æ‰¾è¿™ä¸ªå‡½æ•°ç”¨åˆ°çš„ä¸´æ—¶å˜é‡çš„ä¸ªæ•°ï¼Œå¹¶æ›´æ–°åˆ°BEGINè¯­å¥ä¸­
+// æœ€åè¿”å›æŒ‡å‘è¯¥å‡½æ•°ç»“æŸåçš„ä¸‹ä¸€æ¡è¯­å¥çš„è¿­ä»£å™¨
+// å¦‚æœè¿™ä¸ªå‡½æ•°æœ‰åµŒå¥—çš„å‡½æ•°ï¼Œåˆ™å¯¹åµŒå¥—å‡½æ•°çš„BEGINè¯­å¥è¿›è¡ŒåŒæ ·çš„æ›´æ–°
+// æ³¨æ„ï¼Œè¯¥å‡½æ•°è¦æ±‚å››å…ƒå¼ä¸­çš„BEGINä¸ENDä¸€å®šè¦åŒ¹é…
 std::vector<Quaternary>::iterator Quaternary::FindTempVar(const std::vector<Quaternary>::iterator &begin_iter) throw()
 {
 	std::vector<Quaternary>::iterator next_iter = begin_iter + 1;
@@ -33,12 +33,12 @@ std::vector<Quaternary>::iterator Quaternary::FindTempVar(const std::vector<Quat
 	{
 		next_iter = FindTempVar(next_iter);
 	}
-	// ÏÖÔÚnext_iterÖ¸Ïò¸Ãº¯ÊıµÄBEGINÓï¾äÖ®ºóµÄµÚÒ»ÌõÊôÓÚ¸Ãº¯ÊıµÄÓï¾ä
+	// ç°åœ¨next_iteræŒ‡å‘è¯¥å‡½æ•°çš„BEGINè¯­å¥ä¹‹åçš„ç¬¬ä¸€æ¡å±äºè¯¥å‡½æ•°çš„è¯­å¥
 	int max_temp_index = -1;
 	while(Quaternary::END != next_iter->op_)
 	{
-		// ÔÚÒÑÓĞµÄÂß¼­ÏÂ£¬Èç¹ûÉêÇëÁËĞÂµÄÁÙÊ±±äÁ¿£¬ÔòÒ»¶¨»áÓÃÔÚdst²Ù×÷ÊıÉÏ
-		// ËùÒÔÇ°Á½¸öifÓï¾ä²¢²»ÊÇ±ØÒªµÄ
+		// åœ¨å·²æœ‰çš„é€»è¾‘ä¸‹ï¼Œå¦‚æœç”³è¯·äº†æ–°çš„ä¸´æ—¶å˜é‡ï¼Œåˆ™ä¸€å®šä¼šç”¨åœ¨dstæ“ä½œæ•°ä¸Š
+		// æ‰€ä»¥å‰ä¸¤ä¸ªifè¯­å¥å¹¶ä¸æ˜¯å¿…è¦çš„
 		//if(Quaternary::TEMPORARY_ADDRESSING == next_iter->method1_
 		//	&& next_iter->src1_ > max_temp_index)
 		//{
@@ -56,14 +56,14 @@ std::vector<Quaternary>::iterator Quaternary::FindTempVar(const std::vector<Quat
 		}
 		++next_iter;
 	}
-	// ¸üĞÂBEGINÓï¾ä
+	// æ›´æ–°BEGINè¯­å¥
 	begin_iter->src2_ = max_temp_index + 1;
-	// ·µ»ØÖ¸Ïòº¯Êı½áÊøºóµÄÏÂÒ»¸öÓï¾äµÄµü´úÆ÷
+	// è¿”å›æŒ‡å‘å‡½æ•°ç»“æŸåçš„ä¸‹ä¸€ä¸ªè¯­å¥çš„è¿­ä»£å™¨
 	return ++next_iter;
 }
 
-// Í¨¹ı¹ı³Ì/º¯ÊıÔÚËÄÔªÊ½±íÖĞµÄBEGINÓï¾äµÄµü´úÆ÷£¬ÕÒµ½Æä¹ı³Ì/º¯ÊıÌåµÄµÚÒ»ÌõÓï¾äµÄµü´úÆ÷
-// ÕâÀïÒªÇó¹ı³Ì/º¯ÊıµÄBEGINºÍENDÒ»¶¨ÒªÅä¶Ô
+// é€šè¿‡è¿‡ç¨‹/å‡½æ•°åœ¨å››å…ƒå¼è¡¨ä¸­çš„BEGINè¯­å¥çš„è¿­ä»£å™¨ï¼Œæ‰¾åˆ°å…¶è¿‡ç¨‹/å‡½æ•°ä½“çš„ç¬¬ä¸€æ¡è¯­å¥çš„è¿­ä»£å™¨
+// è¿™é‡Œè¦æ±‚è¿‡ç¨‹/å‡½æ•°çš„BEGINå’ŒENDä¸€å®šè¦é…å¯¹
 std::vector<Quaternary>::const_iterator Quaternary::GetFunctionBody(std::vector<Quaternary>::const_iterator begin_iter) throw()
 {
 	++begin_iter;
@@ -72,7 +72,7 @@ std::vector<Quaternary>::const_iterator Quaternary::GetFunctionBody(std::vector<
 		return begin_iter;
 	}
 
-	int func_num = 1;	// ÒÑ¾­¶Áµ½ÁËÒ»¸öbegin
+	int func_num = 1;	// å·²ç»è¯»åˆ°äº†ä¸€ä¸ªbegin
 	while(func_num > 0 || Quaternary::BEGIN == (begin_iter+1)->op_)
 	{
 		++begin_iter;
