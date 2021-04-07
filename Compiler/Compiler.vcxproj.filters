@@ -78,14 +78,20 @@
     <ClInclude Include="EscapeSequence.h">
       <Filter>Header Files\Lexical</Filter>
     </ClInclude>
-    <ClInclude Include="SemanticsAnalyzer.h">
-      <Filter>Header Files\Semantics</Filter>
-    </ClInclude>
     <ClInclude Include="TokenTable.h">
       <Filter>Header Files\TokenTable</Filter>
     </ClInclude>
     <ClInclude Include="TokenTableItem.h">
       <Filter>Header Files\TokenTable</Filter>
+    </ClInclude>
+    <ClInclude Include="SyntaxException.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenTableException.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SemanticsAnalyzer.h">
+      <Filter>Header Files\Semantics</Filter>
     </ClInclude>
     <ClInclude Include="MidCodeGenerator.h">
       <Filter>Header Files\MidCode</Filter>

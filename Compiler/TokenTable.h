@@ -55,9 +55,6 @@ public:
 	// 汇编过程中需要
 	int GetVariableSpace(TokenTable::const_iterator c_iter) const throw();
 	int GetParameterNum(int var_index) const throw();
-	
-
-
 private:
 	const_iterator SearchDefinition(const Token &token) const throw();	// 查找定义处
 	vector<TokenTableItem> rows_;	// 符号表的每一行
