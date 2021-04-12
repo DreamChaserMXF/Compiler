@@ -1,7 +1,7 @@
-var i, j, k, n, result : integer;
+var i, j, k, n, result, final_res : integer;
 
 // 计算阶乘
-function factorial(var n : integer) : integer;
+function factorial(n : integer) : integer;
 begin
 	if n <= 1
 	then factorial := 1
@@ -19,11 +19,13 @@ begin
 	write("input a value n, output the factorial of n\n");
 	read(n);
 	// 测试点：1. 普通语句中对函数的调用
-	factorial(n);
-	n := result;
-	if n > 0
-	then 
-		write("n! = ", n)
+	final_res := factorial(n);
+	if n > 0 then
+	begin
+        write("n = ", n);
+        write("\n");
+		write("n! = ", final_res);
+    end
 	else
 		write("value too large")
 	;

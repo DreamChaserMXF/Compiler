@@ -61,11 +61,14 @@ begin
 	write("i = ", i);
 	write("j = ", j);
 	// »°∑¥≤‚ ‘
+    write("\nbefore neg: i = ", i);
 	neg1(i);
 	write("\nafter neg: i = ", i);
 	neg2(i);
 	write("\nafter neg: i = ", i);
 	// Ωªªª≤‚ ‘
+    write("\nbefore swap: i = ", i);
+	write("j = ", j);
 	swap1(i, j);
 	write("\nafter swap: i = ", i);
 	write("j = ", j);
@@ -73,6 +76,7 @@ begin
 	write("\nafter swap: i = ", i);
 	write("j = ", j);
 	// ∏≥÷µ≤‚ ‘
+    write("\nbefore assigning: i = ", i);
 	assign1(i);
 	write("\nafter assigning: i = ", i);
 	assign2(i);

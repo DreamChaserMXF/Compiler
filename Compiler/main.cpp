@@ -57,10 +57,9 @@ int main(int argc, char *argv[])
 
 	//// 输入重定向
 	//freopen("TestCase\\testinput.txt", "r", stdin);
-	for(int i = 0; i < 12; ++i)
+	for(int i = 8; i < 10; ++i)
 	{
-		//if(i > 4) break;
-		//if(i != 4) continue;
+		if(i == 6) continue;
 		cout <<"\ni = " <<  i << endl;
 		Sleep(1000);
 		// 输入重定向
