@@ -13,75 +13,73 @@
 
 using namespace std;
 
-int main(int argc, char *argv[])
-{
-	// 分析器的状态
-	bool lex_legitimate = false;
-	bool syntax_legitimate = false;
-	bool assemble_legitimate = false;
+int main(int argc, char* argv[]) {
+    // 分析器的状态
+    bool lex_legitimate      = false;
+    bool syntax_legitimate   = false;
+    bool assemble_legitimate = false;
 
-	// 输入输出文件名
-	const string kCodeFileName = "example.cpp";
-	const string kTokenFileName = "example_token.txt";
-	const string kTokenTableFileName = "example_tokentable.txt";
-	const string kStringTableFileName = "example_stringtable.txt";
-	const string kSyntaxFileName = "example_syntax.txt";
-	const string kQuaternaryCodeFileName = "example_quaternary.txt";
-	const string kAssemblyCodeFileName = "example_assembly.asm";
+    // 输入输出文件名
+    const string kCodeFileName           = "example.cpp";
+    const string kTokenFileName          = "example_token.txt";
+    const string kTokenTableFileName     = "example_tokentable.txt";
+    const string kStringTableFileName    = "example_stringtable.txt";
+    const string kSyntaxFileName         = "example_syntax.txt";
+    const string kQuaternaryCodeFileName = "example_quaternary.txt";
+    const string kAssemblyCodeFileName   = "example_assembly.asm";
 
-	// 词法分析
-	LexicalAnalyzer lex_analyzer(kCodeFileName);
-	if(!lex_analyzer.IsBound())
-	{
-		cout << "Cannot open source file " << kCodeFileName << endl;
-		return EXIT_FAILURE;
-	}
-	lex_legitimate = lex_analyzer.Parse();	// 进行词法分析并返回状态
-	lex_analyzer.Print(kTokenFileName);		// 输出到文件
-	if(!lex_legitimate)						// 出错提示
-	{
-		cout << "词法分析出错！" << endl;
-		return -1;
-	}
+    // 词法分析
+    LexicalAnalyzer lex_analyzer(kCodeFileName);
+    if (!lex_analyzer.IsBound()) {
+        cout << "Cannot open source file " << kCodeFileName << endl;
+        return EXIT_FAILURE;
+    }
+    lex_legitimate = lex_analyzer.Parse(); // 进行词法分析并返回状态
+    lex_analyzer.Print(kTokenFileName);    // 输出到文件
+    if (!lex_legitimate)                   // 出错提示
+    {
+        cout << "词法分析出错！" << endl;
+        return -1;
+    }
 
-	// 得到字符串表，建立符号表和四元式表
-	vector<string> stringtable = lex_analyzer.getStringTable();						// 字符串表
-	TokenTable tokentable;															// 符号表
-	vector<Quaternary> quaternarytable;												// 四元式表
+    // 得到字符串表，建立符号表和四元式表
+    vector<string> stringtable = lex_analyzer.getStringTable(); // 字符串表
+    TokenTable tokentable;                                      // 符号表
+    vector<Quaternary> quaternarytable;                         // 四元式表
 
-	// 语法分析
-	SyntaxAnalyzer syntax_analyzer(lex_analyzer, 
-		stringtable, tokentable, quaternarytable);// 用词法分析器、符号表、字符串表和四元式表对语法分析器进行初始化
-	syntax_legitimate = syntax_analyzer.Parse();									// 进行语法分析并返回状态
-	syntax_analyzer.Print(kSyntaxFileName);											// 输出语法分析过程
-	tokentable.Print(kTokenTableFileName);											// 输出符号表
-	PrintStringVector(stringtable, kStringTableFileName);							// 输出字符串表
-	PrintQuaternaryVector(quaternarytable, tokentable, kQuaternaryCodeFileName);	// 输出四元式
-//	PrintQuaternaryVector(quaternarytable, tokentable, cout);						// 输出四元式
-	if(!syntax_legitimate)// 出错提示
-	{
-		cout << "语法分析出错！" << endl;
-		return -1;
-	}
+    // 语法分析
+    SyntaxAnalyzer syntax_analyzer(lex_analyzer, stringtable, tokentable,
+                                   quaternarytable); // 用词法分析器、符号表、字符串表和四元式表对语法分析器进行初始化
+    syntax_legitimate = syntax_analyzer.Parse();          // 进行语法分析并返回状态
+    syntax_analyzer.Print(kSyntaxFileName);               // 输出语法分析过程
+    tokentable.Print(kTokenTableFileName);                // 输出符号表
+    PrintStringVector(stringtable, kStringTableFileName); // 输出字符串表
+    PrintQuaternaryVector(quaternarytable, tokentable, kQuaternaryCodeFileName); // 输出四元式
+    //	PrintQuaternaryVector(quaternarytable, tokentable, cout);						// 输出四元式
+    if (!syntax_legitimate) // 出错提示
+    {
+        cout << "语法分析出错！" << endl;
+        return -1;
+    }
 
-	// 目标代码生成
-	// 用四元式表、符号表、字符串表初始化汇编器
-	AssemblyMaker assembly_maker(quaternarytable, tokentable, stringtable);
-	assemble_legitimate = assembly_maker.Assemble();
-	assembly_maker.Print(kAssemblyCodeFileName);
-	assembly_maker.Print(cout);
-	//出错检查
-	if(!assemble_legitimate)// 这里好像不应该有错
-	{
-		cout << "汇编过程出错！" << endl;
-		return -1;
-	}
+    // 目标代码生成
+    // 用四元式表、符号表、字符串表初始化汇编器
+    AssemblyMaker assembly_maker(quaternarytable, tokentable, stringtable);
+    assemble_legitimate = assembly_maker.Assemble();
+    assembly_maker.Print(kAssemblyCodeFileName);
+    assembly_maker.Print(cout);
+    //出错检查
+    if (!assemble_legitimate) // 这里好像不应该有错
+    {
+        cout << "汇编过程出错！" << endl;
+        return -1;
+    }
 
-	// 汇编过程
-	system("masm32\\bin\\ml.exe /c /coff .\\example_assembly.asm");
-	system("masm32\\bin\\link.exe /SUBSYSTEM:CONSOLE /OPT:NOREF example_assembly.obj");
-	system("example_assembly.exe");
-	return 0;
+    // 汇编过程
+    system("masm32\\bin\\ml.exe /c /coff .\\example_assembly.asm");
+    system("masm32\\bin\\link.exe /SUBSYSTEM:CONSOLE /OPT:NOREF example_assembly.obj");
+    system("example_assembly.exe");
+    return 0;
 }
 /*
 

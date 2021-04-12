@@ -20,9 +20,11 @@ scanf  PROTO C: ptr sbyte, :vararg
     _char_format_p       db '%c ', 0   ; for printf
     _string_format       db '%s', 0
     _String0             db 10,0
-    _String1             db 10,97,102,116,101,114,32,115,119,97,112,44,32,115,101,113,117,101,110,99,101,91,48,93,32,61,32,0
-    _String2             db 115,101,113,117,101,110,99,101,91,48,93,32,61,32,0
-    _String3             db 115,101,113,117,101,110,99,101,91,49,93,32,61,32,0
+    _String1             db 105,110,112,117,116,32,97,32,118,97,108,117,101,32,110,44,32,111,117,116,112,117,116,32,116,104,101,32,102,97,99,116
+	                     db 111,114,105,97,108,32,111,102,32,110,10,0
+    _String2             db 110,32,61,32,0
+    _String3             db 110,33,32,61,32,0
+    _String4             db 118,97,108,117,101,32,116,111,111,32,108,97,114,103,101,0
 
 .CODE
 
@@ -35,64 +37,69 @@ _main  proc far
     push    edx
     push    ebp
     mov     ebp,   esp
-    sub     esp,   40
+    sub     esp,   24
 
-    ;  6       AASG                3               0      sequence#0
-    mov     dword ptr SS:[ebp - 4], 3
-    ;  7       AASG                7               1      sequence#0
-    mov     dword ptr SS:[ebp - 8], 7
-    ;  8      WRITE                0               0       _string#2
-    push    offset  _String2
-    push    offset  _string_format
-    call    printf
-    add     esp, 8
-    ;  9      WRITE                0               0      sequence#0
-    push    dword ptr SS:[ebp - 4]
-    push    offset  _integer_format_p
-    call    printf
-    add     esp, 8
-    ; 10      WRITE                0               0       _string#3
-    push    offset  _String3
-    push    offset  _string_format
-    call    printf
-    add     esp, 8
-    ; 11      WRITE                0               1      sequence#0
-    push    dword ptr SS:[ebp - 8]
-    push    offset  _integer_format_p
-    call    printf
-    add     esp, 8
-    ; 12    SETREFP                0               0      sequence#0
-    lea     eax,    SS:[ebp - 4]
-    push    eax
-    ; 13    SETREFP                0               1      sequence#0
-    lea     eax,    SS:[ebp - 8]
-    push    eax
-    ; 14  FUNC_CALL                0               0               1
-    mov     SS:[esp - 4], ebp
-    sub     esp, 4
-    call    _func1
-    add     esp, 12
-    ; 15      WRITE                0               0       _string#1
+    ; 14      WRITE                0               0       _string#1
     push    offset  _String1
     push    offset  _string_format
     call    printf
     add     esp, 8
-    ; 16      WRITE                0               0      sequence#0
-    push    dword ptr SS:[ebp - 4]
+    ; 15       READ                0               0             n#3
+    lea     eax,    SS:[ebp - 16]
+    push    eax
+    push    offset  _integer_format_s
+    call    scanf
+    add     esp, 8
+    ; 16       SETP                0               0             n#3
+    push    dword ptr SS:[ebp - 16]
+    ; 17  FUNC_CALL                0               0               6
+    mov     SS:[esp - 4], ebp
+    sub     esp, 4
+    call    _factorial6
+    add     esp, 8
+    ; 18      STORE                0               0     final_res#5
+    mov     SS:[ebp - 24], eax
+    ; 19        JNG              n#3               0               6
+    mov     eax,    SS:[ebp - 16]
+    cmp     eax, 0
+    jng    _label6
+    ; 20      WRITE                0               0       _string#2
+    push    offset  _String2
+    push    offset  _string_format
+    call    printf
+    add     esp, 8
+    ; 21      WRITE                0               0             n#3
+    push    dword ptr SS:[ebp - 16]
     push    offset  _integer_format_p
     call    printf
     add     esp, 8
-    ; 17      WRITE                0               0       _string#3
+    ; 22      WRITE                0               0       _string#0
+    push    offset  _String0
+    push    offset  _string_format
+    call    printf
+    add     esp, 8
+    ; 23      WRITE                0               0       _string#3
     push    offset  _String3
     push    offset  _string_format
     call    printf
     add     esp, 8
-    ; 18      WRITE                0               1      sequence#0
-    push    dword ptr SS:[ebp - 8]
+    ; 24      WRITE                0               0     final_res#5
+    push    dword ptr SS:[ebp - 24]
     push    offset  _integer_format_p
     call    printf
     add     esp, 8
-    ; 19      WRITE                0               0       _string#0
+    ; 25        JMP                0               0               9
+    jmp     _label9
+    ; 26      LABEL                0               0               6
+_label6:
+    ; 27      WRITE                0               0       _string#4
+    push    offset  _String4
+    push    offset  _string_format
+    call    printf
+    add     esp, 8
+    ; 28      LABEL                0               0               9
+_label9:
+    ; 29      WRITE                0               0       _string#0
     push    offset  _String0
     push    offset  _string_format
     call    printf
@@ -108,30 +115,53 @@ _main  proc far
 _main  endp
 
 
-    ;  1      BEGIN                0               0               1
-_func1  proc near
+    ;  1      BEGIN                0               1               6
+_factorial6  proc near
     push    ebp
     mov     ebp,   esp
     sub     esp,   4
 
-    ;  2        ASG           i#ref2               0           tmp#4
-    mov     ebx,    SS:[ebp + 16]
-    mov     eax,    SS:[ebx]
+    ;  2         JG              n#7               1               1
+    mov     eax,    SS:[ebp + 12]
+    cmp     eax, 1
+    jg     _label1
+    ;  3        RET                0               0               1
+    mov     eax, 1
+    jmp     factorial6_Exit
+    ;  4        JMP                0               0               4
+    jmp     _label4
+    ;  5      LABEL                0               0               1
+_label1:
+    ;  6        SUB              n#7               1         _temp#0
+    mov     eax,    SS:[ebp + 12]
+    sub     eax, 1
     mov     SS:[ebp - 4], eax
-    ;  3        ASG           j#ref3               0          i#ref2
-    mov     ebx,    SS:[ebp + 12]
-    mov     eax,    SS:[ebx]
-    mov     ebx,    SS:[ebp + 16]
-    mov     SS:[ebx], eax
-    ;  4        ASG            tmp#4               0          j#ref3
+    ;  7       SETP                0               0         _temp#0
+    push    dword ptr SS:[ebp - 4]
+    ;  8  FUNC_CALL                0               0               6
+    mov     eax,    SS:[ebp + 8]
+    mov     SS:[esp - 4], eax
+    sub     esp, 4
+    call    _factorial6
+    add     esp, 8
+    ;  9      STORE                0               0         _temp#0
+    mov     SS:[ebp - 4], eax
+    ; 10        MUL              n#7         _temp#0        result#4
     mov     eax,    SS:[ebp - 4]
-    mov     ebx,    SS:[ebp + 12]
-    mov     SS:[ebx], eax
-    ;  5        END                0               0               1
-func1_Exit:
+    imul    dword ptr SS:[ebp + 12]
+    mov     ebx,    SS:[ebp + 8]
+    mov     SS:[ebx - 20], eax
+    ; 11        RET                0               0        result#4
+    mov     ebx,    SS:[ebp + 8]
+    mov     eax,    SS:[ebx - 20]
+    jmp     factorial6_Exit
+    ; 12      LABEL                0               0               4
+_label4:
+    ; 13        END                0               0               6
+factorial6_Exit:
     mov     esp,    ebp
     pop     ebp
     ret
-_func1  endp
+_factorial6  endp
 
 end start
